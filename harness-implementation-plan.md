@@ -94,7 +94,18 @@ Note: `templates/proposal.md` is derived (layout §5 omits its full content); cl
   - [ ] `trap-flags.ts` — achievement (>3 patches) + dislodging (15-min) advisory warns
 - [ ] Gate: unapproved spec blocked live; out-of-surface edit blocked live
 
-## Phase 4 — Verify + Retain (gates + memory)
+## Phase 4 — Verify + Retain (gates + memory) [done 2026-09-19]
+
+- [x] Agent `harness/.opencode/agents/reviewer.md` (`mode: subagent`, all deny, standards + specs axes)
+- [x] Commands `harness/.opencode/commands/verify/` — `review.md` (both axes before verdict), `goal.md`, `release.md` (only fires on recorded `ship`)
+- [x] Commands `harness/.opencode/commands/retain/` — `commit.md` (requires `ship`, tags spec ID, single writer of `state.md`), `teach.md`
+- [x] Skill: `commit-grouping`
+- [x] Plugins:
+  - [x] `evidence-log.ts` — journals `{intent,spec_ref,payload}` bus events to `harness/docs/specs/<id>/log.ndjson` via the `event` catch-all (closed intent set validated, `spec_ref` → dir mapping, never throws; agents also append directly per command prompts)
+  - [x] `context-compactor.ts` — prunes tool output at `experimental.session.compacting`, never diff/tests/logs/why (protected markers; unrecognized shapes pass through untouched)
+- [x] A2A vocabulary closed set `frame|specify|execute|verify|retain|govern`; payload always artifact pointer, never inline diff
+- [x] Gate: `ship/block/redirect` recorded in `review.md`; `redirect` re-opens via new `/propose`
+- [x] Note: `command.execute.after` is NOT in the skill hook surface, so both plugins avoid it (`event` + `experimental.session.compacting` only); runtime confirmation deferred to Phase 5
 
 - [ ] Agent `harness/.opencode/agents/reviewer.md` (`mode: subagent`, all deny, standards + specs axes)
 - [ ] Commands `harness/.opencode/commands/verify/` — `review.md` (both axes before verdict), `goal.md`, `release.md` (only fires on recorded `ship`)

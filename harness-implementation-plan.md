@@ -69,7 +69,19 @@ Note: `templates/proposal.md` is derived (layout §5 omits its full content); cl
 - [ ] Traceability wired: `spec.md` frontmatter `id: <domain>-<sequence>`, `status: draft|approved|superseded`, `proposal_ref`; criterion sub-IDs `<id>-<n>`
 - [ ] Gate: triage debate stays read-only, never writes `docs/` directly; only human pick becomes `proposal.md`
 
-## Phase 3 — Execute (write-isolated)
+## Phase 3 — Execute (write-isolated) [done 2026-09-19]
+
+- [x] Agents:
+  - [x] `harness/.opencode/agents/build.md` (`mode: primary`, `edit: allow`, `bash: ask`, `webfetch: deny`)
+  - [x] `harness/.opencode/agents/scout.md` (ephemeral retrieval-only, returns summaries)
+- [x] Commands `harness/.opencode/commands/execute/` — `implement.md` (thin; refs `@docs/specs/$SPEC_ID/tasks.md` + `acceptance-criteria` skill + `log.ndjson` append), `diagnose.md`
+- [x] Skills: `diff-reading`, `repro-minimisation`, `boundary-audit`, `root-cause-refactor`
+- [x] Plugins in `harness/.opencode/plugins/` (enforce as specified):
+  - [x] `scope-guard.ts` — blocks `edit`/`write` outside `tasks.md` declared surface via `OPENCODE_SPEC_ID` (helpers `readDeclaredSurface`/`matchesAny` implemented; spec folder always allowed)
+  - [x] `spec-link.ts` — refuses `/implement` without `status: approved` (FIXED vs layout: frontmatter parsed for `status:` line instead of `startsWith("---\nstatus: approved")`, which never matches our spec template)
+  - [x] `trap-flags.ts` — achievement (>3 patches) + dislodging (15-min) advisory warns
+- [x] Gate: unapproved spec blocked live; out-of-surface edit blocked live (runtime verification deferred to Phase 5)
+- [x] `command.execute.before` signature: kept per skill hook surface; runtime shape of `output.command`/`output.args` to confirm in Phase 5 (matcher broadened to `/(^|[/:])implement$/`)
 
 - [ ] Agents:
   - [ ] `harness/.opencode/agents/build.md` (`mode: primary`, `edit: allow`, `bash: ask`, `webfetch: deny`)

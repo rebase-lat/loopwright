@@ -9,6 +9,18 @@ const INTENTS = new Set(["frame", "specify", "execute", "verify", "retain", "gov
 // (per their command prompts); this plugin is the canonical backstop:
 // any bus event carrying {intent, spec_ref, payload} is journaled.
 // Never throws — a logging failure must not break the loop.
+// A payload is always a pointer, never inline content (rule 20) —
+// malformed handoffs are skipped, not journaled.
+function isPointer(payload: any): boolean {
+  return (
+    payload &&
+    typeof payload === "object" &&
+    payload.type === "artifact_pointer" &&
+    typeof payload.value === "string" &&
+    payload.value.length > 0
+  );
+}
+
 function specDirOf(specRef: string): string | null {
   if (!/^[a-z0-9]+(-[a-z0-9]+)*-\d+(-\d+)?$/i.test(specRef)) return null;
   const parts = specRef.split("-");
@@ -40,7 +52,7 @@ export default (async () => {
         const h = extractHandoff(input);
         if (!h || !INTENTS.has(h.intent)) return;
         const dir = specDirOf(h.spec_ref);
-        if (!dir || !h.payload) return;
+        if (!dir || !isPointer(h.payload)) return;
         const line =
           JSON.stringify({
             ts: new Date().toISOString(),

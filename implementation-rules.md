@@ -77,7 +77,7 @@ names the failure it prevents.
     logging every file edit turns the audit trail into noise nobody reads at review time.
 23. **Compaction may prune tool output and scratchpad content. It may never prune diff, tests,
     logs, or the "why."** Those four live in `log.ndjson`, outside the compactable window, by
-    construction — verify this holds before shipping `context-compactor.ts`, not after.
+    construction — verify this holds before shipping `guard-compaction.ts`, not after.
 
 ## Constitution and governance
 
@@ -94,7 +94,7 @@ names the failure it prevents.
 ## Traps and thresholds
 
 27. **Trap detection stays mechanical (patch count, elapsed time) and never expands into judging
-    reasoning quality.** `trap-flags.ts` warns on a threshold crossing; it doesn't grade whether
+    reasoning quality.** `flag-traps.ts` warns on a threshold crossing; it doesn't grade whether
     an edit was a good idea.
 28. **The patch counter resets on commit, not on file close.** A file touched across three
     separate short sessions still counts toward the achievement-trap threshold if none of those

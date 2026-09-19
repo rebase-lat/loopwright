@@ -82,7 +82,7 @@ const scopeGuard = (): Promise<Hooks> =>
       if (!matchesAny(output.args.filePath, declaredSurface)) {
         throw new Error(
           `Blocked: ${output.args.filePath} is outside the declared surface for ${specId}. ` +
-            `Update tasks.md first if scope genuinely changed.`
+            `Update tasks.md first if the declared surface genuinely changed.`
         );
       }
     },

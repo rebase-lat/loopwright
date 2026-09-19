@@ -82,11 +82,11 @@ repo/
 │   │   └── commit-grouping/SKILL.md
 │   │
 │   ├── plugins/
-│   │   ├── trap-flags.ts          # achievement + dislodging trap detection (mechanical only)
+│   │   ├── flag-traps.ts          # achievement + dislodging trap detection (mechanical only)
 │   │   ├── scope-guard.ts         # blocks edits outside the active spec's declared surface
 │   │   ├── spec-link.ts           # refuses /implement without an approved spec id
-│   │   ├── evidence-log.ts        # appends a2a messages to log.ndjson
-│   │   └── context-compactor.ts   # prunes tool output, never prunes diff/tests/logs/why
+│   │   ├── log-handoffs.ts         # appends a2a messages to log.ndjson
+│   │   └── guard-compaction.ts    # prunes tool output, never prunes diff/tests/logs/why
 │   │
 │   └── tools/
 │
@@ -96,7 +96,7 @@ repo/
 │   ├── stack.md
 │   ├── standards/
 │   ├── specs/<id>/                # proposal.md, spec.md, tasks.md, review.md, log.ndjson
-│   ├── lessons/<date>-<id>.md
+│   ├── lessons/<id>.md
 │   └── state.md
 │
 └── templates/                     # referenced by commands via @, shown in full in §5
@@ -169,7 +169,7 @@ A spec may be marked "ship" only when:
 - a human has read the diff in full, not only the test output.
 
 ## Verdict authority
-- Low-risk changes (docs, config, non-behavioral refactors): self-approval permitted.
+- Low-risk changes (docs, config, non-behavioral refactors): the implementer may record their own verdict.
 - Behavioral changes: one reviewer other than the implementer required.
 
 ## Standards enforcement
@@ -332,7 +332,7 @@ export const ScopeGuard: Plugin = async ({ project }) => {
 };
 ```
 
-### `plugins/trap-flags.ts` — achievement trap (patch count) and dislodging trap (timebox)
+### `plugins/flag-traps.ts` — achievement trap (patch count) and dislodging trap (timebox)
 
 ```typescript
 import type { Plugin } from "@opencode-ai/plugin";

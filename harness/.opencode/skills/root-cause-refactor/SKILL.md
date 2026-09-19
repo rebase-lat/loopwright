@@ -1,6 +1,6 @@
 ---
 name: root-cause-refactor
-description: Halt incremental patching after 3 consecutive fixes and refactor the root cause. Use when trap-flags fires or patches stack up on one file.
+description: Halt incremental patching after 3 consecutive fixes and refactor the root cause. Use when flag-traps fires or patches stack up on one file.
 ---
 
 # Root-Cause Refactor

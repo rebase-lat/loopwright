@@ -6,6 +6,6 @@ agent: plan
 From the approved proposal for $ARGUMENTS, write `docs/specs/<id>/spec.md` via `templates/spec.md`.
 
 Load first: the proposal (`proposal_ref`), `docs/constitution.md`, `docs/glossary.md`. Use skills `writing-ears` and `acceptance-criteria`.
-Rules: EARS-typed criteria with sub-IDs `<id>-<n>`; behavior and constraints, never implementation details; explicit non-goals; acceptance table left with an empty test-reference column for Execute to fill. Reject (don't silently correct) any banned substitute from `docs/glossary.md` found in the proposal or draft — glossary-exact terms are required before approval. Present the spec for human approval (`status: approved` only on human sign-off).
+Rules: EARS-typed criteria with sub-IDs `<id>-<n>`; behavior and constraints, never implementation details; explicit non-goals; acceptance table left with an empty test-reference column for Execute to fill. Reject (don't silently correct) any banned substitute from `docs/glossary.md` found in the proposal or draft — glossary-exact terms are required before approval. Present the spec for a human verdict (`status: approved` only on an explicit human verdict).
 
 Append one A2A line to `docs/specs/<id>/log.ndjson` with intent `specify`.

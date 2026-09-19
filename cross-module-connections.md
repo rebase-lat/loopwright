@@ -76,7 +76,7 @@ feature spec — Govern doesn't get a side channel.
 **Links out:**
 - `scope-guard.ts` reads `tasks.md` to compute the declared surface — a plugin, not a person,
   enforces the Specify → Execute boundary.
-- `trap-flags.ts` watches Execute's own edit stream (patch count, elapsed time) and warns inline;
+- `flag-traps.ts` watches Execute's own edit stream (patch count, elapsed time) and warns inline;
   it doesn't write to any domain's artifact, it's advisory console output only.
 - Every `edit`/`write` tool call inside Execute is a candidate `log.ndjson` line — but only
   handoffs (not every file write) get logged, to keep the audit trail meaningful rather than noisy.
@@ -108,7 +108,7 @@ feature spec — Govern doesn't get a side channel.
 | --- | --- |
 | **Owns** | `/commit`, `/teach` — no dedicated agent, runs on whichever agent closed Verify |
 | **Reads** | `review.md` verdict (Verify), full `log.ndjson` for the spec (all domains) |
-| **Writes** | git commit (tagged with spec ID), `docs/state.md`, `docs/lessons/<date>-<id>.md` |
+| **Writes** | git commit (tagged with spec ID), `docs/state.md`, `docs/lessons/<id>.md` |
 | **Consumed by** | **Govern/Frame**, on the next run — `state.md` and `lessons/` are the only artifacts every domain is expected to re-read at the start of its next invocation |
 
 **Links out:**

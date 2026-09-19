@@ -18,7 +18,7 @@ A spec may be marked "ship" only when:
 - a human has read the diff in full, not only the test output.
 
 ## Verdict authority
-- Low-risk changes (docs, config, non-behavioral refactors): self-approval permitted.
+- Low-risk changes (docs, config, non-behavioral refactors): the implementer may record their own verdict.
 - Behavioral changes: one reviewer other than the implementer required.
 
 ## Standards enforcement

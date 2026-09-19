@@ -79,7 +79,7 @@ Note: `templates/proposal.md` is derived (layout §5 omits its full content); cl
 - [x] Plugins in `harness/.opencode/plugins/` (enforce as specified):
   - [x] `scope-guard.ts` — blocks `edit`/`write` outside `tasks.md` declared surface via `OPENCODE_SPEC_ID` (helpers `readDeclaredSurface`/`matchesAny` implemented; spec folder always allowed)
   - [x] `spec-link.ts` — refuses `/implement` without `status: approved` (FIXED vs layout: frontmatter parsed for `status:` line instead of `startsWith("---\nstatus: approved")`, which never matches our spec template)
-  - [x] `trap-flags.ts` — achievement (>3 patches) + dislodging (15-min) advisory warns
+  - [x] `flag-traps.ts` — achievement (>3 patches) + dislodging (15-min) advisory warns
 - [x] Gate: unapproved spec blocked live; out-of-surface edit blocked live (runtime verification deferred to Phase 5)
 - [x] `command.execute.before` signature: kept per skill hook surface; runtime shape of `output.command`/`output.args` to confirm in Phase 5 (matcher broadened to `/(^|[/:])implement$/`)
 
@@ -91,7 +91,7 @@ Note: `templates/proposal.md` is derived (layout §5 omits its full content); cl
 - [ ] Plugins in `harness/.opencode/plugins/` (enforce as specified):
   - [ ] `scope-guard.ts` — blocks `edit`/`write` outside `tasks.md` declared surface via `OPENCODE_SPEC_ID`
   - [ ] `spec-link.ts` — refuses `/implement` without `status: approved`
-  - [ ] `trap-flags.ts` — achievement (>3 patches) + dislodging (15-min) advisory warns
+  - [ ] `flag-traps.ts` — achievement (>3 patches) + dislodging (15-min) advisory warns
 - [ ] Gate: unapproved spec blocked live; out-of-surface edit blocked live
 
 ## Phase 4 — Verify + Retain (gates + memory) [done 2026-09-19]
@@ -101,8 +101,8 @@ Note: `templates/proposal.md` is derived (layout §5 omits its full content); cl
 - [x] Commands `harness/.opencode/commands/retain/` — `commit.md` (requires `ship`, tags spec ID, single writer of `state.md`), `teach.md`
 - [x] Skill: `commit-grouping`
 - [x] Plugins:
-  - [x] `evidence-log.ts` — journals `{intent,spec_ref,payload}` bus events to `harness/docs/specs/<id>/log.ndjson` via the `event` catch-all (closed intent set validated, `spec_ref` → dir mapping, never throws; agents also append directly per command prompts)
-  - [x] `context-compactor.ts` — prunes tool output at `experimental.session.compacting`, never diff/tests/logs/why (protected markers; unrecognized shapes pass through untouched)
+  - [x] `log-handoffs.ts` — journals `{intent,spec_ref,payload}` bus events to `harness/docs/specs/<id>/log.ndjson` via the `event` catch-all (closed intent set validated, `spec_ref` → dir mapping, never throws; agents also append directly per command prompts)
+  - [x] `guard-compaction.ts` — prunes tool output at `experimental.session.compacting`, never diff/tests/logs/why (protected markers; unrecognized shapes pass through untouched)
 - [x] A2A vocabulary closed set `frame|specify|execute|verify|retain|govern`; payload always artifact pointer, never inline diff
 - [x] Gate: `ship/block/redirect` recorded in `review.md`; `redirect` re-opens via new `/propose`
 - [x] Note: `command.execute.after` is NOT in the skill hook surface, so both plugins avoid it (`event` + `experimental.session.compacting` only); runtime confirmation deferred to Phase 5
@@ -112,8 +112,8 @@ Note: `templates/proposal.md` is derived (layout §5 omits its full content); cl
 - [ ] Commands `harness/.opencode/commands/retain/` — `commit.md` (requires `ship`, tags spec ID, single writer of `state.md`), `teach.md`
 - [ ] Skill: `commit-grouping`
 - [ ] Plugins:
-  - [ ] `evidence-log.ts` — appends A2A `{"intent","spec_ref","payload","confidence"}` lines to `harness/docs/specs/<id>/log.ndjson`
-  - [ ] `context-compactor.ts` — prunes tool output, never diff/tests/logs/why
+  - [ ] `log-handoffs.ts` — appends A2A `{"intent","spec_ref","payload","confidence"}` lines to `harness/docs/specs/<id>/log.ndjson`
+  - [ ] `guard-compaction.ts` — prunes tool output, never diff/tests/logs/why
 - [ ] A2A vocabulary closed set `frame|specify|execute|verify|retain|govern`; payload always artifact pointer, never inline diff
 - [ ] Gate: `ship/block/redirect` recorded in `review.md`; `redirect` re-opens via new `/propose`
 

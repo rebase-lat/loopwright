@@ -1,37 +1,53 @@
-import type { Plugin } from "@opencode-ai/plugin";
 import { readFile } from "node:fs/promises";
 
-// Refuses /implement without an approved spec id.
-// NOTE: layout snippet used raw.startsWith("---\nstatus: approved") —
-// that never matches our spec template (id comes first), so we parse
-// the frontmatter for a `status: approved` line instead.
-function frontmatterStatus(raw: string): string | null {
-  const match = raw.match(/^---\n([\s\S]*?)\n---/);
-  if (!match) return null;
-  const line = match[1]
-    .split("\n")
-    .find((l) => l.trim().startsWith("status:"));
-  if (!line) return null;
-  return line.split(":").slice(1).join(":").split("#")[0].trim();
-}
+import type { Hooks } from "@opencode-ai/plugin";
 
-export default (async () => {
-  return {
-    "command.execute.before": async (input: any, output: any) => {
-      const name: string = output.command ?? "";
-      if (!/(^|[/:])implement$/.test(name)) return;
-      const specId: string | undefined =
-        output.args?.specId ?? output.args?.SPEC_ID ?? output.args?.id ?? output.args?.[0];
-      if (!specId) throw new Error("Blocked: /implement requires a spec id.");
+// Refuses /implement without an approved spec id.
+// The spec id is the first token of the command arguments string.
+// Frontmatter is parsed for a `status: approved` line (inline `#`
+// comments stripped) instead of prefix-matching, so field order
+// in spec.md never matters.
+const frontmatterStatus = (raw: string): string | null => {
+  const match = raw.match(/^---\n(?<frontmatter>[\s\S]*?)\n---/u);
+  const frontmatter = match?.groups?.frontmatter;
+  if (!frontmatter) {
+    return null;
+  }
+  const line = frontmatter
+    .split("\n")
+    .find((candidate) => candidate.trim().startsWith("status:"));
+  if (!line) {
+    return null;
+  }
+  return line.split(":").slice(1).join(":").split("#")[0].trim();
+};
+
+const firstArgument = (args: string): string | undefined =>
+  args.trim().split(/\s+/u)[0];
+
+const specLink = (): Promise<Hooks> =>
+  Promise.resolve({
+    "command.execute.before": async (input) => {
+      const name = input.command.split(/[/:]/u).pop() ?? "";
+      if (name !== "implement") {
+        return;
+      }
+      const specId = firstArgument(input.arguments);
+      if (!specId) {
+        throw new Error("Blocked: /implement requires a spec id.");
+      }
       let raw: string;
       try {
         raw = await readFile(`docs/specs/${specId}/spec.md`, "utf-8");
       } catch {
-        throw new Error(`Blocked: spec ${specId} not found at docs/specs/${specId}/spec.md.`);
+        throw new Error(
+          `Blocked: spec ${specId} not found at docs/specs/${specId}/spec.md.`
+        );
       }
       if (frontmatterStatus(raw) !== "approved") {
         throw new Error(`Blocked: spec ${specId} is not approved yet.`);
       }
     },
-  };
-}) satisfies Plugin;
+  });
+
+export default specLink;

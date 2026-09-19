@@ -1,11 +1,15 @@
-import type { Plugin } from "@opencode-ai/plugin";
 import { readFile } from "node:fs/promises";
+
+import type { Hooks } from "@opencode-ai/plugin";
 
 // Blocks edits outside the active spec's declared surface.
 // Active spec comes from OPENCODE_SPEC_ID (worktree environment).
-// Declared surface = backtick-quoted paths/globs in tasks.md
+// Declared surface is the backtick-quoted paths/globs in tasks.md
 // plus the spec's own folder, always allowed.
-async function readDeclaredSurface(tasksPath: string, specId: string): Promise<string[]> {
+const readDeclaredSurface = async (
+  tasksPath: string,
+  specId: string
+): Promise<string[]> => {
   const surface = [`docs/specs/${specId}/**`];
   let raw: string;
   try {
@@ -13,45 +17,68 @@ async function readDeclaredSurface(tasksPath: string, specId: string): Promise<s
   } catch {
     return surface;
   }
-  for (const match of raw.matchAll(/`([^`]+)`/g)) {
-    const entry = match[1].trim();
-    if (entry && !entry.includes("<") && !entry.includes(" ")) surface.push(entry);
+  for (const match of raw.matchAll(/`(?<path>[^`]+)`/gu)) {
+    const entry = match.groups?.path?.trim() ?? "";
+    if (entry && !entry.includes("<") && !entry.includes(" ")) {
+      surface.push(entry);
+    }
   }
   return [...new Set(surface)];
-}
+};
 
-function globToRegExp(glob: string): RegExp {
+const globToRegExp = (glob: string): RegExp => {
   const escaped = glob
     .split("/")
     .map((seg) => {
-      if (seg === "**") return "\0";
-      return seg.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*/g, "[^/]*").replace(/\?/g, "[^/]");
+      if (seg === "**") {
+        return "\0";
+      }
+      return seg
+        .replaceAll(/[.+^${}()|[\]\\]/gu, "\\$&")
+        .replaceAll("*", "[^/]*")
+        .replaceAll("?", "[^/]");
     })
     .join("/")
-    .replace(/\0/g, ".*");
-  return new RegExp(`^${escaped}$`);
-}
+    .replaceAll("\0", ".*");
+  return new RegExp(`^${escaped}$`, "u");
+};
 
-function matchesAny(filePath: string, patterns: string[]): boolean {
-  const normalized = filePath.replace(/^\.\//, "");
-  return patterns.some((p) => {
-    const n = p.replace(/^\.\//, "");
-    if (n === normalized || normalized.startsWith(n.replace(/\/\*\*$/, "/"))) return true;
+const matchesAny = (filePath: string, patterns: string[]): boolean => {
+  const normalized = filePath.replace(/^\.\//u, "");
+  return patterns.some((pattern) => {
+    const candidate = pattern.replace(/^\.\//u, "");
+    if (candidate === normalized) {
+      return true;
+    }
+    if (
+      candidate.endsWith("/**") &&
+      normalized.startsWith(`${candidate.slice(0, -"/**".length)}/`)
+    ) {
+      return true;
+    }
     try {
-      return globToRegExp(n).test(normalized);
+      return globToRegExp(candidate).test(normalized);
     } catch {
       return false;
     }
   });
-}
+};
 
-export default (async () => {
-  return {
-    "tool.execute.before": async (input: any, output: any) => {
-      if (input.tool !== "edit" && input.tool !== "write") return;
+const scopeGuard = (): Promise<Hooks> =>
+  Promise.resolve({
+    "tool.execute.before": async (input, output) => {
+      if (input.tool !== "edit" && input.tool !== "write") {
+        return;
+      }
       const specId = process.env.OPENCODE_SPEC_ID;
-      if (!specId) return; // no active spec — nothing to guard
-      const declaredSurface = await readDeclaredSurface(`docs/specs/${specId}/tasks.md`, specId);
+      // No active spec means nothing to guard.
+      if (!specId) {
+        return;
+      }
+      const declaredSurface = await readDeclaredSurface(
+        `docs/specs/${specId}/tasks.md`,
+        specId
+      );
       if (!matchesAny(output.args.filePath, declaredSurface)) {
         throw new Error(
           `Blocked: ${output.args.filePath} is outside the declared surface for ${specId}. ` +
@@ -59,5 +86,6 @@ export default (async () => {
         );
       }
     },
-  };
-}) satisfies Plugin;
+  });
+
+export default scopeGuard;

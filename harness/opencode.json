@@ -8,12 +8,31 @@
   "default_agent": "build",
   "permission": {},
   "agent": {
-    "build": { "permission": { "edit": "allow", "bash": "ask", "webfetch": "deny" } },
-    "plan": { "permission": { "edit": "deny", "bash": "deny", "webfetch": "allow" } },
-    "neutral": { "permission": { "edit": "deny", "bash": "deny", "webfetch": "deny" } },
-    "deep-expert": { "permission": { "edit": "deny", "bash": "deny", "webfetch": "allow" } },
-    "applied-judge": { "permission": { "edit": "deny", "bash": "deny", "webfetch": "deny" } },
-    "reviewer": { "permission": { "edit": "deny", "bash": "deny", "webfetch": "deny" } },
-    "scout": { "permission": { "edit": "deny", "bash": "deny", "webfetch": "deny", "task": "deny" } }
+    "build": {
+      "permission": { "edit": "allow", "bash": "ask", "webfetch": "deny" }
+    },
+    "plan": {
+      "permission": { "edit": "deny", "bash": "deny", "webfetch": "allow" }
+    },
+    "neutral": {
+      "permission": { "edit": "deny", "bash": "deny", "webfetch": "deny" }
+    },
+    "deep-expert": {
+      "permission": { "edit": "deny", "bash": "deny", "webfetch": "allow" }
+    },
+    "applied-judge": {
+      "permission": { "edit": "deny", "bash": "deny", "webfetch": "deny" }
+    },
+    "reviewer": {
+      "permission": { "edit": "deny", "bash": "deny", "webfetch": "deny" }
+    },
+    "scout": {
+      "permission": {
+        "edit": "deny",
+        "bash": "deny",
+        "webfetch": "deny",
+        "task": "deny"
+      }
+    }
   }
 }

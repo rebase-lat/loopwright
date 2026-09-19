@@ -1,0 +1,22 @@
+{
+  "name": "loopwright",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Loopwright harness workspace (agentic workflow for opencode)",
+  "type": "module",
+  "scripts": {
+    "lint": "oxlint && npm run fmt:check",
+    "lint:fix": "oxlint --fix && npm run fmt",
+    "fmt": "oxfmt --write \"harness/**/*.ts\" \"*.config.ts\" \"*.json\" \".vscode/*.json\"",
+    "fmt:check": "oxfmt --check \"harness/**/*.ts\" \"*.config.ts\" \"*.json\" \".vscode/*.json\"",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@opencode-ai/plugin": "^1.18.31",
+    "@types/node": "^26.6.2",
+    "oxfmt": "^0.68.0",
+    "oxlint": "^1.83.0",
+    "typescript": "^7.0.2",
+    "ultracite": "^7.12.0"
+  }
+}

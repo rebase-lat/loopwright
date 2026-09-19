@@ -1,72 +1,108 @@
-import type { Plugin } from "@opencode-ai/plugin";
 import { appendFile, mkdir } from "node:fs/promises";
-import { dirname } from "node:path";
+import path from "node:path";
 
-const INTENTS = new Set(["frame", "specify", "execute", "verify", "retain", "govern"]);
+import type { Hooks } from "@opencode-ai/plugin";
 
-// Appends A2A handoff lines to docs/specs/<id>/log.ndjson — the one
-// artifact every domain writes to. Agents also append lines directly
-// (per their command prompts); this plugin is the canonical backstop:
-// any bus event carrying {intent, spec_ref, payload} is journaled.
-// Never throws — a logging failure must not break the loop.
-// A payload is always a pointer, never inline content (rule 20) —
-// malformed handoffs are skipped, not journaled.
-function isPointer(payload: any): boolean {
-  return (
-    payload &&
-    typeof payload === "object" &&
-    payload.type === "artifact_pointer" &&
-    typeof payload.value === "string" &&
-    payload.value.length > 0
-  );
-}
+// Journals domain handoffs to docs/specs/<id>/log.ndjson — the one
+// artifact every domain writes to. Each command invocation maps to its
+// domain intent; the payload is always a constructed artifact pointer,
+// never inline content (rule 20). Only spec-shaped arguments are
+// journaled; anything else is out-of-process work, not a gap in the log.
+// Agents also append precise completion lines per their command prompts;
+// this plugin is the canonical backstop. Never throws — a logging
+// failure must not break the loop.
+const COMMAND_INTENTS = {
+  codebase: "govern",
+  commit: "retain",
+  constitution: "govern",
+  diagnose: "execute",
+  domain: "govern",
+  goal: "verify",
+  implement: "execute",
+  improve: "frame",
+  interview: "frame",
+  propose: "frame",
+  release: "verify",
+  research: "frame",
+  review: "verify",
+  specs: "specify",
+  stack: "govern",
+  tasks: "specify",
+  teach: "retain",
+} as const;
 
-function specDirOf(specRef: string): string | null {
-  if (!/^[a-z0-9]+(-[a-z0-9]+)*-\d+(-\d+)?$/i.test(specRef)) return null;
+type CommandName = keyof typeof COMMAND_INTENTS;
+
+const COMMAND_ARTIFACTS: Record<CommandName, string> = {
+  codebase: "glossary.md",
+  commit: "",
+  constitution: "constitution.md",
+  diagnose: "",
+  domain: "glossary.md",
+  goal: "",
+  implement: "",
+  improve: "",
+  interview: "",
+  propose: "proposal.md",
+  release: "review.md",
+  research: "",
+  review: "review.md",
+  specs: "spec.md",
+  stack: "stack.md",
+  tasks: "tasks.md",
+  teach: "",
+};
+
+const isCommand = (name: string): name is CommandName =>
+  name in COMMAND_INTENTS;
+
+const specDirOf = (specRef: string): string | null => {
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*-\d+(?:-\d+)?$/iu.test(specRef)) {
+    return null;
+  }
   const parts = specRef.split("-");
-  const last = parts[parts.length - 1];
-  const prev = parts[parts.length - 2];
-  const dir =
-    /^\d+$/.test(last) && /^\d+$/.test(prev)
-      ? parts.slice(0, -1).join("-")
-      : /^\d+$/.test(last)
-        ? specRef
-        : null;
-  return dir;
-}
-
-function extractHandoff(evt: any): any | null {
-  const candidates = [evt, evt?.payload, evt?.data, evt?.output, evt?.message];
-  for (const c of candidates) {
-    if (c && typeof c === "object" && typeof c.intent === "string" && typeof c.spec_ref === "string") {
-      return c;
-    }
+  const last = parts.at(-1) ?? "";
+  const prev = parts.at(-2) ?? "";
+  if (/^\d+$/u.test(last) && /^\d+$/u.test(prev)) {
+    return parts.slice(0, -1).join("-");
+  }
+  if (/^\d+$/u.test(last)) {
+    return specRef;
   }
   return null;
-}
+};
 
-export default (async () => {
-  return {
-    event: async (input: any) => {
+const evidenceLog = (): Promise<Hooks> =>
+  Promise.resolve({
+    "command.execute.before": async (input) => {
       try {
-        const h = extractHandoff(input);
-        if (!h || !INTENTS.has(h.intent)) return;
-        const dir = specDirOf(h.spec_ref);
-        if (!dir || !isPointer(h.payload)) return;
-        const line =
-          JSON.stringify({
-            ts: new Date().toISOString(),
-            intent: h.intent,
-            spec_ref: h.spec_ref,
-            payload: h.payload,
-            confidence: h.confidence ?? "medium",
-          }) + "\n";
-        const path = `docs/specs/${dir}/log.ndjson`;
-        await mkdir(dirname(path), { recursive: true });
-        await appendFile(path, line, "utf-8");
+        const name = input.command.split(/[/:]/u).pop() ?? "";
+        if (!isCommand(name)) {
+          return;
+        }
+        const specRef = input.arguments.trim().split(/\s+/u)[0] ?? "";
+        const dir = specDirOf(specRef);
+        if (!dir) {
+          return;
+        }
+        const artifact = COMMAND_ARTIFACTS[name];
+        const pointer = artifact
+          ? `docs/specs/${dir}/${artifact}`
+          : `docs/specs/${dir}/`;
+        const line = `${JSON.stringify({
+          confidence: "medium",
+          intent: COMMAND_INTENTS[name],
+          payload: { type: "artifact_pointer", value: pointer },
+          spec_ref: specRef,
+          ts: new Date().toISOString(),
+        })}\n`;
+        const logPath = `docs/specs/${dir}/log.ndjson`;
+        await mkdir(path.dirname(logPath), { recursive: true });
+        await appendFile(logPath, line, "utf-8");
       } catch {
-        // logging must never break the loop
+        // Logging must never break the loop.
       }
     },
-  };
-}) satisfies Plugin;
+  });
+
+export default evidenceLog;

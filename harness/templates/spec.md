@@ -1,0 +1,31 @@
+---
+id: <domain>-<sequence>
+status: draft   # draft | approved | superseded
+supersedes: null
+proposal_ref: docs/specs/<id>/proposal.md
+---
+
+# Spec: <title>
+
+## Ubiquitous
+- <id>-1: The system shall <always-true behavior>.
+
+## Event-driven
+- <id>-2: When <trigger>, the system shall <response>.
+
+## State-driven
+- <id>-3: While <state>, the system shall <behavior>.
+
+## Unwanted behavior
+- <id>-4: If <condition>, then the system shall <response>.
+
+## Optional features
+- <id>-5: Where <feature> is included, the system shall <behavior>.
+
+## Non-goals
+- <explicitly out of scope, to prevent scope creep during /implement>
+
+## Acceptance criteria → test binding
+| Criterion ID | Test reference (filled by /implement) |
+| --- | --- |
+| <id>-1 | (pending) |

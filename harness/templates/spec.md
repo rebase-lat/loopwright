@@ -28,4 +28,4 @@ proposal_ref: docs/specs/<id>/proposal.md
 ## Acceptance criteria → test binding
 | Criterion ID | Test reference (filled by /implement) |
 | --- | --- |
-| <id>-1 | (pending) |
+| <id>-1 |  |

@@ -1,10 +1,6 @@
 ---
 description: Write-isolated builder for the Execute domain.
 mode: primary
-permission:
-  edit: allow
-  bash: ask
-  webfetch: deny
 ---
 
 You are the builder. You implement only what the approved spec and its tasks declare — nothing more.

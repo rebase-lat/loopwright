@@ -117,7 +117,16 @@ Note: `templates/proposal.md` is derived (layout §5 omits its full content); cl
 - [ ] A2A vocabulary closed set `frame|specify|execute|verify|retain|govern`; payload always artifact pointer, never inline diff
 - [ ] Gate: `ship/block/redirect` recorded in `review.md`; `redirect` re-opens via new `/propose`
 
-## Phase 5 — Hardening + team conventions
+## Phase 5 — Hardening + team conventions [done 2026-09-19]
+
+- [x] `harness/opencode.json` full matrix — per-agent `permission` (corrected `edit` key), `default_agent: build`, top-level `permission: {}` (inherit); models intentionally UNSET per user decision (all inherit runtime default; pin when the team standardizes)
+- [x] Permissions single-sourced in `opencode.json` (stripped from 7 agent `.md` files); `scout` additionally `task: deny` (leaf agent)
+- [x] `harness/docs/conventions.md` — worktrees per spec ID, config precedence, permissions/model policy, harness-changes-like-code, ≤2 worktrees, inline completion off
+- [x] Cold-start validation: `opencode agent list` from `harness/` loads all 7 harness agents with correct modes (JSONC comments accepted); `AGENTS.md` instructions inject confirmed
+- [x] Plugin typecheck: `tsc --strict` against real `@opencode-ai/plugin` — zero errors on all 5 plugins
+- [x] Logic dry-run: `spec-link` frontmatter parse + `evidence-log` spec-ref→dir mapping verified against real templates (`auth-014-3` → `auth-014`; FIXED: inline `#` comments now stripped from `status:` values)
+- [x] Frontmatter sweep: 35/35 agent/command/skill files valid
+- [ ] Deferred (need live session + model calls): `/implement` block on unapproved spec, `scope-guard` block on out-of-surface edit, `command.execute.before` arg-shape confirmation, end-to-end `auth-xxx` dry-run Govern → Retain
 
 - [ ] `harness/opencode.json` full matrix — per-agent `model` + `permission` (corrected `edit` key); top-level `permission` defaults; `formatter`/`lsp`/`tool_output`/`compaction` as needed
 - [ ] Conventions: worktrees per spec ID (`OPENCODE_SPEC_ID` env), repo `harness/.opencode/` authoritative vs `~/.config/opencode/` ergonomics-only, harness changes via `/propose` → `/review`, ≤2 concurrent worktrees, inline completion off

@@ -11,7 +11,8 @@ function frontmatterStatus(raw: string): string | null {
   const line = match[1]
     .split("\n")
     .find((l) => l.trim().startsWith("status:"));
-  return line ? line.split(":")[1].trim() : null;
+  if (!line) return null;
+  return line.split(":").slice(1).join(":").split("#")[0].trim();
 }
 
 export default (async () => {

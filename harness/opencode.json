@@ -1,6 +1,19 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "instructions": ["AGENTS.md"],
-  "agent": {},
-  "permission": {}
+  // Models intentionally unset (2026-09-19): all agents inherit the runtime
+  // default. Pin per-agent models here when the team standardizes on providers.
+  // Permissions matrix is defined HERE (single source of truth); agent .md
+  // files carry role prompts only and must not duplicate permission blocks.
+  "default_agent": "build",
+  "permission": {},
+  "agent": {
+    "build": { "permission": { "edit": "allow", "bash": "ask", "webfetch": "deny" } },
+    "plan": { "permission": { "edit": "deny", "bash": "deny", "webfetch": "allow" } },
+    "neutral": { "permission": { "edit": "deny", "bash": "deny", "webfetch": "deny" } },
+    "deep-expert": { "permission": { "edit": "deny", "bash": "deny", "webfetch": "allow" } },
+    "applied-judge": { "permission": { "edit": "deny", "bash": "deny", "webfetch": "deny" } },
+    "reviewer": { "permission": { "edit": "deny", "bash": "deny", "webfetch": "deny" } },
+    "scout": { "permission": { "edit": "deny", "bash": "deny", "webfetch": "deny", "task": "deny" } }
+  }
 }

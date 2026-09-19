@@ -45,7 +45,18 @@ Note: `templates/proposal.md` is derived (layout §5 omits its full content); cl
 - [ ] Commands `harness/.opencode/commands/govern/` — `constitution.md`, `codebase.md`, `domain.md`, `stack.md` (file form, `description` + `template` body, `$ARGUMENTS` for IDs)
 - [ ] Gate: opencode starts clean; `/constitution` round-trips
 
-## Phase 2 — Frame + Specify (read-only)
+## Phase 2 — Frame + Specify (read-only) [done 2026-09-19]
+
+- [x] Agents in `harness/.opencode/agents/` (file form, `mode: subagent`, no `model` — inherits; global config sets none, matrix lands in Phase 5):
+  - [x] `plan.md` (Frame/Specify primary seat; `edit: deny, bash: deny, webfetch: allow`)
+  - [x] `neutral.md` (triage seat 1; all deny)
+  - [x] `deep-expert.md` (triage seat 2; `webfetch: allow`)
+  - [x] `applied-judge.md` (triage seat 3; all deny)
+- [x] Commands `harness/.opencode/commands/frame/` — `propose.md` (triage fan-out), `interview.md`, `research.md`, `improve.md`
+- [x] Commands `harness/.opencode/commands/specify/` — `specs.md` (loads constitution + glossary, emits EARS-typed criteria), `tasks.md`
+- [x] Skills in `harness/.opencode/skills/<name>/SKILL.md` (each with `name` + `description` frontmatter): `writing-ears`, `acceptance-criteria`, `option-triage`, `explain-back`, `primary-sources`, `context-economy`
+- [x] Traceability wired: `spec.md` frontmatter `id: <domain>-<sequence>`, `status: draft|approved|superseded`, `proposal_ref`; criterion sub-IDs `<id>-<n>`
+- [x] Gate: triage debate stays read-only, never writes `docs/` directly; only human pick becomes `proposal.md`
 
 - [ ] Agents in `harness/.opencode/agents/` (file form, `mode: subagent`, explicit `model: provider/model-id`):
   - [ ] `plan.md` (Frame/Specify primary seat; `edit: deny, bash: deny`)

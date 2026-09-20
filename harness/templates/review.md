@@ -1,6 +1,8 @@
 ---
 id: <domain>-<sequence>
 diff_ref: HEAD~<n>..HEAD
+waived: []       # criterion IDs explicitly waived; justify each in Verdict reasoning
+deferred: []     # one `<criterion-id> -> <follow-up spec>` per line; each needs a follow-up
 ---
 
 # Review: <title>
@@ -16,4 +18,4 @@ diff_ref: HEAD~<n>..HEAD
 
 ## Verdict
 - [ ] Ship  [ ] Block  [ ] Redirect
-- Reasoning: <why the evidence above is or isn't enough>
+- Reasoning: <why the evidence above is or isn't enough; justify every waived/deferred ID here>

@@ -40,20 +40,20 @@ runs on the read-only `plan` agent instead of a new stateful plugin.
   `guard-compaction` → `lpwr-guard-compaction.ts`, `verdict-gate` → `lpwr-verdict-gate.ts`.
 - [x] Add opening `Stage: <Stage>` line to all 20 command bodies (rule 37).
 
-## Phase B — Reference sweep (every cross-name updated, then grep to zero)
+## Phase B — Reference sweep (every cross-name updated, then grep to zero) [done 2026-09-19]
 
-- [ ] Command→command: `/propose`, `/review`, `/specs`, `/implement`, `/commit` mentions →
+- [x] Command→command: `/propose`, `/review`, `/specs`, `/implement`, `/commit` mentions →
   `lpwr-` names (constitution + specs + review + release + commit commands, `AGENTS.md`).
-- [ ] Command→skill: `Use skill X` refs → `lpwr-` names (implement, propose, specs, research,
+- [x] Command→skill: `Use skill X` refs → `lpwr-` names (implement, propose, specs, research,
   commit, diagnose commands).
-- [ ] Command→plugin: `commit.md`'s `` `verdict-gate.ts` `` → `` `lpwr-verdict-gate.ts` ``.
-- [ ] Agent prose: `build.md` (`flag-traps`, `spec-link` mentions) → prefixed names.
-- [ ] Skill prose: `root-cause-refactor` description (`flag-traps fires`) → `lpwr-flag-traps`.
-- [ ] `docs/stack.md` refs → `docs/context.md` stack section (implement, diagnose, build agent,
+- [x] Command→plugin: `commit.md`'s `` `verdict-gate.ts` `` → `` `lpwr-verdict-gate.ts` ``.
+- [x] Agent prose: `build.md` (`flag-traps`, `spec-link` mentions) → prefixed names.
+- [x] Skill prose: `root-cause-refactor` description (`flag-traps fires`) → `lpwr-flag-traps`.
+- [x] `docs/stack.md` refs → `docs/context.md` stack section (implement, diagnose, build agent,
   specs table, `lpwr-stack` command body). Then `git rm docs/stack.md`.
-- [ ] Lessons path revert → `docs/lessons/<date>-<id>.md` (commit command, commit-grouping skill,
+- [x] Lessons path revert → `docs/lessons/<date>-<id>.md` (commit command, commit-grouping skill,
   cross-module-connections, harness-layout).
-- [ ] Verify: grep for bare old names (`trap-flags`, `evidence-log`, `context-compactor`,
+- [x] Verify: grep for bare old names (`trap-flags`, `evidence-log`, `context-compactor`,
   unprefixed skill/command refs, `stack.md`, `<id>.md` lesson paths) excluding node_modules
   and this plan's history sections → zero hits. Re-run frontmatter + skill name==folder sweeps
   (20 commands, 7 agents, 11 skills).

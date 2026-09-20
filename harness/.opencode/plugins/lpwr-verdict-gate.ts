@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 
 import type { Hooks } from "@opencode-ai/plugin";
 
-// Mechanical verdict floor (rules 5/7): /commit and /release cannot run
+// Mechanical verdict floor (rules 5/7): /lpwr-commit and /lpwr-release cannot run
 // without a recorded "ship" whose acceptance table is complete.
 // A prompt sentence ("no ship, no commit") is a request an agent can miss
 // under pressure; this plugin is the gate that holds whether or not the
@@ -42,7 +42,7 @@ const verdictGate = (): Promise<Hooks> =>
   Promise.resolve({
     "command.execute.before": async (input) => {
       const name = input.command.split(/[/:]/u).pop() ?? "";
-      if (name !== "commit" && name !== "release") {
+      if (name !== "lpwr-commit" && name !== "lpwr-release") {
         return;
       }
       const specId = firstArgument(input.arguments);

@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 
 import type { Hooks } from "@opencode-ai/plugin";
 
-// Refuses /implement without an approved spec id.
+// Refuses /lpwr-implement without an approved spec id.
 // The spec id is the first token of the command arguments string.
 // Frontmatter is parsed for a `status: approved` line (inline `#`
 // comments stripped) instead of prefix-matching, so field order
@@ -29,12 +29,12 @@ const specLink = (): Promise<Hooks> =>
   Promise.resolve({
     "command.execute.before": async (input) => {
       const name = input.command.split(/[/:]/u).pop() ?? "";
-      if (name !== "implement") {
+      if (name !== "lpwr-implement") {
         return;
       }
       const specId = firstArgument(input.arguments);
       if (!specId) {
-        throw new Error("Blocked: /implement requires a spec id.");
+        throw new Error("Blocked: /lpwr-implement requires a spec id.");
       }
       let raw: string;
       try {

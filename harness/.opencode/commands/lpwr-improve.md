@@ -5,4 +5,4 @@ agent: plan
 
 Stage: Frame.
 
-Survey the codebase at $ARGUMENTS for deepening opportunities (structure, boundaries, tech debt). Output feeds back into Frame as new `/propose` candidates — never into Execute directly. This command never writes code.
+Survey the codebase at $ARGUMENTS for deepening opportunities (structure, boundaries, tech debt). Output feeds back into Frame as new `lpwr-propose` candidates — never into Execute directly. This command never writes code.

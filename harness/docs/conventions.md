@@ -2,7 +2,7 @@
 
 Enforced by harness pieces where mechanical, by agreement where human.
 
-- **Worktrees per spec ID**, not per person — `scope-guard.ts` reads `OPENCODE_SPEC_ID` from the worktree's environment.
+- **Worktrees per spec ID**, not per person — `lpwr-scope-guard.ts` reads `OPENCODE_SPEC_ID` from the worktree's environment.
 - **Config precedence**: repo `harness/.opencode/` is authoritative for output quality; personal `~/.config/opencode/` holds only ergonomics.
 - **Permissions single source**: the matrix lives in `harness/opencode.json`; agent `.md` files carry role prompts only and must not duplicate `permission` blocks.
 - **Models unset by default**: all agents inherit the runtime default until the team pins providers in `opencode.json` (decision 2026-09-19).

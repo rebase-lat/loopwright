@@ -7,11 +7,11 @@ updated_by: lpwr-onboard
 
 ## Codebase
 Agentic workflow workspace for opencode. Entry points: `AGENTS.md` (protocol) and
-`opencode.json` (permission matrix, instructions). `harness/.opencode/` holds agents (7),
-flat `lpwr-*` commands (20), `lpwr-*` skills (11), and `lpwr-*` plugins (6, auto-discovered).
-`harness/docs/` holds constitution, glossary, context, specs, lessons, state.
-`harness/templates/` holds the fixed record shapes. Repo root holds the design docs and the
-Node toolchain (`package.json`, `oxlint.config.ts`, `oxfmt.config.ts`, `tsconfig.json`).
+`opencode.json` (permission matrix, instructions). `.opencode/` holds agents (7),
+flat `lpwr-*` commands (20), `lpwr-*` skills (12), and `lpwr-*` plugins (6, auto-discovered).
+`docs/` holds constitution, glossary, context, specs, lessons, state.
+`templates/` holds the fixed record shapes. The project root holds the Node toolchain
+(`package.json`, `oxlint.config.ts`, `oxfmt.config.ts`, `tsconfig.json`).
 
 ## Domain
 Spec-driven agent harness: six workflow domains (Govern, Frame, Specify, Execute, Verify,

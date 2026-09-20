@@ -1,0 +1,29 @@
+---
+last_updated: 2026-09-19
+updated_by: lpwr-onboard
+---
+
+# Project context
+
+## Codebase
+Agentic workflow workspace for opencode. Entry points: `AGENTS.md` (protocol) and
+`opencode.json` (permission matrix, instructions). `harness/.opencode/` holds agents (7),
+flat `lpwr-*` commands (20), `lpwr-*` skills (11), and `lpwr-*` plugins (6, auto-discovered).
+`harness/docs/` holds constitution, glossary, context, specs, lessons, state.
+`harness/templates/` holds the fixed record shapes. Repo root holds the design docs and the
+Node toolchain (`package.json`, `oxlint.config.ts`, `oxfmt.config.ts`, `tsconfig.json`).
+
+## Domain
+Spec-driven agent harness: six workflow domains (Govern, Frame, Specify, Execute, Verify,
+Retain) plus Bootstrap. One traceability ID per spec joins worktree, branch, folder, log,
+and commits. Human owns the verdict; plugins enforce the gates. See `docs/glossary.md`.
+
+## Stack and tools
+TypeScript (strict, NodeNext) for `.opencode/plugins/*.ts`. Linter oxlint + formatter oxfmt
+via ultracite presets (`npm run lint`, `npm run fmt:check`); `tsc --noEmit` via
+`npm run typecheck`. Package manager npm. No CI gate configured yet; no deploy target
+(this repo ships no runtime).
+
+## Principles (summary)
+See `docs/constitution.md` — ubiquitous rules, verdict floor, and verdict authority live
+there, never duplicated here.

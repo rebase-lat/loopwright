@@ -57,7 +57,9 @@ const isCommand = (name: string): name is CommandName =>
   name in COMMAND_INTENTS;
 
 const specDirOf = (specRef: string): string | null => {
-  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*-\d+(?:-\d+)?$/iu.test(specRef)) {
+  // Strictly lowercase: the ID scheme is lowercase everywhere, and an uppercase
+  // argument must not journal phantom entries under a second spelling of the ID.
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*-\d+(?:-\d+)?$/u.test(specRef)) {
     return null;
   }
   const parts = specRef.split("-");

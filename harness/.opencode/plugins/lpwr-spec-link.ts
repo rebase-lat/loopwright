@@ -15,7 +15,9 @@ const frontmatterStatus = (raw: string): string | null => {
   }
   const line = frontmatter
     .split("\n")
-    .find((candidate) => candidate.trim().startsWith("status:"));
+    .find((candidate) =>
+      candidate.trim().toLowerCase().startsWith("status:")
+    );
   if (!line) {
     return null;
   }
@@ -44,7 +46,7 @@ const specLink = (): Promise<Hooks> =>
           `Blocked: spec ${specId} not found at docs/specs/${specId}/spec.md.`
         );
       }
-      if (frontmatterStatus(raw) !== "approved") {
+      if (frontmatterStatus(raw)?.toLowerCase() !== "approved") {
         throw new Error(`Blocked: spec ${specId} is not approved yet.`);
       }
     },

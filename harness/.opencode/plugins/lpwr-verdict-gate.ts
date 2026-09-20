@@ -25,7 +25,7 @@ const sectionEntries = (block: string, key: string): string[] => {
   let inside = false;
   for (const line of block.split("\n")) {
     if (!inside) {
-      const header = line.match(new RegExp(`^${key}:\\s*(?<rest>.*)$`, "u"));
+      const header = line.match(new RegExp(`^${key}:\\s*(?<rest>.*)$`, "iu"));
       const rest = header?.groups?.rest.trim() ?? "";
       if (header?.groups) {
         inside = true;

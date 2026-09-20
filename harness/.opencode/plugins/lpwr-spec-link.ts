@@ -15,9 +15,7 @@ const frontmatterStatus = (raw: string): string | null => {
   }
   const line = frontmatter
     .split("\n")
-    .find((candidate) =>
-      candidate.trim().toLowerCase().startsWith("status:")
-    );
+    .find((candidate) => candidate.trim().toLowerCase().startsWith("status:"));
   if (!line) {
     return null;
   }

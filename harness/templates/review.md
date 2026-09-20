@@ -14,7 +14,7 @@ deferred: []     # one `<criterion-id> -> <follow-up spec>` per line; each needs
 ## Specs axis
 | Criterion ID | Test reference | Pass? |
 | --- | --- | --- |
-| <id>-1 | <test> | yes/no |
+| <id>-1 | <test> | yes/no (leave empty if waived/deferred — see frontmatter) |
 
 ## Verdict
 - [ ] Ship  [ ] Block  [ ] Redirect

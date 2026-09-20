@@ -24,7 +24,9 @@ names the failure it prevents.
    `spec-link.ts`, checked before the first tool call, not after.
 7. **`/review` refuses to render "ship" if any acceptance criterion lacks a test reference.**
    The verdict floor from the constitution is a hard stop, not a recommendation in the reviewer's
-   prompt.
+   prompt. The only way past it is an explicit waiver: the ID listed under `waived:` (with
+   reasoning) or `deferred:` (with a follow-up) in `review.md` frontmatter, enforced by
+   `lpwr-verdict-gate.ts` — unlisted gaps never ship, and a silent skip is a miss, not a waiver.
 8. **Only `/release` may trigger deploy, and only on a recorded "ship."** No other command path,
    including manual runs of the build agent, should have deploy permission.
 

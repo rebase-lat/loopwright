@@ -10,3 +10,4 @@ This file is protocol, not rules. The rules live in `docs/constitution.md`.
 6. Before starting any domain command, glance at `docs/state.md` and relevant `docs/lessons/`.
 7. Verdict (`ship` / `block` / `redirect`) is human-owned and recorded in `docs/specs/<id>/review.md`. Nothing downstream routes around it.
 8. Waived/deferred criteria live in `review.md` frontmatter with justification and follow-ups — unlisted gaps never ship.
+9. Behavior changes update the spec first via `lpwr-amend` (review voided, tasks reconciled, re-approval required) — never code first.

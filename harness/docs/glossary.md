@@ -13,3 +13,4 @@ Banned substitutes are enforced, not suggested. `/specs` must use the exact term
 | Triage | The neutral / deep-expert / applied-judge debate plus ratification motion run by `lpwr-propose`; read-only, never writes `docs/` | "panel", "jury" |
 | Handoff | One intent-tagged A2A line in `log.ndjson` | "ping", "notification" |
 | Motion | The ratification of a picked option (moved, seconded, debated once, amendable, voted) before the traceability ID is assigned | "resolution", "measure" |
+| Amend | A post-approval change to `spec.md` + `tasks.md` via `lpwr-amend`; voids the review, routes to re-approval | "revise", "tweak" |

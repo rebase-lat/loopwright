@@ -114,3 +114,9 @@ names the failure it prevents.
     repo.
 32. **Don't automate `/improve`'s discovery step until it has run manually and proven a query is
     worth repeating.** A scheduled job with no proven signal is noise with a cron trigger.
+
+38. **Amend an approved spec only through `lpwr-amend`: status returns to `draft`, `review.md`
+    is deleted (the old verdict no longer describes the spec, and the missing review blocks
+    commit/release mechanically), `tasks.md` reconciles by criterion ID with test refs cleared
+    on reworded rows.** Post-ship changes are not amendments — they go through a new spec
+    naming the old ID in `supersedes:`.

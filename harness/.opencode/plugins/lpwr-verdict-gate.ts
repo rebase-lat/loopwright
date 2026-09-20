@@ -48,7 +48,8 @@ const sectionEntries = (block: string, key: string): string[] => {
   return entries;
 };
 
-const stripBrackets = (entry: string): string => entry.replace(/^\[/u, "").replace(/\]$/u, "");
+const stripBrackets = (entry: string): string =>
+  entry.replace(/^\[/u, "").replace(/\]$/u, "");
 
 const parseWaived = (block: string): Set<string> => {
   const ids = new Set<string>();
@@ -96,7 +97,9 @@ const rowCells = (row: string): string[] => {
 const tableComplete = (review: string): { ok: boolean; reason?: string } => {
   const block = frontmatterBlock(review);
   const waived = block ? parseWaived(block) : new Set<string>();
-  const deferred = block ? parseDeferred(block) : { targets: new Map<string, string>() };
+  const deferred = block
+    ? parseDeferred(block)
+    : { targets: new Map<string, string>() };
   if (deferred.error) {
     return { ok: false, reason: deferred.error };
   }
@@ -110,7 +113,10 @@ const tableComplete = (review: string): { ok: boolean; reason?: string } => {
   for (const row of data) {
     const [criterion, testRef, pass] = rowCells(row);
     if (!criterion) {
-      return { ok: false, reason: `table row without a criterion id: ${row.trim()}` };
+      return {
+        ok: false,
+        reason: `table row without a criterion id: ${row.trim()}`,
+      };
     }
     seen.add(criterion);
     if (pass && /^yes$/iu.test(pass) && testRef) {

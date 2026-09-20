@@ -7,8 +7,8 @@ updated_by: lpwr-onboard
 
 ## Codebase
 Agentic workflow workspace for opencode. Entry points: `AGENTS.md` (protocol) and
-`opencode.json` (permission matrix, instructions). `.opencode/` holds agents (7),
-flat `lpwr-*` commands (20), `lpwr-*` skills (12), and `lpwr-*` plugins (6, auto-discovered).
+`opencode.json` (permission matrix, instructions). `.opencode/` holds agents (8),
+flat `lpwr-*` commands (21), `lpwr-*` skills (12), and `lpwr-*` plugins (6, auto-discovered).
 `docs/` holds constitution, glossary, context, specs, lessons, state.
 `templates/` holds the fixed record shapes. The project root holds the Node toolchain
 (`package.json`, `oxlint.config.ts`, `oxfmt.config.ts`, `tsconfig.json`).

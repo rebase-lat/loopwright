@@ -33,8 +33,8 @@ loopwright/
 │   ├── AGENTS.md               # protocol only — rules live in docs/constitution.md
 │   ├── opencode.json           # permission matrix (single source), instructions
 │   ├── .opencode/
-│   │   ├── agents/             # 7 role files (build, plan, reviewer, triage seats, scout)
-│   │   ├── commands/           # 20 flat lpwr-* commands, each declaring its Stage:
+│   │   ├── agents/             # 8 role files (build, plan, scribe, reviewer, triage seats, scout)
+│   │   ├── commands/           # 21 flat lpwr-* commands, each declaring its Stage:
 │   │   ├── skills/             # 11 lpwr-* procedures (SKILL.md + trigger descriptions)
 │   │   └── plugins/            # 6 lpwr-* gates (auto-discovered, typechecked)
 │   ├── docs/                   # constitution, glossary, context, specs, lessons, state
@@ -59,14 +59,15 @@ loopwright/
 | Bootstrap | `lpwr-setup` |
 | Govern | `lpwr-onboard`, `lpwr-constitution`, `lpwr-codebase`, `lpwr-domain`, `lpwr-stack` |
 | Frame | `lpwr-propose`, `lpwr-interview`, `lpwr-research`, `lpwr-improve` |
-| Specify | `lpwr-specs`, `lpwr-tasks` |
+| Specify | `lpwr-specs`, `lpwr-tasks`, `lpwr-amend` |
 | Execute | `lpwr-implement`, `lpwr-diagnose` |
 | Verify | `lpwr-review`, `lpwr-goal`, `lpwr-release` |
 | Retain | `lpwr-commit`, `lpwr-teach` |
 | Cross-cutting | `lpwr-guide` |
 
 Cross-cutting rules: amendments (including harness changes) go through
-`lpwr-propose` → `lpwr-review`; `docs/state.md` has exactly one writer
+`lpwr-propose` → `lpwr-review`; approved specs change only via `lpwr-amend`
+(review voided, re-approval required); `docs/state.md` has exactly one writer
 (`lpwr-commit`); payloads are always artifact pointers, never inline content.
 
 ## Toolchain

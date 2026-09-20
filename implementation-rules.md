@@ -53,6 +53,9 @@ names the failure it prevents.
     discipline, is what makes a role actually read-only.
 15. **`build` is the only agent with `write: allow`, and its `bash` permission is `ask`, not
     `allow`.** Shell access stays a checkpoint even for the one agent that's allowed to write.
+    Authoring commands (`lpwr-specs`, `lpwr-tasks`, `lpwr-review`, `lpwr-onboard`, `lpwr-amend`)
+    run on the `scribe` agent with `write: ask` — the human confirms each file write, and the
+    scribe never approves what it writes.
 16. **Ephemeral agents (`scout`) return summaries, never raw retrieved content, to the caller.**
     Keeps context economy real instead of aspirational.
 

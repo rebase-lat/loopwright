@@ -33,6 +33,14 @@
         "webfetch": "deny",
         "task": "deny"
       }
+    },
+    "scribe": {
+      "permission": {
+        "edit": "ask",
+        "bash": "deny",
+        "webfetch": "deny",
+        "task": "deny"
+      }
     }
   }
 }

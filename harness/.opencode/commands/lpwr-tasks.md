@@ -1,6 +1,6 @@
 ---
 description: Break an approved spec into tasks bound to criterion IDs.
-agent: plan
+agent: scribe
 ---
 
 Stage: Specify.

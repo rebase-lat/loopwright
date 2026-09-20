@@ -1,6 +1,6 @@
 ---
 description: Review the diff against the spec on standards and specs axes, render verdict.
-agent: reviewer
+agent: scribe
 ---
 
 Stage: Verify.

@@ -1,6 +1,6 @@
 ---
 description: Deploy only on a recorded ship verdict.
-agent: reviewer
+agent: build
 ---
 
 Stage: Verify.

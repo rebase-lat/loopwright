@@ -1,6 +1,6 @@
 ---
 description: Guided first-run pass producing docs/context.md and a drafted constitution.
-agent: plan
+agent: scribe
 ---
 
 Stage: Govern.

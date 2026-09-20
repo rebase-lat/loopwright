@@ -1,6 +1,6 @@
 ---
 description: Create the EARS specification from an approved proposal.
-agent: plan
+agent: scribe
 ---
 
 Stage: Specify.

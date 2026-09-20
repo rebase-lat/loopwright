@@ -7,6 +7,11 @@ This revision folds in the accepted recommendations: the constitution as a concr
 traceability ID scheme, a verdict/permissions model, an A2A message schema, and agents promoted
 to a full harness piece alongside templates.
 
+> Superseded in command structure by `implementation-guide-v3.md`: commands are now flat
+> `lpwr-*` files (no `commands/<domain>/` nesting), skills and plugins carry the `lpwr-`
+> prefix, and `docs/stack.md` is folded into `docs/context.md`. Gates, ID scheme, A2A
+> schema, and template content below still hold; unprefixed command names are the v2 layout.
+
 ---
 
 ## 1. The six domains, with gates and artifacts

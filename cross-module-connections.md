@@ -4,6 +4,9 @@ Quick reference: what each domain owns, what it reads, what it writes, and who c
 output. The traceability ID (`<domain>-<sequence>`) and the audit log (`log.ndjson`) are the two
 threads that run through every row — everything below is ultimately joined on one of those two.
 
+> Command names below are the v2 layout; the implemented set is flat `lpwr-*` per
+> `implementation-guide-v3.md`. Domain ownership, read/write flow, and gates are unchanged.
+
 ---
 
 ## Govern

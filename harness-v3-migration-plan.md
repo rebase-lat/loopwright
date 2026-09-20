@@ -76,16 +76,16 @@ runs on the read-only `plan` agent instead of a new stateful plugin.
   harness repo itself (TS plugins, opencode config, npm toolchain) + `docs/memos/`,
   `docs/lessons/` dirs.
 
-## Phase D — Verification + close-out
+## Phase D [done 2026-09-19] — Verification + close-out
 
-- [ ] `npm run lint`, `npm run fmt:check`, `npm run typecheck` green (dir-scoped globs cover
+- [x] `npm run lint`, `npm run fmt:check`, `npm run typecheck` green (dir-scoped globs cover
   renames; md excluded by policy).
-- [ ] Cold-start: fresh opencode session from `harness/`, `agent list` shows 7 agents;
+- [x] Cold-start: fresh opencode session from `harness/`, `agent list` shows 7 agents;
   flat `lpwr-*` commands resolve (same check as the confirmed nested invocation).
-- [ ] Root design docs (`harness-layout.md`, `cross-module-connections.md`,
+- [x] Root design docs (`harness-layout.md`, `cross-module-connections.md`,
   `implementation-rules.md`) get mechanical reference updates; phase log above stays as
   history. `implementation-guide-v3.md` committed alongside.
-- [ ] Commit per phase (standing rule); restart reminder on completion.
+- [x] Commit per phase (standing rule); restart reminder on completion.
 
 ## Explicit non-changes
 

@@ -1,5 +1,6 @@
 ---
 description: Record primary, secondary and complementary stack.
+agent: scribe
 ---
 
 Stage: Govern.

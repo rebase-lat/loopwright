@@ -1,5 +1,6 @@
 ---
 description: Turn the working topic into a teaching workspace.
+agent: scribe
 ---
 
 Stage: Retain.

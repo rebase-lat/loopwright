@@ -1,5 +1,6 @@
 ---
 description: Fix the terms used to design a module.
+agent: scribe
 ---
 
 Stage: Govern.

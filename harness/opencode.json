@@ -15,16 +15,16 @@
       "permission": { "edit": "deny", "bash": "deny", "webfetch": "allow" }
     },
     "neutral": {
-      "permission": { "edit": "deny", "bash": "deny", "webfetch": "deny" }
+      "permission": { "edit": "deny", "bash": "deny", "webfetch": "deny", "task": "deny" }
     },
     "deep-expert": {
-      "permission": { "edit": "deny", "bash": "deny", "webfetch": "allow" }
+      "permission": { "edit": "deny", "bash": "deny", "webfetch": "allow", "task": "deny" }
     },
     "applied-judge": {
-      "permission": { "edit": "deny", "bash": "deny", "webfetch": "deny" }
+      "permission": { "edit": "deny", "bash": "deny", "webfetch": "deny", "task": "deny" }
     },
     "reviewer": {
-      "permission": { "edit": "deny", "bash": "deny", "webfetch": "deny" }
+      "permission": { "edit": "deny", "bash": "deny", "webfetch": "deny", "task": "deny" }
     },
     "scout": {
       "permission": {

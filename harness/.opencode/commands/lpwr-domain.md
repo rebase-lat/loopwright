@@ -1,5 +1,6 @@
 ---
 description: Sharpen the project ubiquitous language.
+agent: scribe
 ---
 
 Stage: Govern.

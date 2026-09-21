@@ -1,5 +1,6 @@
 ---
 description: Amend the project constitution (never per-task).
+agent: scribe
 ---
 
 Stage: Govern.

@@ -36,18 +36,19 @@ loopwright/
 │   ├── .opencode/
 │   │   ├── agents/             # 8 role files (build, plan, scribe, reviewer, triage seats, scout)
 │   │   ├── commands/           # 22 flat lpwr-* commands, each declaring its Stage:
-│   │   ├── skills/             # 11 lpwr-* procedures (SKILL.md + trigger descriptions)
+│   ├── skills/             # 13 lpwr-* procedures (SKILL.md + trigger descriptions)
 │   │   └── plugins/            # 10 lpwr-* plugins (gates, journaling, advisories — auto-discovered, typechecked)
 │   ├── docs/                   # constitution, glossary, context, specs, lessons, state
 │   └── templates/              # fixed record shapes (spec, review, lesson, …)
-├── harness-layout.md           # original six-domain layout (v2; command structure
-├── cross-module-connections.md #   superseded by implementation-guide-v3.md —
-├── harness-principles.md       #   banners on file mark what still holds)
-├── implementation-rules.md     # flat build checklist (each rule names its failure)
-├── naming-and-communication-conventions.md
-├── implementation-guide-v3.md  # current picture: flat commands, Bootstrap, prefix policy
-├── harness-implementation-plan.md  # build log, phases 0–5 (history)
-├── harness-v3-migration-plan.md    # v3 migration log, phases A–D (history)
+├── docs/                       # guides, rules, plans (design history)
+│   ├── harness-layout.md           # original six-domain layout (v2; command structure
+│   ├── cross-module-connections.md #   superseded by implementation-guide-v3.md —
+│   ├── harness-principles.md       #   banners on file mark what still holds)
+│   ├── implementation-rules.md     # flat build checklist (each rule names its failure)
+│   ├── naming-and-communication-conventions.md
+│   ├── implementation-guide-v3.md  # current picture: flat commands, Bootstrap, prefix policy
+│   ├── harness-implementation-plan.md  # build log, phases 0–5 (history)
+│   └── harness-v3-migration-plan.md    # v3 migration log, phases A–D (history)
 ├── package.json                # npm scripts: lint, fmt, fmt:check, typecheck
 ├── oxlint.config.ts / oxfmt.config.ts  # ultracite presets
 └── tsconfig.json               # strict, covers plugins + configs

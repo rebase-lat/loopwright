@@ -16,7 +16,7 @@ Ubiquitous rules — always true, never re-litigated per spec.
 - The system shall not commit secrets, keys, or credentials to version control.
 - Dependencies shall carry no known critical or high-severity vulnerability at release time.
 
-Audit command: <audit command for this stack — lpwr-security-scan blocks implement on nonzero exit>
+Audit command: <one audit command per stack — lpwr-security-scan blocks implement if any fails>
 
 ## Verdict floor
 A spec may be marked "ship" only when:

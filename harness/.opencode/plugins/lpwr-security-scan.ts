@@ -70,7 +70,7 @@ const scanFile = async (filePath: string): Promise<string | null> => {
   return null;
 };
 
-const readAuditCommand = async (): Promise<string | null> => {
+const readAuditCommands = async (): Promise<string[]> => {
   let raw = "";
   try {
     raw = await readFile(
@@ -78,21 +78,19 @@ const readAuditCommand = async (): Promise<string | null> => {
       "utf-8"
     );
   } catch {
-    return null;
+    return [];
   }
-  const line = raw
-    .split("\n")
-    .find((candidate) =>
-      candidate.trim().toLowerCase().startsWith("audit command:")
-    );
-  if (!line) {
-    return null;
+  const commands: string[] = [];
+  for (const line of raw.split("\n")) {
+    if (!line.trim().toLowerCase().startsWith("audit command:")) {
+      continue;
+    }
+    const command = line.split(":").slice(1).join(":").trim();
+    if (command && !command.includes("<")) {
+      commands.push(command);
+    }
   }
-  const command = line.split(":").slice(1).join(":").trim();
-  if (!command || command.includes("<")) {
-    return null;
-  }
-  return command;
+  return commands;
 };
 
 // Minimal quote-aware split: single binary plus args, no shell features.
@@ -129,33 +127,35 @@ const auditDependencies = async (): Promise<{
   blocked?: string;
   warned?: string;
 }> => {
-  const command = await readAuditCommand();
-  if (!command) {
+  const commands = await readAuditCommands();
+  if (commands.length === 0) {
     return {
       warned:
-        "No audit command declared in docs/constitution.md — dependency findings are unverified; declare one or run it manually before release.",
+        "No audit command declared in docs/constitution.md — dependency findings are unverified; declare one per stack or run them manually before release.",
     };
   }
-  const [binary, ...args] = splitCommand(command);
-  if (!binary) {
-    return {
-      warned:
-        "Audit command in docs/constitution.md is empty — dependency findings are unverified; fix the declaration or run it manually before release.",
-    };
+  for (const command of commands) {
+    const [binary, ...args] = splitCommand(command);
+    if (!binary) {
+      return {
+        warned:
+          "An audit command in docs/constitution.md is empty — dependency findings are unverified; fix the declaration or run it manually before release.",
+      };
+    }
+    try {
+      await execFileAsync(binary, args, {
+        maxBuffer: 10_485_760,
+        timeout: AUDIT_TIMEOUT_MS,
+      });
+    } catch {
+      return {
+        blocked:
+          `Audit command "${command}" failed — resolve findings or fix the command, ` +
+          `then re-run lpwr-implement.`,
+      };
+    }
   }
-  try {
-    await execFileAsync(binary, args, {
-      maxBuffer: 10_485_760,
-      timeout: AUDIT_TIMEOUT_MS,
-    });
-    return {};
-  } catch {
-    return {
-      blocked:
-        `Audit command "${command}" failed — resolve findings or fix the command, ` +
-        `then re-run lpwr-implement.`,
-    };
-  }
+  return {};
 };
 
 const securityScan = (plugin: PluginInput): Promise<Hooks> =>

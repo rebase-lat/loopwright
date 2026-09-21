@@ -3,7 +3,7 @@
 All notable changes to this project, grouped by git tag. See the commit
 history for per-change detail.
 
-## [Unreleased] — 0.5.0
+## [Current] — 0.5.0
 
 - Motion narrowed to pin / memory-check / dissent capture — no more
   move/second/scrutiny/vote machinery; proposal template follows the

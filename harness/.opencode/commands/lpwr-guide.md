@@ -14,13 +14,14 @@ Walk this decision path over file existence and state, in order, stopping at the
 3. Nothing "In flight" in `docs/state.md` → suggest `lpwr-propose`.
 4. Spec has `proposal.md` but no `spec.md` → suggest `lpwr-specs`.
 5. `spec.md` status is `draft` → suggest `lpwr-specs` to finish approval (`lpwr-amend` if changing an already-approved spec).
-6. `spec.md` is `approved` but no `tasks.md` → suggest `lpwr-tasks`.
-7. `tasks.md` exists but the acceptance table has empty test-reference cells → suggest `lpwr-implement`.
-8. All criteria have test references but no `review.md` verdict → suggest `lpwr-review`.
-9. `review.md` `risk_tier` is "high" but no `threat-review.md` → suggest `lpwr-threat-review`.
-10. `review.md` verdict is "ship" but no matching commit → suggest `lpwr-commit`.
-11. `review.md` verdict is "block" → suggest `lpwr-implement` (rework), then `lpwr-review` again.
-12. `review.md` verdict is "redirect" → suggest `lpwr-propose` (re-frame the spec).
-13. `review.md` lists `deferred:` entries (`<criterion-id> -> <follow-up>`) → suggest `lpwr-propose` for the named follow-up, citing the deferred IDs.
-14. Committed but no lesson filed at `docs/lessons/<date>-<id>.md` → suggest `lpwr-teach`.
-15. Everything closed → point at `docs/state.md`'s "Next" section or suggest `lpwr-propose`.
+6. `spec.md` `design_review` is "required" but no accepted `adr.md` → suggest `lpwr-design`.
+7. `spec.md` is `approved` but no `tasks.md` → suggest `lpwr-tasks`.
+8. `tasks.md` exists but the acceptance table has empty test-reference cells → suggest `lpwr-implement`.
+9. All criteria have test references but no `review.md` verdict → suggest `lpwr-review`.
+10. `review.md` `risk_tier` is "high" but no `threat-review.md` → suggest `lpwr-threat-review`.
+11. `review.md` verdict is "ship" but no matching commit → suggest `lpwr-commit`.
+12. `review.md` verdict is "block" → suggest `lpwr-implement` (rework), then `lpwr-review` again.
+13. `review.md` verdict is "redirect" → suggest `lpwr-propose` (re-frame the spec).
+14. `review.md` lists `deferred:` entries (`<criterion-id> -> <follow-up>`) → suggest `lpwr-propose` for the named follow-up, citing the deferred IDs.
+15. Committed but no lesson filed at `docs/lessons/<date>-<id>.md` → suggest `lpwr-teach`.
+16. Everything closed → point at `docs/state.md`'s "Next" section or suggest `lpwr-propose`.

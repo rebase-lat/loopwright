@@ -15,4 +15,6 @@ Banned substitutes are enforced, not suggested. `lpwr-specs` must use the exact 
 | Motion | The ratification of a picked option: pinned final statement, memory check, dissent capture — never a re-run of triage | "resolution", "measure" |
 | Risk tier | The `low | medium | high` band in `spec.md` frontmatter, human-confirmed, deciding how much review a spec gets | "risk level" |
 | Threat review | The failure-mode analysis required before releasing a `high`-tier spec | "threat model" |
+| Design review | The ADR settling one open technical decision before criteria are written | "design doc" |
+| ADR | Architecture decision record: decision, alternatives, reasoning, consequences | "decision log" |
 | Amend | A post-approval change to `spec.md` + `tasks.md` via `lpwr-amend`; voids the review, routes to re-approval | "revise", "tweak" |

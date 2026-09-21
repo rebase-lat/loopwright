@@ -22,6 +22,43 @@ const frontmatterStatus = (raw: string): string | null => {
   return line.split(":").slice(1).join(":").split("#")[0].trim();
 };
 
+const frontmatterValue = (raw: string, key: string): string | null => {
+  const match = raw.match(/^---\n(?<frontmatter>[\s\S]*?)\n---/u);
+  const frontmatter = match?.groups?.frontmatter;
+  if (!frontmatter) {
+    return null;
+  }
+  const line = frontmatter
+    .split("\n")
+    .find((candidate) =>
+      candidate.trim().toLowerCase().startsWith(`${key}:`)
+    );
+  if (!line) {
+    return null;
+  }
+  return line.split(":").slice(1).join(":").split("#")[0].trim().toLowerCase() || null;
+};
+
+// Design gate: a spec with design_review: required needs an accepted adr.md
+// before implement runs — same defense-in-depth shape as the threat-review
+// gate on release. Reads the already-loaded spec text plus the ADR file.
+const designReviewOpen = async (
+  specId: string,
+  specRaw: string
+): Promise<boolean> => {
+  const tier = frontmatterValue(specRaw, "design_review");
+  if (tier !== "required") {
+    return false;
+  }
+  let adr = "";
+  try {
+    adr = await readFile(`docs/specs/${specId}/adr.md`, "utf-8");
+  } catch {
+    return true;
+  }
+  return frontmatterValue(adr, "status") !== "accepted";
+};
+
 const firstArgument = (args: string): string | undefined =>
   args.trim().split(/\s+/u)[0];
 
@@ -110,6 +147,13 @@ const specLink = (plugin: PluginInput): Promise<Hooks> =>
         const message =
           `Blocked: spec ${specId} sits in docs/state.md's Blocked section — ` +
           `resolve the escalation before implementing.`;
+        await toastBlocked(plugin, message);
+        throw new Error(message);
+      }
+      if (await designReviewOpen(specId, raw)) {
+        const message =
+          `Blocked: spec ${specId} requires design review with no accepted adr.md — ` +
+          `run lpwr-design first.`;
         await toastBlocked(plugin, message);
         throw new Error(message);
       }

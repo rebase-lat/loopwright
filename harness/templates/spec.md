@@ -2,6 +2,7 @@
 id: <domain>-<sequence>
 status: draft   # draft | approved | superseded
 risk_tier: low   # low | medium | high — human-confirmed
+design_review: none   # none | required — human call
 supersedes: null
 proposal_ref: docs/specs/<id>/proposal.md
 ---

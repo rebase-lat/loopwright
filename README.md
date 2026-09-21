@@ -35,7 +35,7 @@ loopwright/
 │   ├── opencode.json           # permission matrix (single source), instructions
 │   ├── .opencode/
 │   │   ├── agents/             # 8 role files (build, plan, scribe, reviewer, triage seats, scout)
-│   │   ├── commands/           # 22 flat lpwr-* commands, each declaring its Stage:
+│   │   ├── commands/           # 23 flat lpwr-* commands, each declaring its Stage:
 │   ├── skills/             # 13 lpwr-* procedures (SKILL.md + trigger descriptions)
 │   │   └── plugins/            # 10 lpwr-* plugins (gates, journaling, advisories — auto-discovered, typechecked)
 │   ├── docs/                   # constitution, glossary, context, specs, lessons, state
@@ -61,7 +61,7 @@ loopwright/
 | Bootstrap | `lpwr-setup` |
 | Govern | `lpwr-onboard`, `lpwr-constitution`, `lpwr-codebase`, `lpwr-domain`, `lpwr-stack` |
 | Frame | `lpwr-propose`, `lpwr-interview`, `lpwr-research`, `lpwr-improve` |
-| Specify | `lpwr-specs`, `lpwr-tasks`, `lpwr-amend` |
+| Specify | `lpwr-specs`, `lpwr-tasks`, `lpwr-amend`, `lpwr-design` |
 | Execute | `lpwr-implement`, `lpwr-diagnose` |
 | Verify | `lpwr-review`, `lpwr-goal`, `lpwr-release`, `lpwr-threat-review` (high tier only) |
 | Retain | `lpwr-commit`, `lpwr-teach` |

@@ -146,3 +146,8 @@ names the failure it prevents.
     or personality.** If two agents' messages read as having different "characters" once the
     identifiers are stripped out, the persona has drifted; fix the wording, not the role.
     (Numbered 43 — the guide's 41 was taken by the motion rules.)
+
+44. **`lpwr-design` settles one decision before the spec locks in — it is not a second proposal
+    step.** If it starts re-litigating what Frame's motion already decided, it has drifted into
+    Frame's job; its scope is narrower: given what to build, decide the one open technical
+    question standing in the way of writing criteria against a stable structure.

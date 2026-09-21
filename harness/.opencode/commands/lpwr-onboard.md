@@ -1,5 +1,5 @@
 ---
-description: Guided first-run pass producing docs/context.md and a drafted constitution.
+description: Guided onboarding pass producing docs/context.md and a drafted constitution; safe to re-run as refresh.
 agent: scribe
 ---
 
@@ -10,3 +10,5 @@ Walk the repo once — codebase structure, domain language, stack and tooling (i
 Works on new and existing code the same way: on a fresh repo most sections come back thin (fine — the file grows as real code lands); on an existing repo capture what's real (actual lint config, actual test coverage, actual non-functional realities). Thin is allowed; unrun is the failure (rule 35).
 
 This command drafts only — the constitution is approved by a human on demand, never here. Afterwards the granular commands (`lpwr-codebase`, `lpwr-domain`, `lpwr-stack`, `lpwr-constitution`) refresh one section each without re-running this pass.
+
+Re-running is a refresh, not a reset: update `docs/context.md` sections in place (bump `last_updated`); if `docs/constitution.md` exists with `status: approved`, do not touch it — report discovered deltas as a `lpwr-propose` candidate instead. Only draft the constitution when it is missing.

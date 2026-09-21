@@ -30,7 +30,9 @@ Run from `harness/` (the live workspace). After any config change, quit + restar
 ```
 loopwright/
 ├── README.md
-├── harness/                    # the live opencode workspace (run opencode from here)
+├── constitution.md             # this repo's own rules (harness ships without one; onboard creates it)
+├── context.md                  # this repo's own context (same: generated per project by onboard)
+├── harness/                    # pure boilerplate — no prefilled project info (run opencode from here)
 │   ├── AGENTS.md               # protocol only — rules live in docs/constitution.md
 │   ├── opencode.json           # permission matrix (single source), instructions
 │   ├── .opencode/
@@ -38,7 +40,7 @@ loopwright/
 │   │   ├── commands/           # 24 flat lpwr-* commands, each declaring its Stage:
 │   ├── skills/             # 13 lpwr-* procedures (SKILL.md + trigger descriptions)
 │   │   └── plugins/            # 10 lpwr-* plugins (gates, journaling, advisories — auto-discovered, typechecked)
-│   ├── docs/                   # constitution, glossary, context, specs, lessons, state
+│   ├── docs/                   # glossary, conventions + generated docs (constitution, context, state.md appear on first onboard/commit)
 │   └── templates/              # fixed record shapes (spec, review, lesson, …)
 ├── docs/                       # guides, rules, plans (design history)
 │   ├── harness-layout.md           # original six-domain layout (v2; command structure

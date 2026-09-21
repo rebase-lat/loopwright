@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 
-import type { Hooks } from "@opencode-ai/plugin";
+import type { Hooks, PluginInput } from "@opencode-ai/plugin";
 
 // Mechanical verdict floor (rules 5/7): /lpwr-commit and /lpwr-release cannot run
 // without a recorded "ship" whose acceptance table is complete — unless incomplete
@@ -152,7 +152,25 @@ const tableComplete = (review: string): { ok: boolean; reason?: string } => {
   return { ok: true };
 };
 
-const verdictGate = (): Promise<Hooks> =>
+// Every blockage raises a TUI toast with the same actionable message as the
+// thrown error, then throws. The toast never breaks the gate: with no attached
+// TUI (headless runs) the call is a harmless no-op, and any delivery failure is
+// swallowed — the error below remains the record.
+const toastBlocked = async (
+  plugin: PluginInput,
+  message: string
+): Promise<void> => {
+  try {
+    await plugin.client.tui.showToast({
+      body: { message, title: "Loopwright gate", variant: "error" },
+      query: { directory: plugin.directory },
+    });
+  } catch {
+    // Toast delivery is best-effort only.
+  }
+};
+
+const verdictGate = (plugin: PluginInput): Promise<Hooks> =>
   Promise.resolve({
     "command.execute.before": async (input) => {
       const name = input.command.split(/[/:]/u).pop() ?? "";
@@ -161,26 +179,28 @@ const verdictGate = (): Promise<Hooks> =>
       }
       const specId = firstArgument(input.arguments);
       if (!specId) {
-        throw new Error(`Blocked: /${name} requires a spec id.`);
+        const message = `Blocked: /${name} requires a spec id.`;
+        await toastBlocked(plugin, message);
+        throw new Error(message);
       }
       let review: string;
       try {
         review = await readFile(`docs/specs/${specId}/review.md`, "utf-8");
       } catch {
-        throw new Error(
-          `Blocked: no review.md for ${specId} — no ship, no ${name}.`
-        );
+        const message = `Blocked: no review.md for ${specId} — no ship, no ${name}.`;
+        await toastBlocked(plugin, message);
+        throw new Error(message);
       }
       if (!shipClaimed(review)) {
-        throw new Error(
-          `Blocked: no recorded "ship" verdict for ${specId} — no ${name}.`
-        );
+        const message = `Blocked: no recorded "ship" verdict for ${specId} — no ${name}.`;
+        await toastBlocked(plugin, message);
+        throw new Error(message);
       }
       const check = tableComplete(review);
       if (!check.ok) {
-        throw new Error(
-          `Blocked: ship claimed for ${specId} but ${check.reason}.`
-        );
+        const message = `Blocked: ship claimed for ${specId} but ${check.reason}.`;
+        await toastBlocked(plugin, message);
+        throw new Error(message);
       }
     },
   });

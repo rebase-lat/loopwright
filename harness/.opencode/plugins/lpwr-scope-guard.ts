@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 
-import type { Hooks } from "@opencode-ai/plugin";
+import type { Hooks, PluginInput } from "@opencode-ai/plugin";
 
 // Blocks edits outside the active spec's declared surface.
 // Active spec comes from OPENCODE_SPEC_ID (worktree environment).
@@ -64,7 +64,25 @@ const matchesAny = (filePath: string, patterns: string[]): boolean => {
   });
 };
 
-const scopeGuard = (): Promise<Hooks> =>
+// Every blockage raises a TUI toast with the same actionable message as the
+// thrown error, then throws. The toast never breaks the gate: with no attached
+// TUI (headless runs) the call is a harmless no-op, and any delivery failure is
+// swallowed — the error below remains the record.
+const toastBlocked = async (
+  plugin: PluginInput,
+  message: string
+): Promise<void> => {
+  try {
+    await plugin.client.tui.showToast({
+      body: { message, title: "Loopwright gate", variant: "error" },
+      query: { directory: plugin.directory },
+    });
+  } catch {
+    // Toast delivery is best-effort only.
+  }
+};
+
+const scopeGuard = (plugin: PluginInput): Promise<Hooks> =>
   Promise.resolve({
     "tool.execute.before": async (input, output) => {
       if (input.tool !== "edit" && input.tool !== "write") {
@@ -80,10 +98,11 @@ const scopeGuard = (): Promise<Hooks> =>
         specId
       );
       if (!matchesAny(output.args.filePath, declaredSurface)) {
-        throw new Error(
+        const message =
           `Blocked: ${output.args.filePath} is outside the declared surface for ${specId}. ` +
-            `Update tasks.md first if the declared surface genuinely changed.`
-        );
+          `Update tasks.md first if the declared surface genuinely changed.`;
+        await toastBlocked(plugin, message);
+        throw new Error(message);
       }
     },
   });

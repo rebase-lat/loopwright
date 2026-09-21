@@ -36,7 +36,7 @@ loopwright/
 │   │   ├── agents/             # 8 role files (build, plan, scribe, reviewer, triage seats, scout)
 │   │   ├── commands/           # 21 flat lpwr-* commands, each declaring its Stage:
 │   │   ├── skills/             # 11 lpwr-* procedures (SKILL.md + trigger descriptions)
-│   │   └── plugins/            # 6 lpwr-* gates (auto-discovered, typechecked)
+│   │   └── plugins/            # 9 lpwr-* plugins (gates, journaling, advisories — auto-discovered, typechecked)
 │   ├── docs/                   # constitution, glossary, context, specs, lessons, state
 │   └── templates/              # fixed record shapes (spec, review, lesson, …)
 ├── harness-layout.md           # original six-domain layout (v2; command structure

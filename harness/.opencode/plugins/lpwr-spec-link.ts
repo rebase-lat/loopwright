@@ -25,6 +25,34 @@ const frontmatterStatus = (raw: string): string | null => {
 const firstArgument = (args: string): string | undefined =>
   args.trim().split(/\s+/u)[0];
 
+// A spec sitting in docs/state.md's Blocked section is blocked, even when its
+// own status reads approved — the state file is the cross-spec escalation
+// record, and implement must not route around it. Entries look like
+// `- <id>: <reason>`; matching is by ID prefix so trailing prose is fine.
+const isStateBlocked = async (specId: string): Promise<boolean> => {
+  let state = "";
+  try {
+    state = await readFile("docs/state.md", "utf-8");
+  } catch {
+    return false;
+  }
+  const lines = state.split("\n");
+  let inside = false;
+  for (const line of lines) {
+    if (/^##\s+blocked/iu.test(line)) {
+      inside = true;
+      continue;
+    }
+    if (inside && /^##\s+/u.test(line)) {
+      break;
+    }
+    if (inside && line.trim().startsWith(`- ${specId}`)) {
+      return true;
+    }
+  }
+  return false;
+};
+
 // Every blockage raises a TUI toast with the same actionable message as the
 // thrown error, then throws. The toast never breaks the gate: with no attached
 // TUI (headless runs) the call is a harmless no-op, and any delivery failure is
@@ -66,6 +94,13 @@ const specLink = (plugin: PluginInput): Promise<Hooks> =>
       }
       if (frontmatterStatus(raw)?.toLowerCase() !== "approved") {
         const message = `Blocked: spec ${specId} is not approved yet.`;
+        await toastBlocked(plugin, message);
+        throw new Error(message);
+      }
+      if (await isStateBlocked(specId)) {
+        const message =
+          `Blocked: spec ${specId} sits in docs/state.md's Blocked section — ` +
+          `resolve the escalation before implementing.`;
         await toastBlocked(plugin, message);
         throw new Error(message);
       }

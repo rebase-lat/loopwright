@@ -8,6 +8,7 @@ Enforced by harness pieces where mechanical, by agreement where human.
 - **Scribe authors, build implements**: authoring commands run on `scribe` (`edit: ask`, human confirms each write); `build` stays the only `allow`-writer and the only shell.
 - **Only orchestrators spawn**: leaf subagents carry `task: deny`; only `plan` (triage/scout fan-out) and `build` (scout delegation) may invoke subagents.
 - **Toasts inform, logs record**: gate blockages and trap crossings raise best-effort TUI toasts; the thrown error and `log.ndjson` remain the record of what happened.
+- **Gates can't see who acts**: tool hooks carry no agent identity, so frontmatter fields (`status`, verdict) can't be origin-restricted by plugin. They rely on scribe ask-checkpoints plus re-validation at commit/release instead — forging a ship means fabricating the full evidence chain a human re-reads, not flipping one field unnoticed.
 - **Risk tier is a human call, the scan is not**: tiers are set at specs and re-confirmed at review; the secret/dependency scan runs on every spec regardless of tier.
 - **Exact once, plain once**: state exact things exactly; explain plainly, once, then move on. Firing messages name what happened and what to do — never restate the concept behind the gate.
 - **Models unset by default**: all agents inherit the runtime default until the team pins providers in `opencode.json` (decision 2026-09-19).

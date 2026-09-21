@@ -30,6 +30,7 @@ const COMMAND_INTENTS = {
   "lpwr-stack": "govern",
   "lpwr-tasks": "specify",
   "lpwr-teach": "retain",
+  "lpwr-threat-review": "verify",
 } as const;
 
 type CommandName = keyof typeof COMMAND_INTENTS;
@@ -52,6 +53,7 @@ const COMMAND_ARTIFACTS: Record<CommandName, string> = {
   "lpwr-stack": "",
   "lpwr-tasks": "tasks.md",
   "lpwr-teach": "",
+  "lpwr-threat-review": "threat-review.md",
 };
 
 const isCommand = (name: string): name is CommandName =>

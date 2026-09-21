@@ -1,6 +1,7 @@
 ---
 id: <domain>-<sequence>
 status: draft   # draft | approved | superseded
+risk_tier: low   # low | medium | high — human-confirmed
 supersedes: null
 proposal_ref: docs/specs/<id>/proposal.md
 ---

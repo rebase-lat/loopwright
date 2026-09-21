@@ -1,7 +1,7 @@
 ---
 spec_ref: <domain>-<sequence>
 date: <date>
-failure_bucket: null   # wrong-spec | wrong-implementation | flaky-check | harness-defect
+failure_bucket: null   # wrong-spec | wrong-implementation | flaky-check | harness-defect | security-gap
 ---
 
 # Lesson

@@ -1,6 +1,7 @@
 ---
 id: <domain>-<sequence>
 diff_ref: HEAD~<n>..HEAD
+risk_tier: low   # carried over from spec.md
 waived: []       # criterion IDs explicitly waived; justify each in Verdict reasoning
 deferred: []     # one `<criterion-id> -> <follow-up spec>` per line; each needs a follow-up
 ---
@@ -15,6 +16,13 @@ deferred: []     # one `<criterion-id> -> <follow-up spec>` per line; each needs
 | Criterion ID | Test reference | Pass? |
 | --- | --- | --- |
 | <id>-1 | <test> | yes/no (leave empty if waived/deferred — see frontmatter) |
+
+## Security axis
+- [ ] `lpwr-security-scan` passed (no secrets, no high/critical dependency findings)
+- [ ] Constitution's security floors are met
+- [ ] Risk tier still looks correct given the actual diff
+- [ ] If risk_tier is high: threat-review.md exists and its findings are addressed
+- Notes: <anything downgraded, deferred, or accepted as residual risk, and why>
 
 ## Verdict
 - [ ] Ship  [ ] Block  [ ] Redirect

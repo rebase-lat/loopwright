@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 
 import type { Hooks, PluginInput } from "@opencode-ai/plugin";
@@ -152,6 +153,51 @@ const tableComplete = (review: string): { ok: boolean; reason?: string } => {
   return { ok: true };
 };
 
+const frontmatterValue = (review: string, key: string): string | null => {
+  const block = frontmatterBlock(review);
+  if (!block) {
+    return null;
+  }
+  const line = block
+    .split("\n")
+    .find((candidate) =>
+      candidate.trim().toLowerCase().startsWith(`${key}:`)
+    );
+  if (!line) {
+    return null;
+  }
+  return line.split(":").slice(1).join(":").split("#")[0].trim().toLowerCase() || null;
+};
+
+// The Security axis must be fully checked — no unchecked boxes allowed.
+// Reviews written before the axis existed fail here: re-render them with the
+// current template rather than carrying an unchecked security posture forward.
+const securityAxisComplete = (review: string): boolean => {
+  const lines = review.split("\n");
+  let inside = false;
+  let checked = 0;
+  for (const line of lines) {
+    if (/^##\s+security axis/iu.test(line)) {
+      inside = true;
+      continue;
+    }
+    if (inside && /^##\s+/u.test(line)) {
+      break;
+    }
+    if (!inside) {
+      continue;
+    }
+    const trimmed = line.trim();
+    if (/^- \[ \]/.test(trimmed)) {
+      return false;
+    }
+    if (/^- \[[xX]\]/.test(trimmed)) {
+      checked += 1;
+    }
+  }
+  return inside && checked > 0;
+};
+
 // Every blockage raises a TUI toast with the same actionable message as the
 // thrown error, then throws. The toast never breaks the gate: with no attached
 // TUI (headless runs) the call is a harmless no-op, and any delivery failure is
@@ -199,6 +245,24 @@ const verdictGate = (plugin: PluginInput): Promise<Hooks> =>
       const check = tableComplete(review);
       if (!check.ok) {
         const message = `Blocked: ship claimed for ${specId} but ${check.reason}.`;
+        await toastBlocked(plugin, message);
+        throw new Error(message);
+      }
+      if (!securityAxisComplete(review)) {
+        const message =
+          `Blocked: ship claimed for ${specId} but the Security axis is incomplete ` +
+          `(missing section or unchecked box) — re-render review.md with the current template.`;
+        await toastBlocked(plugin, message);
+        throw new Error(message);
+      }
+      if (
+        name === "lpwr-release" &&
+        frontmatterValue(review, "risk_tier") === "high" &&
+        !existsSync(`docs/specs/${specId}/threat-review.md`)
+      ) {
+        const message =
+          `Blocked: ${specId} is high risk with no threat-review.md — ` +
+          `run lpwr-threat-review before releasing.`;
         await toastBlocked(plugin, message);
         throw new Error(message);
       }

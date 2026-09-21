@@ -90,7 +90,7 @@ feature spec — Govern doesn't get a side channel.
 
 | | |
 | --- | --- |
-| **Owns** | `/review`, `/goal`, `/release` — agent: `reviewer` (read-only) |
+| **Owns** | `/review`, `/goal`, `/release`, `/threat-review` (high tier only) — agents: `reviewer` (read-only checks), `scribe` (writes review + threat-review), `build` (release) |
 | **Reads** | diff (Execute), `spec.md` acceptance table (Specify + Execute's fill-ins), `constitution.md` (Govern) |
 | **Writes** | `docs/specs/<id>/review.md`, the verdict (ship / block / redirect) |
 | **Consumed by** | **Retain** (`/commit` requires a "ship" verdict to proceed); **Frame** (a "redirect" verdict can re-open the spec via a new `/propose`) |

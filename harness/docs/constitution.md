@@ -8,9 +8,13 @@ last_amended: 2026-09-19
 Ubiquitous rules — always true, never re-litigated per spec.
 
 ## Non-functional floors
-- The system shall never log credentials or secrets in plaintext.
-- The system shall reject any request without authentication.
 - The system shall respond to <critical path> within <threshold>.
+
+## Security floors
+- The system shall never log credentials, tokens, or secrets in plaintext.
+- The system shall reject any request without authentication on <protected surfaces>.
+- The system shall not commit secrets, keys, or credentials to version control.
+- Dependencies shall carry no known critical or high-severity vulnerability at release time.
 
 ## Verdict floor
 A spec may be marked "ship" only when:

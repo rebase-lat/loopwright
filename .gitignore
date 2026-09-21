@@ -1,1 +1,8 @@
 node_modules/
+# Secrets — never commit (constitution security floors)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/

@@ -125,3 +125,8 @@ names the failure it prevents.
     commit/release mechanically), `tasks.md` reconciles by criterion ID with test refs cleared
     on reworded rows.** Post-ship changes are not amendments — they go through a new spec
     naming the old ID in `supersedes:`.
+
+39. **`risk_tier` is set human-confirmed at `lpwr-specs` time and re-confirmed against the
+    actual diff at `lpwr-review` time; `high` requires `threat-review.md` before `lpwr-release`,
+    enforced by `lpwr-verdict-gate.ts`.** The scan (`lpwr-security-scan.ts`) runs on every spec
+    regardless of tier — proportional review weight, zero exceptions to the floor.

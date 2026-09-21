@@ -12,3 +12,4 @@ This file is protocol, not rules. The rules live in `docs/constitution.md`.
 8. Waived/deferred criteria live in `review.md` frontmatter with justification and follow-ups — unlisted gaps never ship.
 9. Behavior changes update the spec first via `lpwr-amend` (review voided, tasks reconciled, re-approval required) — never code first.
 10. Say what's exact exactly; say what's explanatory plainly, once, and move on. When a gate fires, name what happened and what to do — never re-explain the concept; the reader looks it up if it's genuinely new.
+11. Risk tier is set at specs and re-confirmed at review; high-tier specs need `threat-review.md` before release.

@@ -12,7 +12,8 @@ through typed stages — each command declares its `Stage:` — and every handof
 structured line (`intent`, `spec_ref`, artifact-pointer `payload`, `confidence`) to the
 spec's `log.ndjson`. Gates hold whether or not the agent cooperates: `lpwr-spec-link` blocks
 unapproved specs, `lpwr-scope-guard` blocks out-of-surface edits, `lpwr-verdict-gate` blocks
-ship-less commits and deploys.
+ship-less commits and deploys, `lpwr-security-scan` blocks secrets and vulnerable dependencies.
+Review weight scales by human-confirmed risk tier; high-tier specs need a threat review before release.
 
 ## Quickstart
 
@@ -67,8 +68,10 @@ loopwright/
 
 Cross-cutting rules: amendments (including harness changes) go through
 `lpwr-propose` → `lpwr-review`; approved specs change only via `lpwr-amend`
-(review voided, re-approval required); `docs/state.md` has exactly one writer
-(`lpwr-commit`); payloads are always artifact pointers, never inline content.
+(review voided, re-approval required); risk tier is set at specs, re-confirmed
+at review, and high tier needs `lpwr-threat-review` before release;
+`docs/state.md` has exactly one writer (`lpwr-commit`); payloads are always
+artifact pointers, never inline content.
 
 ## Toolchain
 

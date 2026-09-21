@@ -26,5 +26,5 @@ Derived shape (layout §5 omits full content; this closes the Frame → Specify 
 - Vote: <adopted / rejected>
 
 ## Scope for spec
-- In: <what `/specs` must cover>
+- In: <what `lpwr-specs` must cover>
 - Out (non-goals): <explicitly excluded>

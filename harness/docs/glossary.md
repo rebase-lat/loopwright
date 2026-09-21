@@ -1,6 +1,6 @@
 # Glossary
 
-Banned substitutes are enforced, not suggested. `/specs` must use the exact terms below.
+Banned substitutes are enforced, not suggested. `lpwr-specs` must use the exact terms below.
 
 | Term | Definition | Banned substitutes |
 | --- | --- | --- |

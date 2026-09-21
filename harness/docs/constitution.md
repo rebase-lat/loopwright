@@ -1,6 +1,6 @@
 ---
 status: approved
-last_amended: 2026-09-19
+last_amended: 2026-09-21
 ---
 
 # Project constitution

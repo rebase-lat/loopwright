@@ -3,7 +3,7 @@ description: Suggest the next command to run. Read-only, never writes.
 agent: plan
 ---
 
-Stage: cross-cutting.
+Stage: Cross-cutting.
 
 Suggest the next command — orientation only, never enforcement (enforcement stays with `lpwr-spec-link` and `lpwr-scope-guard`). Read-only by construction: read files, suggest one command, write nothing (not to `state.md`, not to the log).
 

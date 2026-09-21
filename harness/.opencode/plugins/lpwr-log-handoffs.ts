@@ -1,6 +1,7 @@
 import { appendFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 
+import { tool } from "@opencode-ai/plugin";
 import type { Hooks } from "@opencode-ai/plugin";
 
 // Journals domain handoffs to docs/specs/<id>/log.ndjson — the one
@@ -56,6 +57,67 @@ const COMMAND_ARTIFACTS: Record<CommandName, string> = {
 const isCommand = (name: string): name is CommandName =>
   name in COMMAND_INTENTS;
 
+const writeHandoff = async (
+  intent: string,
+  specRef: string,
+  pointer: string,
+  confidence: string
+): Promise<string | null> => {
+  const dir = specDirOf(specRef);
+  if (!dir) {
+    return null;
+  }
+  const line = `${JSON.stringify({
+    confidence,
+    intent,
+    payload: { type: "artifact_pointer", value: pointer },
+    spec_ref: specRef,
+    ts: new Date().toISOString(),
+  })}\n`;
+  const logPath = `docs/specs/${dir}/log.ndjson`;
+  await mkdir(path.dirname(logPath), { recursive: true });
+  await appendFile(logPath, line, "utf-8");
+  return logPath;
+};
+
+// Mechanical logging: commands call this instead of hand-writing log lines,
+// so intent vocabulary and pointer shape are validated by schema, not by prose.
+const journalHandoff = tool({
+  args: {
+    artifact: tool.schema.string().min(1),
+    confidence: tool.schema.enum(["high", "low", "medium"]).optional(),
+    intent: tool.schema.enum([
+      "frame",
+      "specify",
+      "execute",
+      "verify",
+      "retain",
+      "govern",
+    ]),
+    spec_ref: tool.schema
+      .string()
+      .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*-\d+(?:-\d+)?$/u),
+  },
+  description:
+    "Append one validated A2A handoff line to a spec's log.ndjson. Prefer this over hand-writing log lines.",
+  execute: async (args) => {
+    try {
+      const written = await writeHandoff(
+        args.intent,
+        args.spec_ref,
+        args.artifact,
+        args.confidence ?? "medium"
+      );
+      if (!written) {
+        return `Refused: "${args.spec_ref}" is not a traceability ID.`;
+      }
+      return `Recorded ${args.intent} handoff for ${args.spec_ref} in ${written}.`;
+    } catch {
+      return `Failed to record handoff for ${args.spec_ref}; logging must never break the loop.`;
+    }
+  },
+});
+
 const specDirOf = (specRef: string): string | null => {
   // Strictly lowercase: the ID scheme is lowercase everywhere, and an uppercase
   // argument must not journal phantom entries under a second spelling of the ID.
@@ -76,6 +138,7 @@ const specDirOf = (specRef: string): string | null => {
 
 const evidenceLog = (): Promise<Hooks> =>
   Promise.resolve({
+    tool: { journal_handoff: journalHandoff },
     "command.execute.before": async (input) => {
       try {
         const name = input.command.split(/[/:]/u).pop() ?? "";
@@ -83,24 +146,11 @@ const evidenceLog = (): Promise<Hooks> =>
           return;
         }
         const specRef = input.arguments.trim().split(/\s+/u)[0] ?? "";
-        const dir = specDirOf(specRef);
-        if (!dir) {
-          return;
-        }
         const artifact = COMMAND_ARTIFACTS[name];
         const pointer = artifact
-          ? `docs/specs/${dir}/${artifact}`
-          : `docs/specs/${dir}/`;
-        const line = `${JSON.stringify({
-          confidence: "medium",
-          intent: COMMAND_INTENTS[name],
-          payload: { type: "artifact_pointer", value: pointer },
-          spec_ref: specRef,
-          ts: new Date().toISOString(),
-        })}\n`;
-        const logPath = `docs/specs/${dir}/log.ndjson`;
-        await mkdir(path.dirname(logPath), { recursive: true });
-        await appendFile(logPath, line, "utf-8");
+          ? `docs/specs/${specDirOf(specRef)}/${artifact}`
+          : `docs/specs/${specDirOf(specRef)}/`;
+        await writeHandoff(COMMAND_INTENTS[name], specRef, pointer, "medium");
       } catch {
         // Logging must never break the loop.
       }

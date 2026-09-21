@@ -1,9 +1,15 @@
+import { execFile } from "node:child_process";
+import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
+import { dirname, resolve } from "node:path";
+import { promisify } from "node:util";
 
 import type { Hooks, PluginInput } from "@opencode-ai/plugin";
 
 // Blocks edits outside the active spec's declared surface.
-// Active spec comes from OPENCODE_SPEC_ID (worktree environment).
+// The active spec resolves as: explicit OPENCODE_SPEC_ID wins; otherwise the git
+// branch of the edited file's worktree, when it looks like a spec ID (worktrees
+// are named per spec ID, so branch-derived resolution needs no manual exports).
 // Declared surface is the backtick-quoted paths/globs in tasks.md
 // plus the spec's own folder, always allowed.
 const readDeclaredSurface = async (
@@ -64,6 +70,61 @@ const matchesAny = (filePath: string, patterns: string[]): boolean => {
   });
 };
 
+const execFileAsync = promisify(execFile);
+
+const SPEC_ID = /^[a-z0-9]+(?:-[a-z0-9]+)*-\d+$/u;
+
+const specCache = new Map<string, string | null>();
+
+const findGitDir = (filePath: string): string | null => {
+  let dir = resolve(process.cwd(), dirname(filePath));
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    if (existsSync(resolve(dir, ".git"))) {
+      return dir;
+    }
+    const parent = dirname(dir);
+    if (parent === dir) {
+      return null;
+    }
+    dir = parent;
+  }
+  return null;
+};
+
+const branchSpecId = async (gitDir: string): Promise<string | null> => {
+  const cached = specCache.get(gitDir);
+  if (cached !== undefined) {
+    return cached;
+  }
+  let specId: string | null = null;
+  try {
+    const { stdout } = await execFileAsync("git", ["-C", gitDir, "branch", "--show-current"], {
+      timeout: 5000,
+    });
+    const branch = stdout.trim();
+    specId = SPEC_ID.test(branch) ? branch : null;
+  } catch {
+    specId = null;
+  }
+  specCache.set(gitDir, specId);
+  return specId;
+};
+
+const activeSpecId = async (filePath: unknown): Promise<string | null> => {
+  const explicit = process.env.OPENCODE_SPEC_ID;
+  if (explicit) {
+    return explicit;
+  }
+  if (typeof filePath !== "string") {
+    return null;
+  }
+  const gitDir = findGitDir(filePath);
+  if (!gitDir) {
+    return null;
+  }
+  return branchSpecId(gitDir);
+};
+
 // Every blockage raises a TUI toast with the same actionable message as the
 // thrown error, then throws. The toast never breaks the gate: with no attached
 // TUI (headless runs) the call is a harmless no-op, and any delivery failure is
@@ -88,7 +149,7 @@ const scopeGuard = (plugin: PluginInput): Promise<Hooks> =>
       if (input.tool !== "edit" && input.tool !== "write") {
         return;
       }
-      const specId = process.env.OPENCODE_SPEC_ID;
+      const specId = await activeSpecId(output.args.filePath);
       // No active spec means nothing to guard.
       if (!specId) {
         return;

@@ -13,6 +13,7 @@ updated_by: lpwr-onboard   # or lpwr-codebase / lpwr-domain / lpwr-stack for a p
 
 ## Stack and tools
 <languages, frameworks, package manager, CI, deploy target — what lpwr-stack maintains>
+<MCP servers: name, transport, required env, purpose — inventoried here, verified by lpwr-setup>
 
 ## Principles (summary)
 <one-paragraph pointer to docs/constitution.md — the full rules live there, not duplicated here>

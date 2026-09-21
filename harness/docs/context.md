@@ -22,7 +22,7 @@ and commits. Human owns the verdict; plugins enforce the gates. See `docs/glossa
 TypeScript (strict, NodeNext) for `.opencode/plugins/*.ts`. Linter oxlint + formatter oxfmt
 via ultracite presets (`npm run lint`, `npm run fmt:check`); `tsc --noEmit` via
 `npm run typecheck`. Package manager npm. No CI gate configured yet; no deploy target
-(this repo ships no runtime).
+(this repo ships no runtime). MCP servers: none configured.
 
 ## Principles (summary)
 See `docs/constitution.md` — ubiquitous rules, verdict floor, and verdict authority live

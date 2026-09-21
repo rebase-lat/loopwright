@@ -5,7 +5,7 @@ agent: scribe
 
 Stage: Govern.
 
-Walk the repo once — codebase structure, domain language, stack and tooling — and write `docs/context.md` via `templates/context.md`, plus a drafted `docs/constitution.md` built from what you find, never invented in a vacuum.
+Walk the repo once — codebase structure, domain language, stack and tooling (including configured MCP servers: name, transport, required env, what each one is for) — and write `docs/context.md` via `templates/context.md`, plus a drafted `docs/constitution.md` built from what you find, never invented in a vacuum.
 
 Works on new and existing code the same way: on a fresh repo most sections come back thin (fine — the file grows as real code lands); on an existing repo capture what's real (actual lint config, actual test coverage, actual non-functional realities). Thin is allowed; unrun is the failure (rule 35).
 

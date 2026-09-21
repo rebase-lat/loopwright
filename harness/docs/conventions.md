@@ -11,6 +11,7 @@ Enforced by harness pieces where mechanical, by agreement where human.
 - **Gates can't see who acts**: tool hooks carry no agent identity, so frontmatter fields (`status`, verdict) can't be origin-restricted by plugin. They rely on scribe ask-checkpoints plus re-validation at commit/release instead — forging a ship means fabricating the full evidence chain a human re-reads, not flipping one field unnoticed.
 - **Risk tier is a human call, the scan is not**: tiers are set at specs and re-confirmed at review; the secret/dependency scan runs on every spec regardless of tier.
 - **Exact once, plain once**: state exact things exactly; explain plainly, once, then move on. Firing messages name what happened and what to do — never restate the concept behind the gate.
+- **One voice**: every agent writes per skill `lpwr-voice` — outcome first, flat register, no filler. Severity language is reserved for actual severity.
 - **Models unset by default**: all agents inherit the runtime default until the team pins providers in `opencode.json` (decision 2026-09-19).
 - **Harness changes reviewed like code** — a new skill or amended instruction goes through `lpwr-propose` → `lpwr-review`, same as any spec.
 - **Concurrent worktrees per person capped at 2**, raised only if the team reports the cap is binding rather than the orchestration tax being real.

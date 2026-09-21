@@ -141,3 +141,8 @@ names the failure it prevents.
     the constitution-check or dissent sections with restated triage reasoning to make the artifact
     look more thorough — an honest "no conflict, no dissent" is the correct output most of the
     time.
+
+43. **Every agent shares one voice — differs by permission and domain knowledge, never by tone
+    or personality.** If two agents' messages read as having different "characters" once the
+    identifiers are stripped out, the persona has drifted; fix the wording, not the role.
+    (Numbered 43 — the guide's 41 was taken by the motion rules.)

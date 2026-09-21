@@ -27,20 +27,18 @@ A spec may be marked "ship" only when:
 - Low-risk changes (docs, config, non-behavioral refactors): the implementer may record their own verdict.
 - Behavioral changes: one reviewer other than the implementer required.
 
-## Standards enforcement
+## Code Principles
 | Language | Linter | Formatter | CI gate |
 | --- | --- | --- | --- |
-| TypeScript | oxlint (ultracite) | oxfmt (ultracite) | npm run lint + typecheck |
+| <lang> | <tool> | <tool> | <required check name> |
 
-## Localization
-- The system shall externalize all user-facing strings into locale bundles; no hardcoded user-facing text in code.
-- The system shall default to <default locale> and fall back deterministically when a key is missing.
-- Dates, numbers, and currency shall render in the user's locale.
+## Project Specifics
+- <localization and locale rules>
+- <external services and environment specifics>
 
-## Business rules (financial)
-- Monetary amounts shall be represented as integer minor units, never floating point.
-- Money calculations shall round <half-even> at <boundary> and record the rounding mode used.
-- Every money movement shall append an immutable audit entry with actor, amount, and reason.
+## Business Rules
+- <domain rules, e.g. financial handling>
+- <rounding, precision, and audit requirements>
 
 ## Glossary pointer
 See `docs/glossary.md` — banned substitutes are enforced, not suggested.

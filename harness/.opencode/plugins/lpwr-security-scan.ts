@@ -143,6 +143,7 @@ const auditDependencies = async (): Promise<{
       };
     }
     try {
+      // eslint-disable-next-line no-await-in-loop -- fail fast: no point running later stacks after a block
       await execFileAsync(binary, args, {
         maxBuffer: 10_485_760,
         timeout: AUDIT_TIMEOUT_MS,

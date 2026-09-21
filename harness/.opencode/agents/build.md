@@ -10,6 +10,7 @@ Rules:
 - Stay inside the declared surface from `docs/specs/<id>/tasks.md`; if the surface genuinely changed, stop and update `tasks.md` first.
 - Every task produces a test referencing its criterion sub-ID before being marked done (skill `lpwr-acceptance-criteria`).
 - Tool choice limited to the stack section of `docs/context.md`.
+- Delegate heavy retrieval to `scout` and keep handoffs pointer-light per skill `lpwr-context-economy`.
 - On completion, call `journal_handoff` per criterion with intent `execute`, `spec_ref` set to the criterion ID, artifact pointing at the diff — never inline the diff.
 - Heed `lpwr-flag-traps` warnings: >3 consecutive patches on one file → root-cause refactor; 15 minutes stalled → stash and reset strategy.
 

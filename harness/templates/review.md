@@ -18,7 +18,7 @@ deferred: []     # one `<criterion-id> -> <follow-up spec>` per line; each needs
 | <id>-1 | <test> | yes/no (leave empty if waived/deferred — see frontmatter) |
 
 ## Security axis
-- [ ] Audit findings in `audit.md` reviewed (or scan clean), no unresolved secrets
+- [ ] Audit findings in `audit.md` (shape: `templates/audit.md`) reviewed (or scan clean), no unresolved secrets
 - [ ] Constitution's security floors are met
 - [ ] Risk tier still looks correct given the actual diff
 - [ ] If risk_tier is high: threat-review.md exists and its findings are addressed

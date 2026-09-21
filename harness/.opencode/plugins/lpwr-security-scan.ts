@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { existsSync, statSync } from "node:fs";
+import { statSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
@@ -10,6 +10,11 @@ import type { Hooks, PluginInput } from "@opencode-ai/plugin";
 // a dependency audit gates lpwr-implement. Zero overhead for a low-tier doc fix
 // beyond these two checks — nothing proceeds with a hardcoded secret or a
 // known-critical dependency, regardless of tier.
+//
+// The audit stays language-agnostic: the exact command is declared per project
+// in the constitution (`Audit command:`), never hardcoded here. A nonzero exit
+// means findings-or-failure for the project's chosen tool — either way,
+// implement does not proceed.
 //
 // Block messages name the pattern and the file, never the matched secret text
 // itself — echoing a secret into an error would violate the constitution floor
@@ -32,8 +37,6 @@ const SECRET_PATTERNS: [string, RegExp][] = [
 
 const MAX_SCAN_BYTES = 1024 * 1024;
 const AUDIT_TIMEOUT_MS = 120_000;
-
-const auditCache = new Map<string, { clean: boolean; summary: string }>();
 
 const toastBlocked = async (
   plugin: PluginInput,
@@ -67,109 +70,92 @@ const scanFile = async (filePath: string): Promise<string | null> => {
   return null;
 };
 
-const findLockfile = (): string | null => {
-  for (const lockfile of [
-    "package-lock.json",
-    "pnpm-lock.yaml",
-    "yarn.lock",
-    "bun.lockb",
-  ]) {
-    if (existsSync(path.resolve(process.cwd(), lockfile))) {
-      return lockfile;
-    }
-  }
-  return null;
-};
-
-const countHighCritical = (
-  stdout: string
-): { high: number; critical: number } | null => {
+const readAuditCommand = async (): Promise<string | null> => {
+  let raw = "";
   try {
-    const report = JSON.parse(stdout) as {
-      metadata?: { vulnerabilities?: { high?: number; critical?: number } };
-    };
-    return {
-      critical: report.metadata?.vulnerabilities?.critical ?? 0,
-      high: report.metadata?.vulnerabilities?.high ?? 0,
-    };
+    raw = await readFile(
+      path.resolve(process.cwd(), "docs/constitution.md"),
+      "utf-8"
+    );
   } catch {
     return null;
   }
+  const line = raw
+    .split("\n")
+    .find((candidate) =>
+      candidate.trim().toLowerCase().startsWith("audit command:")
+    );
+  if (!line) {
+    return null;
+  }
+  const command = line.split(":").slice(1).join(":").trim();
+  if (!command || command.includes("<")) {
+    return null;
+  }
+  return command;
+};
+
+// Minimal quote-aware split: single binary plus args, no shell features.
+// Unclosed quotes run to the end of the line.
+const splitCommand = (command: string): string[] => {
+  const parts: string[] = [];
+  let current = "";
+  let quote = "";
+  for (const char of command) {
+    if (quote) {
+      if (char === quote) {
+        quote = "";
+      } else {
+        current += char;
+      }
+    } else if (char === '"' || char === "'") {
+      quote = char;
+    } else if (/\s/u.test(char)) {
+      if (current) {
+        parts.push(current);
+        current = "";
+      }
+    } else {
+      current += char;
+    }
+  }
+  if (current) {
+    parts.push(current);
+  }
+  return parts;
 };
 
 const auditDependencies = async (): Promise<{
   blocked?: string;
   warned?: string;
 }> => {
-  const lockfile = findLockfile();
-  if (!lockfile) {
-    return {};
-  }
-  if (lockfile !== "package-lock.json") {
+  const command = await readAuditCommand();
+  if (!command) {
     return {
-      warned: `Dependency audit is automated for npm only; ${lockfile} found — run your manager's audit manually before implementing.`,
+      warned:
+        "No audit command declared in docs/constitution.md — dependency findings are unverified; declare one or run it manually before release.",
     };
   }
-  const lockPath = path.resolve(process.cwd(), lockfile);
-  let mtime = 0;
+  const [binary, ...args] = splitCommand(command);
+  if (!binary) {
+    return {
+      warned:
+        "Audit command in docs/constitution.md is empty — dependency findings are unverified; fix the declaration or run it manually before release.",
+    };
+  }
   try {
-    mtime = statSync(lockPath).mtimeMs;
-  } catch {
-    return {};
-  }
-  const cacheKey = `${lockPath}:${mtime}`;
-  const cached = auditCache.get(cacheKey);
-  if (cached) {
-    return cached.clean ? {} : { blocked: cached.summary };
-  }
-  let result: { blocked?: string; warned?: string } = {};
-  // npm audit exits nonzero when it finds vulnerabilities, so findings arrive
-  // via the exec error's stdout — not via the success path. Only a missing or
-  // unparseable report degrades to a warning.
-  const inspect = (stdout: unknown): void => {
-    const counts =
-      typeof stdout === "string" ? countHighCritical(stdout) : null;
-    if (!counts) {
-      result = {
-        warned:
-          "npm audit produced no parseable report (offline or npm error) — proceeding without automated findings; run it manually before release.",
-      };
-      return;
-    }
-    if (counts.high + counts.critical > 0) {
-      result = {
-        blocked:
-          `npm audit found ${counts.high} high and ${counts.critical} critical vulnerabilities. ` +
-          `Resolve before implementing.`,
-      };
-    }
-    auditCache.set(cacheKey, {
-      clean: !result.blocked,
-      summary: result.blocked ?? "",
+    await execFileAsync(binary, args, {
+      maxBuffer: 10_485_760,
+      timeout: AUDIT_TIMEOUT_MS,
     });
-  };
-  try {
-    const { stdout } = await execFileAsync(
-      "npm",
-      ["audit", "--json", "--audit-level=high"],
-      {
-        maxBuffer: 10_485_760,
-        timeout: AUDIT_TIMEOUT_MS,
-      }
-    );
-    inspect(stdout);
-  } catch (error) {
-    const { stdout } = error as { stdout?: unknown };
-    if (typeof stdout === "string" && stdout) {
-      inspect(stdout);
-    } else {
-      result = {
-        warned:
-          "npm audit could not run (offline or npm error) — proceeding without automated findings; run it manually before release.",
-      };
-    }
+    return {};
+  } catch {
+    return {
+      blocked:
+        `Audit command "${command}" failed — resolve findings or fix the command, ` +
+        `then re-run lpwr-implement.`,
+    };
   }
-  return result;
 };
 
 const securityScan = (plugin: PluginInput): Promise<Hooks> =>

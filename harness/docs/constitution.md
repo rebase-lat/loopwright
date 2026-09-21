@@ -16,6 +16,8 @@ Ubiquitous rules — always true, never re-litigated per spec.
 - The system shall not commit secrets, keys, or credentials to version control.
 - Dependencies shall carry no known critical or high-severity vulnerability at release time.
 
+Audit command: npm audit --audit-level=high
+
 ## Verdict floor
 A spec may be marked "ship" only when:
 - every acceptance criterion sub-ID has a passing test referencing it, and

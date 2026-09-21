@@ -3,7 +3,18 @@
 All notable changes to this project, grouped by git tag. See the commit
 history for per-change detail.
 
-## [Current] — 0.6.0
+## [Current] — 0.6.1
+
+- Improve completeness: full candidate blocks required, no foreign verdicts
+  from other domains.
+- Tasks journals its specify handoff like every other spec artifact write.
+- Scribe confirmations show exact contents with sources and next step;
+  onboard resolves contradictions from ground truth instead of punting
+  alternatives to the human.
+- Stale Phase-5 model TODOs reworded to name the real trigger; propose
+  journal step deduplicated.
+
+## [0.6.0]
 
 - Design review checkpoint: risk-gated ADR co-located in the spec folder,
   with specs-side refusal and `lpwr-spec-link` enforcement.

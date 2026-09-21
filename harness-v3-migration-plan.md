@@ -81,7 +81,7 @@ runs on the read-only `plan` agent instead of a new stateful plugin.
 - [x] `npm run lint`, `npm run fmt:check`, `npm run typecheck` green (dir-scoped globs cover
   renames; md excluded by policy).
 - [x] Cold-start: fresh opencode session from `harness/`, `agent list` shows 7 agents;
-  flat `lpwr-*` commands resolve (same check as the confirmed nested invocation).
+  flat `lpwr-*` command resolution confirmed live by the user (2026-09-21).
 - [x] Root design docs (`harness-layout.md`, `cross-module-connections.md`,
   `implementation-rules.md`) get mechanical reference updates; phase log above stays as
   history. `implementation-guide-v3.md` committed alongside.

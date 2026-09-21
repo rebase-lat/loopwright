@@ -57,6 +57,24 @@ const COMMAND_ARTIFACTS: Record<CommandName, string> = {
 const isCommand = (name: string): name is CommandName =>
   name in COMMAND_INTENTS;
 
+const specDirOf = (specRef: string): string | null => {
+  // Strictly lowercase: the ID scheme is lowercase everywhere, and an uppercase
+  // argument must not journal phantom entries under a second spelling of the ID.
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*-\d+(?:-\d+)?$/u.test(specRef)) {
+    return null;
+  }
+  const parts = specRef.split("-");
+  const last = parts.at(-1) ?? "";
+  const prev = parts.at(-2) ?? "";
+  if (/^\d+$/u.test(last) && /^\d+$/u.test(prev)) {
+    return parts.slice(0, -1).join("-");
+  }
+  if (/^\d+$/u.test(last)) {
+    return specRef;
+  }
+  return null;
+};
+
 const writeHandoff = async (
   intent: string,
   specRef: string,
@@ -118,27 +136,8 @@ const journalHandoff = tool({
   },
 });
 
-const specDirOf = (specRef: string): string | null => {
-  // Strictly lowercase: the ID scheme is lowercase everywhere, and an uppercase
-  // argument must not journal phantom entries under a second spelling of the ID.
-  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*-\d+(?:-\d+)?$/u.test(specRef)) {
-    return null;
-  }
-  const parts = specRef.split("-");
-  const last = parts.at(-1) ?? "";
-  const prev = parts.at(-2) ?? "";
-  if (/^\d+$/u.test(last) && /^\d+$/u.test(prev)) {
-    return parts.slice(0, -1).join("-");
-  }
-  if (/^\d+$/u.test(last)) {
-    return specRef;
-  }
-  return null;
-};
-
 const evidenceLog = (): Promise<Hooks> =>
   Promise.resolve({
-    tool: { journal_handoff: journalHandoff },
     "command.execute.before": async (input) => {
       try {
         const name = input.command.split(/[/:]/u).pop() ?? "";
@@ -155,6 +154,7 @@ const evidenceLog = (): Promise<Hooks> =>
         // Logging must never break the loop.
       }
     },
+    tool: { journal_handoff: journalHandoff },
   });
 
 export default evidenceLog;

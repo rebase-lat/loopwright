@@ -5,13 +5,14 @@ import type { Hooks } from "@opencode-ai/plugin";
 // is observed, not mutated).
 const auditDenials = (): Promise<Hooks> =>
   Promise.resolve({
-    "permission.ask": async (input, output) => {
+    "permission.ask": (input, output) => {
       if (output.status !== "deny") {
-        return;
+        return Promise.resolve();
       }
       console.warn(
         `[permission-denied] ${input.type} "${input.title}" (session ${input.sessionID}).`
       );
+      return Promise.resolve();
     },
   });
 

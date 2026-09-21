@@ -1,7 +1,7 @@
 import { execFile } from "node:child_process";
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
+import path from "node:path";
 import { promisify } from "node:util";
 
 import type { Hooks, PluginInput } from "@opencode-ai/plugin";
@@ -77,12 +77,12 @@ const SPEC_ID = /^[a-z0-9]+(?:-[a-z0-9]+)*-\d+$/u;
 const specCache = new Map<string, string | null>();
 
 const findGitDir = (filePath: string): string | null => {
-  let dir = resolve(process.cwd(), dirname(filePath));
+  let dir = path.resolve(process.cwd(), path.dirname(filePath));
   for (let attempt = 0; attempt < 10; attempt += 1) {
-    if (existsSync(resolve(dir, ".git"))) {
+    if (existsSync(path.resolve(dir, ".git"))) {
       return dir;
     }
-    const parent = dirname(dir);
+    const parent = path.dirname(dir);
     if (parent === dir) {
       return null;
     }
@@ -110,17 +110,17 @@ const branchSpecId = async (gitDir: string): Promise<string | null> => {
   return specId;
 };
 
-const activeSpecId = async (filePath: unknown): Promise<string | null> => {
+const activeSpecId = (filePath: unknown): Promise<string | null> => {
   const explicit = process.env.OPENCODE_SPEC_ID;
   if (explicit) {
-    return explicit;
+    return Promise.resolve(explicit);
   }
   if (typeof filePath !== "string") {
-    return null;
+    return Promise.resolve(null);
   }
   const gitDir = findGitDir(filePath);
   if (!gitDir) {
-    return null;
+    return Promise.resolve(null);
   }
   return branchSpecId(gitDir);
 };

@@ -13,6 +13,7 @@ import type { Hooks } from "@opencode-ai/plugin";
 // this plugin is the canonical backstop. Never throws — a logging
 // failure must not break the loop.
 const COMMAND_INTENTS = {
+  "lpwr-amend": "specify",
   "lpwr-codebase": "govern",
   "lpwr-commit": "retain",
   "lpwr-constitution": "govern",
@@ -36,6 +37,7 @@ const COMMAND_INTENTS = {
 type CommandName = keyof typeof COMMAND_INTENTS;
 
 const COMMAND_ARTIFACTS: Record<CommandName, string> = {
+  "lpwr-amend": "spec.md",
   "lpwr-codebase": "glossary.md",
   "lpwr-commit": "",
   "lpwr-constitution": "constitution.md",

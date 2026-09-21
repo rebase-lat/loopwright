@@ -28,7 +28,11 @@ const firstArgument = (args: string): string | undefined =>
 // A spec sitting in docs/state.md's Blocked section is blocked, even when its
 // own status reads approved — the state file is the cross-spec escalation
 // record, and implement must not route around it. Entries look like
-// `- <id>: <reason>`; matching is by ID prefix so trailing prose is fine.
+// `- <id>: <reason>`; the boundary check keeps `auth-014` from matching
+// `auth-0144`.
+const escapeRegExp = (text: string): string =>
+  text.replaceAll(/[.+^${}()|[\]\\]/gu, "\\$&");
+
 const isStateBlocked = async (specId: string): Promise<boolean> => {
   let state = "";
   try {
@@ -46,7 +50,12 @@ const isStateBlocked = async (specId: string): Promise<boolean> => {
     if (inside && /^##\s+/u.test(line)) {
       break;
     }
-    if (inside && line.trim().startsWith(`- ${specId}`)) {
+    if (
+      inside &&
+      new RegExp(`^- ${escapeRegExp(specId)}(?=[:\\s]|$)`, "u").test(
+        line.trim()
+      )
+    ) {
       return true;
     }
   }

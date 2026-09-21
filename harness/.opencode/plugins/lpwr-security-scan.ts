@@ -178,6 +178,7 @@ const auditDependencies = async (
         maxBuffer: 10_485_760,
         timeout: AUDIT_TIMEOUT_MS,
       });
+      // eslint-disable-next-line no-await-in-loop -- runs are sequential so the trace reads in declaration order
       await appendAuditTrace(specId, command, 0, "");
     } catch (error) {
       const { code, stdout, stderr } = error as {
@@ -187,6 +188,7 @@ const auditDependencies = async (
       };
       const exit = typeof code === "number" ? code : 1;
       const detail = `${stdout ?? ""}${stderr ?? ""}`.slice(-AUDIT_TRACE_CHARS);
+      // eslint-disable-next-line no-await-in-loop -- runs are sequential so the trace reads in declaration order
       await appendAuditTrace(specId, command, exit, detail);
       return {
         warned:

@@ -50,7 +50,9 @@ names the failure it prevents.
 
 14. **Read-only agents (`plan`, `neutral`, `deep-expert`, `applied-judge`, `reviewer`, `scout`)
     get `write: deny` in `opencode.json` — not "instructed not to write."** Config, not prompt
-    discipline, is what makes a role actually read-only.
+    discipline, is what makes a role actually read-only. Leaf roles additionally get
+    `task: deny` — only orchestrators (`plan`, `build`) may invoke subagents, so triage
+    seats can't fan out on their own.
 15. **`build` is the only agent with `write: allow`, and its `bash` permission is `ask`, not
     `allow`.** Shell access stays a checkpoint even for the one agent that's allowed to write.
     Authoring commands (`lpwr-specs`, `lpwr-tasks`, `lpwr-review`, `lpwr-onboard`, `lpwr-amend`)

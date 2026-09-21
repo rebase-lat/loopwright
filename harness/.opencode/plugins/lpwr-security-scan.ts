@@ -1,15 +1,15 @@
 import { execFile } from "node:child_process";
 import { statSync } from "node:fs";
-import { readFile } from "node:fs/promises";
+import { appendFile, mkdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 
 import type { Hooks, PluginInput } from "@opencode-ai/plugin";
 
 // Always-on mechanical floor: secret patterns in touched files block the edit;
-// a dependency audit gates lpwr-implement. Zero overhead for a low-tier doc fix
-// beyond these two checks — nothing proceeds with a hardcoded secret or a
-// known-critical dependency, regardless of tier.
+// a dependency audit traces findings per spec. Secrets block because committing
+// one is irreversible; audit findings warn-and-trace because the human may
+// accept, defer, or fix them at review time.
 //
 // The audit stays language-agnostic: the exact command is declared per project
 // in the constitution (`Audit command:`), never hardcoded here. A nonzero exit
@@ -123,10 +123,40 @@ const splitCommand = (command: string): string[] => {
   return parts;
 };
 
-const auditDependencies = async (): Promise<{
-  blocked?: string;
-  warned?: string;
-}> => {
+const AUDIT_TRACE_CHARS = 4000;
+
+const appendAuditTrace = async (
+  specId: string | undefined,
+  command: string,
+  exit: number,
+  detail: string
+): Promise<void> => {
+  if (!specId) {
+    return;
+  }
+  try {
+    const dir = `docs/specs/${specId}`;
+    await mkdir(dir, { recursive: true });
+    const lines = [
+      `## ${new Date().toISOString()}`,
+      `command: ${command}`,
+      exit === 0 ? "result: clean" : `result: findings (exit ${exit})`,
+    ];
+    if (detail.trim()) {
+      lines.push("```", detail.trim(), "```");
+    }
+    await appendFile(`${dir}/audit.md`, `${lines.join("\n")}\n\n`, "utf-8");
+  } catch {
+    // The trace is best-effort; the console warning above remains.
+  }
+};
+
+const firstArgument = (args: string): string | undefined =>
+  args.trim().split(/\s+/u)[0];
+
+const auditDependencies = async (
+  specId: string | undefined
+): Promise<{ warned?: string }> => {
   const commands = await readAuditCommands();
   if (commands.length === 0) {
     return {
@@ -143,16 +173,26 @@ const auditDependencies = async (): Promise<{
       };
     }
     try {
-      // eslint-disable-next-line no-await-in-loop -- fail fast: no point running later stacks after a block
+      // eslint-disable-next-line no-await-in-loop -- runs are sequential so the trace reads in declaration order
       await execFileAsync(binary, args, {
         maxBuffer: 10_485_760,
         timeout: AUDIT_TIMEOUT_MS,
       });
-    } catch {
+      await appendAuditTrace(specId, command, 0, "");
+    } catch (error) {
+      const { code, stdout, stderr } = error as {
+        code?: string | number;
+        stdout?: unknown;
+        stderr?: unknown;
+      };
+      const exit = typeof code === "number" ? code : 1;
+      const detail = `${stdout ?? ""}${stderr ?? ""}`.slice(-AUDIT_TRACE_CHARS);
+      await appendAuditTrace(specId, command, exit, detail);
       return {
-        blocked:
-          `Audit command "${command}" failed — resolve findings or fix the command, ` +
-          `then re-run lpwr-implement.`,
+        warned:
+          `Audit command "${command}" reported findings — recorded in ` +
+          `docs/specs/${specId ?? "<id>"}/audit.md; review before release, ` +
+          `implement continues.`,
       };
     }
   }
@@ -166,14 +206,10 @@ const securityScan = (plugin: PluginInput): Promise<Hooks> =>
       if (name !== "lpwr-implement") {
         return;
       }
-      const audit = await auditDependencies();
+      const specId = firstArgument(input.arguments);
+      const audit = await auditDependencies(specId);
       if (audit.warned) {
         console.warn(`[security-audit] ${audit.warned}`);
-      }
-      if (audit.blocked) {
-        const message = `Blocked: ${audit.blocked}`;
-        await toastBlocked(plugin, message);
-        throw new Error(message);
       }
     },
     "tool.execute.after": async (input) => {

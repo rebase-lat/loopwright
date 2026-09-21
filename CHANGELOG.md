@@ -3,7 +3,25 @@
 All notable changes to this project, grouped by git tag. See the commit
 history for per-change detail.
 
-## [Current] — 0.5.0
+## [Current] — 0.6.0
+
+- Design review checkpoint: risk-gated ADR co-located in the spec folder,
+  with specs-side refusal and `lpwr-spec-link` enforcement.
+- Explore entry into Specify: observed-basis specs with an accuracy (not
+  desirability) approval gate.
+- Blocked specs refused via `docs/state.md`, with the tool-hook attribution
+  limit documented in conventions.
+- Plugin audit pass: amend journaling, blocked-ID boundary fix, standalone
+  file notes.
+- Case-consistent gates: liberal frontmatter reads, strict lowercase IDs.
+- Guides and design docs moved to root `docs/`; repository standards
+  (gitkeep coverage, editorconfig, gitattributes, node version).
+- Frontmatter values documented across all templates; `audit.md` carries a
+  `spec_ref` header.
+- Constitution ships `draft` until onboard-approved; onboard re-runs refresh
+  without clobbering and treat placeholder content as unapproved.
+
+## [0.5.0]
 
 - Motion narrowed to pin / memory-check / dissent capture — no more
   move/second/scrutiny/vote machinery; proposal template follows the

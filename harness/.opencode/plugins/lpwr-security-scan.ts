@@ -16,7 +16,7 @@ import type { Hooks, PluginInput } from "@opencode-ai/plugin";
 // this plugin enforces.
 const execFileAsync = promisify(execFile);
 
-const SECRET_PATTERNS: Array<[string, RegExp]> = [
+const SECRET_PATTERNS: [string, RegExp][] = [
   ["AWS access key", /AKIA[0-9A-Z]{16}/u],
   ["private key block", /-----BEGIN (?:RSA |EC |DSA |OPENSSH )?PRIVATE KEY-----/u],
   ["GitHub token", /\bghp_[A-Za-z0-9]{36,}/u],
@@ -28,7 +28,7 @@ const SECRET_PATTERNS: Array<[string, RegExp]> = [
 ];
 
 const MAX_SCAN_BYTES = 1024 * 1024;
-const AUDIT_TIMEOUT_MS = 120000;
+const AUDIT_TIMEOUT_MS = 120_000;
 
 const auditCache = new Map<string, { clean: boolean; summary: string }>();
 

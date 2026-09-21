@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { statSync } from "node:fs";
+import { existsSync, statSync } from "node:fs";
 import { appendFile, mkdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
@@ -137,6 +137,10 @@ const appendAuditTrace = async (
   try {
     const dir = `docs/specs/${specId}`;
     await mkdir(dir, { recursive: true });
+    const logPath = `${dir}/audit.md`;
+    if (!existsSync(logPath)) {
+      await appendFile(logPath, `---\nspec_ref: ${specId}\n---\n\n`, "utf-8");
+    }
     const lines = [
       `## ${new Date().toISOString()}`,
       `command: ${command}`,
@@ -145,7 +149,7 @@ const appendAuditTrace = async (
     if (detail.trim()) {
       lines.push("```", detail.trim(), "```");
     }
-    await appendFile(`${dir}/audit.md`, `${lines.join("\n")}\n\n`, "utf-8");
+    await appendFile(logPath, `${lines.join("\n")}\n\n`, "utf-8");
   } catch {
     // The trace is best-effort; the console warning above remains.
   }

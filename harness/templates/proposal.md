@@ -1,6 +1,6 @@
 ---
 id: <domain>-<sequence>
-status: draft
+status: draft   # draft | accepted
 ---
 
 # Proposal: <title>

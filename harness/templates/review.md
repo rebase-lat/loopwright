@@ -1,7 +1,7 @@
 ---
 id: <domain>-<sequence>
 diff_ref: HEAD~<n>..HEAD
-risk_tier: low   # carried over from spec.md
+risk_tier: low   # low | medium | high — carried over from spec.md
 waived: []       # criterion IDs explicitly waived; justify each in Verdict reasoning
 deferred: []     # one `<criterion-id> -> <follow-up spec>` per line; each needs a follow-up
 ---

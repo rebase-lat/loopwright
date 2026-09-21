@@ -98,9 +98,13 @@ const branchSpecId = async (gitDir: string): Promise<string | null> => {
   }
   let specId: string | null = null;
   try {
-    const { stdout } = await execFileAsync("git", ["-C", gitDir, "branch", "--show-current"], {
-      timeout: 5000,
-    });
+    const { stdout } = await execFileAsync(
+      "git",
+      ["-C", gitDir, "branch", "--show-current"],
+      {
+        timeout: 5000,
+      }
+    );
     const branch = stdout.trim();
     specId = SPEC_ID.test(branch) ? branch : null;
   } catch {

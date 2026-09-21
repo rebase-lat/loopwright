@@ -121,7 +121,7 @@ const journalHandoff = tool({
       .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*-\d+(?:-\d+)?$/u),
   },
   description:
-    "Append one validated A2A handoff line to a spec's log.ndjson. Prefer this over hand-writing log lines.",
+    "Append one validated A2A handoff line to a spec's log.ndjson. Prefer this over hand-writing log lines. Set confidence high only with a passing check behind the claim, medium for mechanical observations, low when inferred from adjacent context.",
   execute: async (args) => {
     try {
       const written = await writeHandoff(

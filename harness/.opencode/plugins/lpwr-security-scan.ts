@@ -141,12 +141,12 @@ const auditDependencies = async (): Promise<{ blocked?: string; warned?: string 
   };
   try {
     const { stdout } = await execFileAsync("npm", ["audit", "--json", "--audit-level=high"], {
-      maxBuffer: 10 * 1024 * 1024,
+      maxBuffer: 10_485_760,
       timeout: AUDIT_TIMEOUT_MS,
     });
     inspect(stdout);
   } catch (error) {
-    const stdout = (error as { stdout?: unknown }).stdout;
+    const { stdout } = error as { stdout?: unknown };
     if (typeof stdout === "string" && stdout) {
       inspect(stdout);
     } else {

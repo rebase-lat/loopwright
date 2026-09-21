@@ -30,13 +30,14 @@ const frontmatterValue = (raw: string, key: string): string | null => {
   }
   const line = frontmatter
     .split("\n")
-    .find((candidate) =>
-      candidate.trim().toLowerCase().startsWith(`${key}:`)
-    );
+    .find((candidate) => candidate.trim().toLowerCase().startsWith(`${key}:`));
   if (!line) {
     return null;
   }
-  return line.split(":").slice(1).join(":").split("#")[0].trim().toLowerCase() || null;
+  return (
+    line.split(":").slice(1).join(":").split("#")[0].trim().toLowerCase() ||
+    null
+  );
 };
 
 // Design gate: a spec with design_review: required needs an accepted adr.md

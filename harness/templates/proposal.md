@@ -5,26 +5,20 @@ status: draft
 
 # Proposal: <title>
 
-Derived shape (layout §5 omits full content; this closes the Frame → Specify link).
-
-## Problem
-- <one paragraph, glossary-exact terms>
-
 ## Options considered
-1. <option A> — trade-offs, cost, risk
-2. <option B> — trade-offs, cost, risk
-3. <option C> — trade-offs, cost, risk
+<brief — one line per option triage evaluated, for context only>
 
-## Human pick
-- Selected: <option>
-- Why: <reasoning in one paragraph>
+## Motion
 
-## Motion record
-- Moved: <option + tradeoff takeaways, by deep-expert>
-- Seconded: <yes — testable as stated / fell once, re-moved as ...>
-- Amendments: <none / amended constraints accepted: ...>
-- Vote: <adopted / rejected>
+### Final statement
+<the human's exact selection, verbatim — including any tweak or merge of triaged options>
 
-## Scope for spec
-- In: <what `lpwr-specs` must cover>
-- Out (non-goals): <explicitly excluded>
+### Checked against memory
+- Constitution: <no conflict | flagged: describe>
+- Lessons: <none relevant | flagged: describe, with a pointer to the specific lesson file>
+
+### Dissent
+<none | seat: specific, unresolved concern about the final framing above>
+
+## Next
+Proceeds to lpwr-specs once this proposal is accepted.

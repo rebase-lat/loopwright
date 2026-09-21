@@ -12,7 +12,7 @@ Banned substitutes are enforced, not suggested. `lpwr-specs` must use the exact 
 | Deferred | A criterion ID listed under `deferred:` as `<id> -> <follow-up spec>`, moving it to a follow-up | "postponed", "moved" |
 | Triage | The neutral / deep-expert / applied-judge debate plus ratification motion run by `lpwr-propose`; read-only, never writes `docs/` | "panel", "jury" |
 | Handoff | One intent-tagged A2A line in `log.ndjson` | "ping", "notification" |
-| Motion | The ratification of a picked option (moved, seconded, debated once, amendable, voted) before the traceability ID is assigned | "resolution", "measure" |
+| Motion | The ratification of a picked option: pinned final statement, memory check, dissent capture — never a re-run of triage | "resolution", "measure" |
 | Risk tier | The `low | medium | high` band in `spec.md` frontmatter, human-confirmed, deciding how much review a spec gets | "risk level" |
 | Threat review | The failure-mode analysis required before releasing a `high`-tier spec | "threat model" |
 | Amend | A post-approval change to `spec.md` + `tasks.md` via `lpwr-amend`; voids the review, routes to re-approval | "revise", "tweak" |

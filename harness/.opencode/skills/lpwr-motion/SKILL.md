@@ -1,21 +1,24 @@
 ---
 name: lpwr-motion
-description: Ratify a picked option by parliamentary motion before the traceability ID is assigned. Use after the human picks an option in lpwr-propose.
+description: Ratify a picked option in three steps before the traceability ID is assigned. Use after the human picks an option in lpwr-propose.
 ---
 
 # Motion
 
-Ratification procedure for the tradeoff takeaways. Runs after the human picks an option
-and before the traceability ID is assigned — nothing is filed until the motion is adopted.
+Ratification, not re-evaluation — triage already answered which option is best.
+Motion does three things triage didn't, and only those three. If none surfaces
+anything new, motion is short — that's the expected case, not a sign of
+shallowness. Never re-run triage's evaluation under motion's name.
 
-- Chair (neutral): states the question, rules out-of-scope contributions out of order,
-  records moved / seconded / amendments / vote.
-- Mover (deep expert): moves the picked option with its tradeoff takeaways.
-- Seconder (applied judge): seconds only if the motion is testable as stated. No
-  second → the motion falls and the mover restates it in testable form, once; if the
-  re-move falls too, the pick returns to the human.
-- Debate: one scrutiny round — the seconder interrogates the tradeoffs, the mover responds.
-- Amendment: the seconder may move to amend on testability constraints only; the mover
-  accepts or rejects; the chair restates the motion as amended.
-- Vote: the human adopts or rejects. Adoption assigns the traceability ID and writes the
-  proposal with the full motion record. Rejection returns to the options.
+- Pin the final statement: the human's actual selection, including any tweak or
+  merge of triaged options, as exact literal text. This becomes the proposal's
+  content, not a summary of triage's notes.
+- Check against memory: the final text against `docs/constitution.md`'s floors
+  and `docs/lessons/*` for anything relevant. Triage judged the option on its
+  own merits — not against accumulated constraints or past mistakes. A conflict
+  or a repeated past mistake gets flagged to the human before finalizing;
+  never silently proceed.
+- Capture dissent, if any: ask each triage seat one question only — "does
+  anything about this final framing, as pinned above, still concern you?"
+  Record a dissent only if the answer is yes and specific. Not a restatement
+  of triage's evaluation.

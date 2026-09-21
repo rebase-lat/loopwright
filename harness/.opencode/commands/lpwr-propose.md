@@ -5,9 +5,17 @@ agent: plan
 
 Stage: Frame.
 
-Take the idea in $ARGUMENTS. Invoke a triage of subagents — neutral (plain restatement), deep-expert (domain truth, what should happen), applied-judge (testability, what would convince me) — to analyze and debate the solution.
+1. Draft 2-3 distinct options for the problem at hand.
+2. Run triage: neutral, deep-expert, applied-judge each evaluate the options independently.
+3. Present triage results to the human; human selects one (or a tweak/merge of options).
 
-Present exactly 3 distinct solution patterns with trade-offs to the human. The human picks one option. Then ratify the pick by motion before assigning anything: neutral chairs, deep-expert moves the pick with its tradeoff takeaways, applied-judge seconds only if testable as stated (a fallen motion is re-moved once in testable form; a twice-fallen pick returns to the human), one scrutiny round, amendments on testability, human vote to adopt or reject. Only an adopted motion gets a traceability ID (`<domain>-<sequence>`) — a proposal never exists without an ID; `lpwr-specs` only consumes it. The adopted pick becomes `docs/specs/<id>/proposal.md` (via `templates/proposal.md`) with the full motion record; triage output itself never writes to `docs/`.
+4. Motion (this step — do not re-run triage's evaluation):
+   a. Pin the human's final selection as exact, literal text — this becomes the proposal's content, not a summary of triage's notes.
+   b. Check the final text against `docs/constitution.md`'s floors and `docs/lessons/*` for anything relevant. A conflict or a repeated past mistake gets flagged to the human before finalizing — never silently proceed.
+   c. Ask each triage seat one question only: "does anything about this final framing, as pinned above, still concern you?" Record a dissent only if the answer is yes and specific.
+
+5. Assign the traceability ID (`<domain>-<sequence>`) — a proposal never exists without an ID; `lpwr-specs` only consumes it. Write `docs/specs/<id>/proposal.md` via `templates/proposal.md`.
+6. Call `journal_handoff` with intent `frame`, the spec ID, and artifact `docs/specs/<id>/proposal.md`. The triage debate in steps 2-3 is not logged — only the motion's outcome is.
 
 Required reading first: `docs/glossary.md`, `docs/context.md`, relevant `docs/lessons/*`. Use skills `lpwr-option-triage` and `lpwr-motion`.
 On completion, call `journal_handoff` with intent `frame`, the spec ID, and artifact `docs/specs/<id>/proposal.md`.

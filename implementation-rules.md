@@ -130,3 +130,14 @@ names the failure it prevents.
     actual diff at `lpwr-review` time; `high` requires `threat-review.md` before `lpwr-release`,
     enforced by `lpwr-verdict-gate.ts`.** The scan (`lpwr-security-scan.ts`) runs on every spec
     regardless of tier — proportional review weight, zero exceptions to the floor.
+
+40. **Motion never re-runs triage's evaluation.** If a motion step asks the same three seats the
+    same question they already answered, it's doing triage's job with different packaging —
+    that's the shallowness signal, and the fix is narrowing motion's scope, not deepening it.
+41. **Motion is the one point in Frame that gets logged.** The triage debate that precedes it
+    stays out of `log.ndjson`, per the existing "log handoffs, not internal reasoning" rule —
+    motion is what that rule was missing a concrete anchor for in this domain.
+42. **A motion with nothing to report is the expected case, not an incomplete one.** Don't pad
+    the constitution-check or dissent sections with restated triage reasoning to make the artifact
+    look more thorough — an honest "no conflict, no dissent" is the correct output most of the
+    time.

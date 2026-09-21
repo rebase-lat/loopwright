@@ -160,13 +160,14 @@ const frontmatterValue = (review: string, key: string): string | null => {
   }
   const line = block
     .split("\n")
-    .find((candidate) =>
-      candidate.trim().toLowerCase().startsWith(`${key}:`)
-    );
+    .find((candidate) => candidate.trim().toLowerCase().startsWith(`${key}:`));
   if (!line) {
     return null;
   }
-  return line.split(":").slice(1).join(":").split("#")[0].trim().toLowerCase() || null;
+  return (
+    line.split(":").slice(1).join(":").split("#")[0].trim().toLowerCase() ||
+    null
+  );
 };
 
 // The Security axis must be fully checked — no unchecked boxes allowed.

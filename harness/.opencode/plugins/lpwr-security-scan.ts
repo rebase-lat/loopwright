@@ -18,7 +18,10 @@ const execFileAsync = promisify(execFile);
 
 const SECRET_PATTERNS: [string, RegExp][] = [
   ["AWS access key", /AKIA[0-9A-Z]{16}/u],
-  ["private key block", /-----BEGIN (?:RSA |EC |DSA |OPENSSH )?PRIVATE KEY-----/u],
+  [
+    "private key block",
+    /-----BEGIN (?:RSA |EC |DSA |OPENSSH )?PRIVATE KEY-----/u,
+  ],
   ["GitHub token", /\bghp_[A-Za-z0-9]{36,}/u],
   ["Slack token", /\bxox[baprs]-[A-Za-z0-9-]{10,}/u],
   [
@@ -78,7 +81,9 @@ const findLockfile = (): string | null => {
   return null;
 };
 
-const countHighCritical = (stdout: string): { high: number; critical: number } | null => {
+const countHighCritical = (
+  stdout: string
+): { high: number; critical: number } | null => {
   try {
     const report = JSON.parse(stdout) as {
       metadata?: { vulnerabilities?: { high?: number; critical?: number } };
@@ -92,7 +97,10 @@ const countHighCritical = (stdout: string): { high: number; critical: number } |
   }
 };
 
-const auditDependencies = async (): Promise<{ blocked?: string; warned?: string }> => {
+const auditDependencies = async (): Promise<{
+  blocked?: string;
+  warned?: string;
+}> => {
   const lockfile = findLockfile();
   if (!lockfile) {
     return {};
@@ -119,7 +127,8 @@ const auditDependencies = async (): Promise<{ blocked?: string; warned?: string 
   // via the exec error's stdout — not via the success path. Only a missing or
   // unparseable report degrades to a warning.
   const inspect = (stdout: unknown): void => {
-    const counts = typeof stdout === "string" ? countHighCritical(stdout) : null;
+    const counts =
+      typeof stdout === "string" ? countHighCritical(stdout) : null;
     if (!counts) {
       result = {
         warned:
@@ -140,10 +149,14 @@ const auditDependencies = async (): Promise<{ blocked?: string; warned?: string 
     });
   };
   try {
-    const { stdout } = await execFileAsync("npm", ["audit", "--json", "--audit-level=high"], {
-      maxBuffer: 10_485_760,
-      timeout: AUDIT_TIMEOUT_MS,
-    });
+    const { stdout } = await execFileAsync(
+      "npm",
+      ["audit", "--json", "--audit-level=high"],
+      {
+        maxBuffer: 10_485_760,
+        timeout: AUDIT_TIMEOUT_MS,
+      }
+    );
     inspect(stdout);
   } catch (error) {
     const { stdout } = error as { stdout?: unknown };

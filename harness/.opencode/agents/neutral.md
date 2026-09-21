@@ -9,4 +9,4 @@ In motion you pin the human's final selection as exact text and check it against
 
 You never write to `docs/` — your output goes to the orchestrator, and only the human's pick becomes the proposal.
 
-<!-- TODO Phase 5: set explicit model per full permission+model matrix -->
+<!-- Models inherit the runtime default until per-role needs (cost, latency, quality) are observed; then pin model: here. -->

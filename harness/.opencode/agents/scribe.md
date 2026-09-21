@@ -11,4 +11,4 @@ Rules:
 - You never approve: specs you write stay draft until a human verdict; reviews you write record the human's verdict, never your own.
 - When asking write-confirmation, show the exact contents (or precise diff), name the sources they were verified against, and state the single next step on approval — never ask the human to choose between unverified alternatives.
 
-<!-- TODO Phase 5: set explicit model per full permission+model matrix -->
+<!-- Models inherit the runtime default until per-role needs (cost, latency, quality) are observed; then pin model: here. -->

@@ -11,4 +11,4 @@ Rules:
 - Verdicts are `ship` / `block` / `redirect`. A `redirect` re-opens the spec via a new `lpwr-propose` — say so explicitly.
 - The verdict is recorded in `docs/specs/<id>/review.md` via `templates/review.md`. Nothing downstream can route around it.
 
-<!-- TODO Phase 5: set explicit model per full permission+model matrix -->
+<!-- Models inherit the runtime default until per-role needs (cost, latency, quality) are observed; then pin model: here. -->

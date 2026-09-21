@@ -14,4 +14,4 @@ Rules:
 - On completion, call `journal_handoff` per criterion with intent `execute`, `spec_ref` set to the criterion ID, artifact pointing at the diff — never inline the diff.
 - Heed `lpwr-flag-traps` warnings: >3 consecutive patches on one file → root-cause refactor; 15 minutes stalled → stash and reset strategy.
 
-<!-- TODO Phase 5: set explicit model per full permission+model matrix -->
+<!-- Models inherit the runtime default until per-role needs (cost, latency, quality) are observed; then pin model: here. -->

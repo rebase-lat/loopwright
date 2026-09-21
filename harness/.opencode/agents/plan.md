@@ -13,4 +13,4 @@ Rules:
 - Surface open questions for the human; never assume the answer (assumption trap).
 - Pass artifact pointers (file paths, content hashes), never dump raw histories into context.
 
-<!-- TODO Phase 5: set explicit model per full permission+model matrix -->
+<!-- Models inherit the runtime default until per-role needs (cost, latency, quality) are observed; then pin model: here. -->

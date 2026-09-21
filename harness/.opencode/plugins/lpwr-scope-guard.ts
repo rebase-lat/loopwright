@@ -149,6 +149,15 @@ const toastBlocked = async (
 
 const scopeGuard = (plugin: PluginInput): Promise<Hooks> =>
   Promise.resolve({
+    event: async (input) => {
+      // Branch switches invalidate the branch-derived spec cache. The event
+      // carries no directory, so the whole cache goes — the next edit
+      // re-derives at the cost of one git call. Explicit OPENCODE_SPEC_ID
+      // is unaffected (it never consults the cache).
+      if (input.event.type === "vcs.branch.updated") {
+        specCache.clear();
+      }
+    },
     "tool.execute.before": async (input, output) => {
       if (input.tool !== "edit" && input.tool !== "write") {
         return;

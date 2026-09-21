@@ -151,3 +151,7 @@ names the failure it prevents.
     step.** If it starts re-litigating what Frame's motion already decided, it has drifted into
     Frame's job; its scope is narrower: given what to build, decide the one open technical
     question standing in the way of writing criteria against a stable structure.
+
+45. **`lpwr-explore`'s draft can only be approved on accuracy, never on desirability.** If a
+    reviewer starts editing the draft to describe what the module *should* do instead of what it
+    *does*, that's Frame's job — stop, and route through `lpwr-propose` instead.

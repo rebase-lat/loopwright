@@ -3,11 +3,15 @@ id: <domain>-<sequence>
 status: draft   # draft | approved | superseded
 risk_tier: low   # low | medium | high — human-confirmed
 design_review: none   # none | required — human call
+basis: proposed   # proposed | observed — observed iff drafted from code by lpwr-explore
 supersedes: null
 proposal_ref: docs/specs/<id>/proposal.md
 ---
 
 # Spec: <title>
+
+## Current behavior narrative
+<observed basis only — plain-language explanation of what this module does today, for someone who has never read the code>
 
 ## Ubiquitous
 - <id>-1: The system shall <always-true behavior>.
@@ -25,7 +29,10 @@ proposal_ref: docs/specs/<id>/proposal.md
 - <id>-5: Where <feature> is included, the system shall <behavior>.
 
 ## Non-goals
-- <explicitly out of scope, to prevent scope creep during /implement>
+- <explicitly out of scope, to prevent scope creep during lpwr-implement>
+
+## Open questions
+<observed basis only — ambiguities found: a null check that might be intentional or latent, a path with no caller, a comment contradicting the code>
 
 ## Acceptance criteria → test binding
 | Criterion ID | Test reference (filled by /implement) |

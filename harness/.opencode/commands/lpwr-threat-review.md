@@ -1,5 +1,5 @@
 ---
-description: Threat-model a high-tier change. Runs only on risk_tier high.
+description: Review failure modes for a high-tier change. Runs only on risk_tier high.
 agent: scribe
 ---
 

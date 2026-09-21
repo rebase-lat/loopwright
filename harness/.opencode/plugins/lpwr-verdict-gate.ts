@@ -188,10 +188,10 @@ const securityAxisComplete = (review: string): boolean => {
       continue;
     }
     const trimmed = line.trim();
-    if (/^- \[ \]/.test(trimmed)) {
+    if (trimmed.startsWith("- [ ]")) {
       return false;
     }
-    if (/^- \[[xX]\]/.test(trimmed)) {
+    if (/^- \[[xX]\]/u.test(trimmed)) {
       checked += 1;
     }
   }

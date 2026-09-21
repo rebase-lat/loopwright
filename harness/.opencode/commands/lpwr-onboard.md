@@ -11,4 +11,4 @@ Works on new and existing code the same way: on a fresh repo most sections come 
 
 This command drafts only — the constitution is approved by a human on demand, never here. Afterwards the granular commands (`lpwr-codebase`, `lpwr-domain`, `lpwr-stack`, `lpwr-constitution`) refresh one section each without re-running this pass.
 
-Re-running is a refresh, not a reset: update `docs/context.md` sections in place (bump `last_updated`); if `docs/constitution.md` exists with `status: approved`, do not touch it — report discovered deltas as a `lpwr-propose` candidate instead. Only draft the constitution when it is missing.
+Re-running is a refresh, not a reset: update `docs/context.md` sections in place (bump `last_updated`); if `docs/constitution.md` exists with `status: approved` and no unfilled `<...>` placeholders, do not touch it — report discovered deltas as a `lpwr-propose` candidate instead. Draft or re-draft the constitution when it is missing, still `draft`, or approved-but-placeholder (placeholders mean it was never truly approved). Only a placeholder-free file confirmed by a human becomes `approved`.

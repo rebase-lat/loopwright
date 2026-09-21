@@ -32,5 +32,15 @@ A spec may be marked "ship" only when:
 | --- | --- | --- | --- |
 | <lang> | <tool> | <tool> | <required check name> |
 
+## Localization
+- The system shall externalize all user-facing strings into locale bundles; no hardcoded user-facing text in code.
+- The system shall default to <default locale> and fall back deterministically when a key is missing.
+- Dates, numbers, and currency shall render in the user's locale.
+
+## Business rules (financial)
+- Monetary amounts shall be represented as integer minor units, never floating point.
+- Money calculations shall round <half-even> at <boundary> and record the rounding mode used.
+- Every money movement shall append an immutable audit entry with actor, amount, and reason.
+
 ## Glossary pointer
 See `docs/glossary.md` — banned substitutes are enforced, not suggested.

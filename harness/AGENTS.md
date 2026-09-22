@@ -2,7 +2,7 @@
 
 This file is protocol, not rules. The rules live in `docs/constitution.md`.
 Team conventions (permissions, spawn, toasts, worktrees): `docs/conventions.md`.
-Extended rule checklist: root `docs/implementation-rules.md`.
+Extended rule checklist: `docs/implementation-rules.md`.
 
 1. Every unit of work keys off one spec ID (`<domain>-<sequence>`, e.g. `auth-014`). Worktree name, branch name, `docs/specs/<id>/` folder, commit messages, and `log.ndjson` lines all carry it.
 2. Never start Execute (`lpwr-implement`) without an approved `docs/specs/<id>/spec.md` (`status: approved`).

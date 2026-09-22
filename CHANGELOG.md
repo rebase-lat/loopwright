@@ -3,6 +3,27 @@
 All notable changes to this project, grouped by git tag. See the commit
 history for per-change detail.
 
+## [1.0.0] — 2026-09-22
+
+First stable release.
+
+- Alignment passes across the harness: commands end with a canonical `Output:`
+  line; skills use one skeleton (H1 + intro + bullets, no `Output:`/`$ARGUMENTS`);
+  agents use `## Persona / Permission / Responsibilities / Skills / Limits` with
+  true stage claims; templates stripped of persisting instruction prose and
+  frontmatter-normalized; plugins share `shared.ts` helpers.
+- `lpwr-codebase` removed (sole glossary writer is `lpwr-domain`); orphaned
+  `templates/audit.md` and `harness/docs/standards/` deleted; audit shape
+  owned by `lpwr-security-scan`.
+- Commit gate 2 mechanized (non-retain `log.ndjson` line required);
+  `lpwr-specify` added to the journal hook map; security-scan anchors to
+  `plugin.directory` with spec-ID path validation.
+- Agents renamed off built-in collisions: `build` → `builder`, `plan` →
+  `planner`; `shared.ts` carries a no-op default Plugin export for discovery.
+- Root `docs/` retired: design history removed; `implementation-rules.md` moved
+  to `harness/docs/`; principles essays synthesized into root `PRINCIPLES.md`.
+- MIT `LICENSE` added; `package.json` version 1.0.0.
+
 ## [Current] — 0.7.1
 
 - Waiver tags go inline (`waived:` / `deferred:` single-line values) so they

@@ -1,8 +1,9 @@
 {
   "name": "loopwright",
-  "version": "0.7.1",
+  "version": "1.0.0",
   "private": true,
   "description": "Loopwright harness workspace (agentic workflow for opencode)",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "lint": "oxlint && npm run fmt:check",

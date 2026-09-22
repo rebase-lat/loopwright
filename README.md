@@ -4,6 +4,9 @@ Agentic coding workflow for [opencode](https://opencode.ai): six workflow domain
 Bootstrap stage, wired together by one traceability ID, mechanical gates, and a shared audit
 log. Humans own the verdicts; plugins enforce the boundaries.
 
+Licensed under the [MIT License](LICENSE). Design intent lives in
+[PRINCIPLES.md](PRINCIPLES.md).
+
 ## How it works
 
 Every unit of work keys off one spec ID (`<domain>-<sequence>`, e.g. `auth-014`) that joins
@@ -32,6 +35,10 @@ Run from `harness/` (the live workspace). After any config change, quit + restar
 ```
 loopwright/
 ├── README.md
+├── PRINCIPLES.md               # design intent (resume of the former principles essays)
+├── LICENSE                     # MIT
+├── CHANGELOG.md
+├── package.json                # npm scripts: lint, fmt, fmt:check, typecheck; version 1.0.0
 ├── constitution.md             # this repo's own rules — the committed record (harness ships without one; onboard creates it)
 ├── context.md                  # this repo's own context (same: generated per project by onboard)
 ├── harness/                    # pure boilerplate — no prefilled project info (run opencode from here)
@@ -40,23 +47,13 @@ loopwright/
 │   ├── .opencode/
 │   │   ├── agents/             # 8 role files (builder, planner, scribe, reviewer, triage seats, scout)
 │   │   ├── commands/           # 25 flat lpwr-* commands, each declaring its Stage:
-│   ├── skills/             # 17 lpwr-* procedures (SKILL.md + trigger descriptions)
-│   │   └── plugins/            # 11 lpwr-* plugins (gates, journaling, advisories — auto-discovered;
-│   │                           #   typechecked in this workspace via root tsconfig.json)
-│   ├── docs/                   # glossary + conventions, kept in git; generated foundation files
-│   │                           #   (constitution, context, state.md) are gitignored — recreate via
-│   │                           #   lpwr-install + lpwr-onboard; repo root files above stay canonical
+│   │   ├── skills/             # 17 lpwr-* procedures (SKILL.md + trigger descriptions)
+│   │   └── plugins/            # 12 lpwr-* plugins (gates, journaling, advisories, shared helpers —
+│   │                           #   auto-discovered; typechecked via root tsconfig.json)
+│   ├── docs/                   # glossary + conventions + implementation-rules, kept in git;
+│   │                           #   generated foundation files (constitution, context, state.md)
+│   │                           #   are gitignored — recreate via lpwr-install + lpwr-onboard
 │   └── templates/              # fixed record shapes (spec, review, lesson, …)
-├── docs/                       # guides, rules, plans (design history)
-│   ├── harness-layout.md           # original six-domain layout (v2; command structure
-│   ├── cross-module-connections.md #   superseded by implementation-guide-v3.md —
-│   ├── harness-principles.md       #   banners on file mark what still holds)
-│   ├── implementation-rules.md     # flat build checklist (each rule names its failure)
-│   ├── naming-and-communication-conventions.md
-│   ├── implementation-guide-v3.md  # v3 rationale + prefix policy (inventory tables historical — see banner)
-│   ├── harness-implementation-plan.md  # build log, phases 0–5 (history)
-│   └── harness-v3-migration-plan.md    # v3 migration log, phases A–D (history)
-├── package.json                # npm scripts: lint, fmt, fmt:check, typecheck
 ├── oxlint.config.ts / oxfmt.config.ts  # ultracite presets
 └── tsconfig.json               # strict, covers plugins + configs
 ```

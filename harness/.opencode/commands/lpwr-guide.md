@@ -28,3 +28,5 @@ Walk this decision path over file existence and state, in order, stopping at the
 17. `review.md` lists `deferred:` entries (`<criterion-id> -> <follow-up>`) → suggest `lpwr-propose` for the named follow-up, citing the deferred IDs.
 18. Committed but no lesson filed at `docs/lessons/<date>-<id>.md` → suggest `lpwr-teach` (it drafts; a human or scribe files the lesson).
 19. Everything closed → point at `docs/state.md`'s "Next" section or suggest `lpwr-propose`.
+
+Output: inline one command suggestion; writes nothing.

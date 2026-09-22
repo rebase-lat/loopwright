@@ -1,12 +1,12 @@
 ---
 last_updated: <date>
-updated_by: lpwr-onboard   # or lpwr-codebase / lpwr-domain / lpwr-stack for a partial refresh
+updated_by: lpwr-onboard   # or lpwr-domain / lpwr-stack for a partial refresh
 ---
 
 # Project context
 
 ## Codebase
-<structure, key modules, entry points — what lpwr-codebase maintains>
+<structure, key modules, entry points — refreshed by lpwr-onboard>
 
 ## Domain
 <ubiquitous language, core concepts — what lpwr-domain maintains, feeds glossary.md>

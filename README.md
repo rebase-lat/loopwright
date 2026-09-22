@@ -65,7 +65,7 @@ loopwright/
 | Stage | Commands |
 | --- | --- |
 | Bootstrap | `lpwr-setup`, `lpwr-install` |
-| Govern | `lpwr-onboard`, `lpwr-constitution`, `lpwr-codebase`, `lpwr-domain`, `lpwr-stack` |
+| Govern | `lpwr-onboard`, `lpwr-constitution`, `lpwr-domain`, `lpwr-stack` |
 | Frame | `lpwr-propose`, `lpwr-interview`, `lpwr-research`, `lpwr-improve` |
 | Specify | `lpwr-specify`, `lpwr-specs`, `lpwr-tasks`, `lpwr-amend`, `lpwr-design`, `lpwr-explore` |
 | Execute | `lpwr-implement`, `lpwr-diagnose` |

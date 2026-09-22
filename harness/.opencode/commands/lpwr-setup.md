@@ -1,5 +1,6 @@
 ---
 description: Bootstrap the dev environment — install deps, check env and runtime. Idempotent.
+agent: build
 ---
 
 Stage: Bootstrap.
@@ -15,3 +16,8 @@ Prepare this machine (or fresh clone) so every other `lpwr-*` command works reli
 7. Report each check plainly: name the specific missing binary, package, variable, server, or daemon — never a generic error. If `docs/context.md` or `docs/constitution.md` are missing, point at `lpwr-install` next — and say to re-run `lpwr-setup` after `lpwr-onboard`, because step 6 can only verify `Audit command:` binaries once the constitution declares them.
 
 Idempotent: running twice on a configured machine is a no-op with a confirmation, not an error.
+
+Machine-level output — unkeyed: no `journal_handoff` (never writes under `docs/`).
+
+Output: inline environment check report; writes nothing under docs/.
+Next: lpwr-install (if docs/ foundation missing).

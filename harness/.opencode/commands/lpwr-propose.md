@@ -18,3 +18,6 @@ Stage: Frame.
 6. Call `journal_handoff` with intent `frame`, the spec ID, and artifact `docs/specs/<id>/proposal.md`. The triage debate in steps 2-3 is not logged — only the motion's outcome is.
 
 Required reading first: `docs/glossary.md`, `docs/context.md`, relevant `docs/lessons/*`. Use skills `lpwr-option-triage`, `lpwr-motion`, and `lpwr-context-economy`.
+
+Output: writes `docs/specs/<id>/proposal.md` via templates/proposal.md; journal_handoff frame `docs/specs/<id>/proposal.md`.
+Next: lpwr-specify.

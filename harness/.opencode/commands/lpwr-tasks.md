@@ -5,4 +5,6 @@ agent: scribe
 
 Stage: Specify.
 
-From the approved spec for $ARGUMENTS, fill the Tasks section of `docs/specs/<id>/spec.md`. Use skill `lpwr-task-breakdown`. Call `journal_handoff` with intent `specify`, the spec ID, and artifact `docs/specs/<id>/spec.md`.
+From the approved spec for $ARGUMENTS, write the Tasks section of `docs/specs/<id>/spec.md`. Use skill `lpwr-task-breakdown`. Call `journal_handoff` with intent `specify`, the spec ID, and artifact `docs/specs/<id>/spec.md`.
+
+Output: writes Tasks section of `docs/specs/<id>/spec.md`; journal_handoff specify `docs/specs/<id>/spec.md`.

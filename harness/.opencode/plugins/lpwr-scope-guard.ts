@@ -10,20 +10,37 @@ import type { Hooks, PluginInput } from "@opencode-ai/plugin";
 // The active spec resolves as: explicit OPENCODE_SPEC_ID wins; otherwise the git
 // branch of the edited file's worktree, when it looks like a spec ID (worktrees
 // are named per spec ID, so branch-derived resolution needs no manual exports).
-// Declared surface is the backtick-quoted paths/globs in tasks.md
-// plus the spec's own folder, always allowed.
+// Declared surface is the backtick-quoted paths/globs in spec.md's Tasks
+// section — section-scoped, so backticks elsewhere in the spec (criterion
+// text, examples) never leak into the surface — plus the spec's own folder,
+// always allowed.
 const readDeclaredSurface = async (
-  tasksPath: string,
+  specPath: string,
   specId: string
 ): Promise<string[]> => {
   const surface = [`docs/specs/${specId}/**`];
   let raw: string;
   try {
-    raw = await readFile(tasksPath, "utf-8");
+    raw = await readFile(specPath, "utf-8");
   } catch {
     return surface;
   }
-  for (const match of raw.matchAll(/`(?<path>[^`]+)`/gu)) {
+  const lines = raw.split("\n");
+  let inside = false;
+  let section = "";
+  for (const line of lines) {
+    if (/^##\s+tasks/iu.test(line)) {
+      inside = true;
+      continue;
+    }
+    if (inside && /^##\s+/u.test(line)) {
+      break;
+    }
+    if (inside) {
+      section += `${line}\n`;
+    }
+  }
+  for (const match of section.matchAll(/`(?<path>[^`]+)`/gu)) {
     const entry = match.groups?.path?.trim() ?? "";
     if (entry && !entry.includes("<") && !entry.includes(" ")) {
       surface.push(entry);
@@ -173,13 +190,13 @@ const scopeGuard = (plugin: PluginInput): Promise<Hooks> =>
       const absolute = path.resolve(process.cwd(), output.args.filePath);
       const relative = path.relative(gitDir, absolute).replaceAll("\\", "/");
       const declaredSurface = await readDeclaredSurface(
-        path.join(gitDir, `docs/specs/${specId}/tasks.md`),
+        path.join(gitDir, `docs/specs/${specId}/spec.md`),
         specId
       );
       if (relative.startsWith("..") || !matchesAny(relative, declaredSurface)) {
         const message =
           `Blocked: ${relative} is outside the declared surface for ${specId}. ` +
-          `Update tasks.md first if the declared surface genuinely changed.`;
+          `Update the Tasks section first if the declared surface genuinely changed.`;
         await toastBlocked(plugin, message);
         throw new Error(message);
       }

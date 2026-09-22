@@ -63,7 +63,7 @@ const COMMAND_ARTIFACTS: Record<CommandName, string> = {
   "lpwr-review": "review.md",
   "lpwr-specs": "spec.md",
   "lpwr-stack": "",
-  "lpwr-tasks": "tasks.md",
+  "lpwr-tasks": "spec.md",
   "lpwr-teach": "",
   "lpwr-threat-review": "threat-review.md",
 };

@@ -1,8 +1,8 @@
 ---
-description: Break an approved spec into tasks bound to criterion IDs.
+description: Break approved criteria into the Tasks section. Granular path; full pass is lpwr-specify.
 agent: scribe
 ---
 
 Stage: Specify.
 
-From the approved spec for $ARGUMENTS, write `docs/specs/<id>/tasks.md` via `templates/tasks.md`. Every task binds to its criterion sub-ID(s) (`— satisfies <id>-<n>`); the declared surface (files/globs) is what `lpwr-scope-guard.ts` will later enforce, so list it exactly. Call `journal_handoff` with intent `specify`, the spec ID, and artifact `docs/specs/<id>/tasks.md`.
+From the approved spec for $ARGUMENTS, fill the Tasks section of `docs/specs/<id>/spec.md`. Use skill `lpwr-task-breakdown`. Call `journal_handoff` with intent `specify`, the spec ID, and artifact `docs/specs/<id>/spec.md`.

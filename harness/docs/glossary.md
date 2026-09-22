@@ -7,7 +7,8 @@ Banned substitutes are rejected at `lpwr-specs` time — the draft goes back unt
 | Spec | An approved `docs/specs/<id>/spec.md` file | "requirements doc", "ticket", "PRD" |
 | Verdict | The human decision recorded in review.md | "approval", "sign-off" (too ambiguous — use verdict) |
 | Criterion | One EARS statement with sub-ID `<id>-<n>` | "requirement", "item" |
-| Surface | The file/glob list declared in `tasks.md` for the active spec | "scope" (too ambiguous — use surface) |
+| Surface | The file/glob list declared in the Tasks section for the active spec | "scope" (too ambiguous — use surface) |
+| Tasks | The criterion-bound work list in `spec.md`'s Tasks section; the declared surface lives here | "todo list" |
 | Waived | A criterion ID listed under `waived:` in `review.md` frontmatter, with justification in Verdict reasoning | "dropped", "abandoned" |
 | Deferred | A criterion ID listed under `deferred:` as `<id> -> <follow-up spec>`, moving it to a follow-up | "postponed", "moved" |
 | Triage | The neutral / deep-expert / applied-judge debate plus ratification motion run by `lpwr-propose`; read-only, never writes `docs/` | "panel", "jury" |

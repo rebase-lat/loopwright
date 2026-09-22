@@ -38,8 +38,8 @@ loopwright/
 │   ├── opencode.json           # permission matrix (single source), instructions
 │   ├── .opencode/
 │   │   ├── agents/             # 8 role files (build, plan, scribe, reviewer, triage seats, scout)
-│   │   ├── commands/           # 25 flat lpwr-* commands, each declaring its Stage:
-│   ├── skills/             # 13 lpwr-* procedures (SKILL.md + trigger descriptions)
+│   │   ├── commands/           # 26 flat lpwr-* commands, each declaring its Stage:
+│   ├── skills/             # 15 lpwr-* procedures (SKILL.md + trigger descriptions)
 │   │   └── plugins/            # 11 lpwr-* plugins (gates, journaling, advisories — auto-discovered;
 │   │                           #   typechecked in this workspace via root tsconfig.json)
 │   ├── docs/                   # glossary + conventions, kept in git; generated foundation files
@@ -67,7 +67,7 @@ loopwright/
 | Bootstrap | `lpwr-setup`, `lpwr-install` |
 | Govern | `lpwr-onboard`, `lpwr-constitution`, `lpwr-codebase`, `lpwr-domain`, `lpwr-stack` |
 | Frame | `lpwr-propose`, `lpwr-interview`, `lpwr-research`, `lpwr-improve` |
-| Specify | `lpwr-specs`, `lpwr-tasks`, `lpwr-amend`, `lpwr-design`, `lpwr-explore` |
+| Specify | `lpwr-specify`, `lpwr-specs`, `lpwr-tasks`, `lpwr-amend`, `lpwr-design`, `lpwr-explore` |
 | Execute | `lpwr-implement`, `lpwr-diagnose` |
 | Verify | `lpwr-review`, `lpwr-goal`, `lpwr-release`, `lpwr-threat-review` (high tier only) |
 | Retain | `lpwr-commit`, `lpwr-teach` |

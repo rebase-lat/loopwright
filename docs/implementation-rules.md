@@ -172,6 +172,12 @@ names the failure it prevents.
     reviewer starts editing the draft to describe what the module *should* do instead of what it
     *does*, that's Frame's job — stop, and route through `lpwr-propose` instead.
 
+46. **Full-pass commands coexist with granular ones; tasks live in `spec.md`.** `lpwr-specify`
+    runs criteria, design, and tasks in one run while `lpwr-specs` / `lpwr-tasks` / `lpwr-design`
+    cover partial states — same pattern as `lpwr-onboard` versus its granular Govern commands.
+    Criterion-to-task binding and the declared surface live in the Tasks section, not a
+    separate file, so neither can drift from the other.
+
 46. **Install materializes, setup prepares, onboard fills.** `lpwr-install` copies templates to
     missing `docs/` files without overwriting; `lpwr-setup` makes the machine ready; only
     `lpwr-onboard` writes project truth. No domain command runs without `docs/context.md` and

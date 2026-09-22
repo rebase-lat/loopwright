@@ -52,9 +52,9 @@ feature spec — Govern doesn't get a side channel.
 
 | | |
 | --- | --- |
-| **Owns** | `/specs`, `/tasks` — agent: `plan` (read-only) |
+| **Owns** | `/specify` (full pass), `/specs`, `/tasks`, `/amend`, `/design`, `/explore` — agent: `scribe` (writes) |
 | **Reads** | `proposal.md` (Frame), `constitution.md` + `glossary.md` (Govern) |
-| **Writes** | `docs/specs/<id>/spec.md`, `docs/specs/<id>/tasks.md` |
+| **Writes** | `docs/specs/<id>/spec.md` (criteria + Tasks section), `docs/specs/<id>/adr.md` (when required) |
 | **Consumed by** | **Execute** (`/implement` reads both), **Verify** (`/review` and `/goal` read `spec.md`'s acceptance table) |
 
 **Links out:**
@@ -72,12 +72,12 @@ feature spec — Govern doesn't get a side channel.
 | | |
 | --- | --- |
 | **Owns** | `/implement`, `/diagnose` — agent: `build` (write + scoped shell) |
-| **Reads** | `spec.md`, `tasks.md` (Specify); `stack.md` (Govern) |
+| **Reads** | `spec.md` incl. its Tasks section (Specify); stack section of `context.md` (Govern) |
 | **Writes** | diff, run log, fills the test-reference column in `spec.md`'s acceptance table, appends `intent: execute` lines to `log.ndjson` |
 | **Consumed by** | **Verify** (`/review` reads the diff + the now-filled acceptance table) |
 
 **Links out:**
-- `scope-guard.ts` reads `tasks.md` to compute the declared surface — a plugin, not a person,
+- `scope-guard.ts` reads the Tasks section to compute the declared surface — a plugin, not a person,
   enforces the Specify → Execute boundary.
 - `flag-traps.ts` watches Execute's own edit stream (patch count, elapsed time) and warns inline;
   it doesn't write to any domain's artifact, it's advisory console output only.

@@ -38,3 +38,13 @@ proposal_ref: docs/specs/<id>/proposal.md
 | Criterion ID | Test reference (filled by lpwr-implement) |
 | --- | --- |
 | <id>-1 |  |
+
+## Tasks
+1. [ ] <task> — satisfies <id>-1
+2. [ ] <task> — satisfies <id>-2, <id>-4
+3. [ ] <task> — satisfies <id>-3
+
+Every task binds to its criterion sub-ID(s); the declared surface (files/globs below) is what `lpwr-scope-guard.ts` enforces, so list it exactly.
+
+### Declared surface
+- `path/or/glob` per line — the only files `lpwr-implement` may touch

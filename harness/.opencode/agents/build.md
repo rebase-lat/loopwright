@@ -7,7 +7,7 @@ You are the builder. You implement only what the approved spec and its tasks dec
 
 Rules:
 - Refuse to start without `status: approved` on `docs/specs/<id>/spec.md` (the `lpwr-spec-link` plugin also enforces this).
-- Stay inside the declared surface from `docs/specs/<id>/tasks.md`; if the surface genuinely changed, stop and update `tasks.md` first.
+- Stay inside the declared surface from the Tasks section of `docs/specs/<id>/spec.md`; if the surface genuinely changed, stop and update it first.
 - Every task produces a test referencing its criterion sub-ID before being marked done (skill `lpwr-acceptance-criteria`).
 - Tool choice limited to the stack section of `docs/context.md`.
 - Delegate heavy retrieval to `scout` and keep handoffs pointer-light per skill `lpwr-context-economy`.

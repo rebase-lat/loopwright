@@ -3,7 +3,14 @@
 All notable changes to this project, grouped by git tag. See the commit
 history for per-change detail.
 
-## [Current] — 0.7.0
+## [Current] — 0.7.1
+
+- Waiver tags go inline (`waived:` / `deferred:` single-line values) so they
+  no longer scan as pending tasks; empty markers (`none`, `[]`) and the
+  legacy list form both validate.
+- Lifecycle status unified on `approved` across proposal, spec, and ADR.
+
+## [0.7.0]
 
 - Verdict gate hardened: Verdict section parsed with exactly-one-of
   Ship/Block/Redirect required, placeholder test references rejected,

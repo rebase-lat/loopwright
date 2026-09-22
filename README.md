@@ -39,7 +39,7 @@ loopwright/
 │   ├── .opencode/
 │   │   ├── agents/             # 8 role files (build, plan, scribe, reviewer, triage seats, scout)
 │   │   ├── commands/           # 26 flat lpwr-* commands, each declaring its Stage:
-│   ├── skills/             # 15 lpwr-* procedures (SKILL.md + trigger descriptions)
+│   ├── skills/             # 17 lpwr-* procedures (SKILL.md + trigger descriptions)
 │   │   └── plugins/            # 11 lpwr-* plugins (gates, journaling, advisories — auto-discovered;
 │   │                           #   typechecked in this workspace via root tsconfig.json)
 │   ├── docs/                   # glossary + conventions, kept in git; generated foundation files

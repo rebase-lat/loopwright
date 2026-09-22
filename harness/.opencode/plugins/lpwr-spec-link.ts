@@ -44,7 +44,7 @@ const frontmatterValue = (raw: string, key: string): string | null => {
   );
 };
 
-// Design gate: a spec with design_review: required needs an accepted adr.md
+// Design gate: a spec with design_review: required needs an approved adr.md
 // before implement runs — same defense-in-depth shape as the threat-review
 // gate on release. Reads the already-loaded spec text plus the ADR file.
 const designReviewOpen = async (
@@ -65,7 +65,7 @@ const designReviewOpen = async (
   } catch {
     return true;
   }
-  return frontmatterValue(adr, "status") !== "accepted";
+  return frontmatterValue(adr, "status") !== "approved";
 };
 
 const firstArgument = (args: string): string | undefined =>
@@ -170,7 +170,7 @@ const specLink = (plugin: PluginInput): Promise<Hooks> => {
       }
       if (await designReviewOpen(specId, raw, root)) {
         const message =
-          `Blocked: spec ${specId} requires design review with no accepted adr.md — ` +
+          `Blocked: spec ${specId} requires design review with no approved adr.md — ` +
           `run lpwr-design first.`;
         await toastBlocked(plugin, message);
         throw new Error(message);

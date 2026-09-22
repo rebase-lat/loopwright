@@ -1,6 +1,6 @@
 ---
 id: <domain>-<sequence>
-status: draft   # draft | accepted
+status: draft   # draft | approved
 ---
 
 # Proposal: <title>
@@ -21,4 +21,4 @@ status: draft   # draft | accepted
 <none | seat: specific, unresolved concern about the final framing above>
 
 ## Next
-Proceeds to lpwr-specs once this proposal is accepted.
+Proceeds to lpwr-specs once this proposal is approved.

@@ -2,7 +2,7 @@
 id: <domain>-<sequence>
 spec_ref: docs/specs/<id>/spec.md
 date: <date>
-status: proposed   # proposed | accepted | superseded
+status: draft   # draft | approved | superseded
 ---
 
 # ADR: <title>

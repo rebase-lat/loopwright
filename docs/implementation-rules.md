@@ -155,3 +155,9 @@ names the failure it prevents.
 45. **`lpwr-explore`'s draft can only be approved on accuracy, never on desirability.** If a
     reviewer starts editing the draft to describe what the module *should* do instead of what it
     *does*, that's Frame's job — stop, and route through `lpwr-propose` instead.
+
+46. **Install materializes, setup prepares, onboard fills.** `lpwr-install` copies templates to
+    missing `docs/` files without overwriting; `lpwr-setup` makes the machine ready; only
+    `lpwr-onboard` writes project truth. No domain command runs without `docs/context.md` and
+    `docs/constitution.md` — enforced by `lpwr-guard-bootstrap.ts`, with `lpwr-setup`,
+    `lpwr-onboard`, `lpwr-guide`, and `lpwr-install` itself exempt.

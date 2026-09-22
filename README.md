@@ -20,9 +20,10 @@ Review weight scales by human-confirmed risk tier; high-tier specs need a threat
 Run from `harness/` (the live workspace). After any config change, quit + restart opencode.
 
 1. `lpwr-setup` — install deps, check env and runtime (idempotent, machine-level).
-2. `lpwr-onboard` — guided pass producing `docs/context.md` + a drafted constitution.
-3. `lpwr-guide` — read-only "what's next" helper; callable any time, from anywhere.
-4. `lpwr-propose` → `lpwr-specs` → `lpwr-tasks` → `lpwr-implement` → `lpwr-review` →
+2. `lpwr-install` — materialize `docs/` files from templates (missing only, never overwrite).
+3. `lpwr-onboard` — guided pass producing `docs/context.md` + a drafted constitution.
+4. `lpwr-guide` — read-only "what's next" helper; callable any time, from anywhere.
+5. `lpwr-propose` → `lpwr-specs` → `lpwr-tasks` → `lpwr-implement` → `lpwr-review` →
    `lpwr-commit` → `lpwr-teach` — the idea-to-lesson spine.
 
 ## Repo layout
@@ -37,7 +38,7 @@ loopwright/
 │   ├── opencode.json           # permission matrix (single source), instructions
 │   ├── .opencode/
 │   │   ├── agents/             # 8 role files (build, plan, scribe, reviewer, triage seats, scout)
-│   │   ├── commands/           # 24 flat lpwr-* commands, each declaring its Stage:
+│   │   ├── commands/           # 25 flat lpwr-* commands, each declaring its Stage:
 │   ├── skills/             # 13 lpwr-* procedures (SKILL.md + trigger descriptions)
 │   │   └── plugins/            # 10 lpwr-* plugins (gates, journaling, advisories — auto-discovered, typechecked)
 │   ├── docs/                   # glossary, conventions + generated docs (constitution, context, state.md appear on first onboard/commit)
@@ -60,7 +61,7 @@ loopwright/
 
 | Stage | Commands |
 | --- | --- |
-| Bootstrap | `lpwr-setup` |
+| Bootstrap | `lpwr-setup`, `lpwr-install` |
 | Govern | `lpwr-onboard`, `lpwr-constitution`, `lpwr-codebase`, `lpwr-domain`, `lpwr-stack` |
 | Frame | `lpwr-propose`, `lpwr-interview`, `lpwr-research`, `lpwr-improve` |
 | Specify | `lpwr-specs`, `lpwr-tasks`, `lpwr-amend`, `lpwr-design`, `lpwr-explore` |

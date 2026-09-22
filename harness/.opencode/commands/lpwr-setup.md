@@ -12,6 +12,6 @@ Prepare this machine (or fresh clone) so every other `lpwr-*` command works reli
 4. Verify configured MCP servers: list them (`opencode mcp list`), and for each local server check its command binary exists, for each remote server check its required env vars are set (prompt for missing secrets — never write them to a tracked file). A project with no MCP servers skips this step with a confirmation.
 5. If the repo signals container need (`Dockerfile`, `compose.yaml`/`compose.yml`/`docker-compose.yml`, `docker/` dir), verify docker is present (`docker --version`) and the daemon answers (`docker info`). No signals → skip with a confirmation.
 6. Verify each `Audit command:` binary declared in `docs/constitution.md` resolves on PATH — a missing audit tool fails naming the binary.
-7. Report each check plainly: name the specific missing binary, package, variable, server, or daemon — never a generic error.
+7. Report each check plainly: name the specific missing binary, package, variable, server, or daemon — never a generic error. If `docs/context.md` or `docs/constitution.md` are missing, point at `lpwr-install` next.
 
 Idempotent: running twice on a configured machine is a no-op with a confirmation, not an error.

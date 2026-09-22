@@ -1,6 +1,6 @@
 ---
 description: Survey the codebase for deepening opportunities, never code.
-agent: plan
+agent: planner
 ---
 
 Stage: Frame.

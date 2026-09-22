@@ -1,6 +1,6 @@
 ---
 description: Build approved tasks against the spec, with tests per criterion.
-agent: build
+agent: builder
 ---
 
 Stage: Execute.

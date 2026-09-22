@@ -5,13 +5,13 @@
   // default. Pin per-agent models here when the team standardizes on providers.
   // Permissions matrix is defined HERE (single source of truth); agent .md
   // files carry role prompts only and must not duplicate permission blocks.
-  "default_agent": "build",
+  "default_agent": "builder",
   "permission": {},
   "agent": {
-    "build": {
+    "builder": {
       "permission": { "edit": "allow", "bash": "ask", "webfetch": "deny" }
     },
-    "plan": {
+    "planner": {
       "permission": { "edit": "deny", "bash": "deny", "webfetch": "allow" }
     },
     "neutral": {

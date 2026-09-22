@@ -1,6 +1,6 @@
 ---
 description: Phased diagnosis of a hard bug — repro, ranked hypotheses, fix plan (no patch).
-agent: build
+agent: builder
 ---
 
 Stage: Execute.

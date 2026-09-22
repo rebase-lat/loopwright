@@ -1,6 +1,6 @@
 ---
 description: Group the diff into spec-tagged commits, update state and lesson.
-agent: build
+agent: builder
 ---
 
 Stage: Retain.

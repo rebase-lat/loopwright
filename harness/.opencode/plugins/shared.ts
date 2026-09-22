@@ -1,7 +1,11 @@
-import type { PluginInput } from "@opencode-ai/plugin";
+import type { Plugin, PluginInput } from "@opencode-ai/plugin";
 
-// Shared helpers for lpwr-* plugins. Named exports only — not a plugin entry
-// (no default export), so the auto-discoverer skips this file.
+// Shared helpers for lpwr-* plugins. Named exports carry the logic; the default
+// export is a no-op Plugin so auto-discovery in plugins/ loads this file safely.
+
+const noopPlugin = (): Promise<Record<string, never>> => Promise.resolve({});
+
+export default noopPlugin satisfies Plugin;
 
 // Branch/command-arg spec ID: single sequence suffix (auth-014).
 export const SPEC_ID = /^[a-z0-9]+(?:-[a-z0-9]+)*-\d+$/u;

@@ -1,6 +1,6 @@
 ---
 description: Bootstrap the dev environment — install deps, check env and runtime. Idempotent.
-agent: build
+agent: builder
 ---
 
 Stage: Bootstrap.

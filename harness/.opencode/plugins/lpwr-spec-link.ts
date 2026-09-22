@@ -1,4 +1,5 @@
 import { readFile } from "node:fs/promises";
+import path from "node:path";
 
 import type { Hooks, PluginInput } from "@opencode-ai/plugin";
 
@@ -6,9 +7,12 @@ import type { Hooks, PluginInput } from "@opencode-ai/plugin";
 // The spec id is the first token of the command arguments string.
 // Frontmatter is parsed for a `status: approved` line (inline `#`
 // comments stripped) instead of prefix-matching, so field order
-// in spec.md never matters.
+// in spec.md never matters. CRLF is normalized first so the
+// `^---\n` fences hold on Windows-authored files.
+const normalizeEol = (raw: string): string => raw.replaceAll("\r\n", "\n");
+
 const frontmatterStatus = (raw: string): string | null => {
-  const match = raw.match(/^---\n(?<frontmatter>[\s\S]*?)\n---/u);
+  const match = normalizeEol(raw).match(/^---\n(?<frontmatter>[\s\S]*?)\n---/u);
   const frontmatter = match?.groups?.frontmatter;
   if (!frontmatter) {
     return null;
@@ -23,7 +27,7 @@ const frontmatterStatus = (raw: string): string | null => {
 };
 
 const frontmatterValue = (raw: string, key: string): string | null => {
-  const match = raw.match(/^---\n(?<frontmatter>[\s\S]*?)\n---/u);
+  const match = normalizeEol(raw).match(/^---\n(?<frontmatter>[\s\S]*?)\n---/u);
   const frontmatter = match?.groups?.frontmatter;
   if (!frontmatter) {
     return null;
@@ -45,7 +49,8 @@ const frontmatterValue = (raw: string, key: string): string | null => {
 // gate on release. Reads the already-loaded spec text plus the ADR file.
 const designReviewOpen = async (
   specId: string,
-  specRaw: string
+  specRaw: string,
+  root: string
 ): Promise<boolean> => {
   const tier = frontmatterValue(specRaw, "design_review");
   if (tier !== "required") {
@@ -53,7 +58,10 @@ const designReviewOpen = async (
   }
   let adr = "";
   try {
-    adr = await readFile(`docs/specs/${specId}/adr.md`, "utf-8");
+    adr = await readFile(
+      path.join(root, `docs/specs/${specId}/adr.md`),
+      "utf-8"
+    );
   } catch {
     return true;
   }
@@ -71,10 +79,13 @@ const firstArgument = (args: string): string | undefined =>
 const escapeRegExp = (text: string): string =>
   text.replaceAll(/[.+^${}()|[\]\\]/gu, "\\$&");
 
-const isStateBlocked = async (specId: string): Promise<boolean> => {
+const isStateBlocked = async (
+  specId: string,
+  root: string
+): Promise<boolean> => {
   let state = "";
   try {
-    state = await readFile("docs/state.md", "utf-8");
+    state = await readFile(path.join(root, "docs/state.md"), "utf-8");
   } catch {
     return false;
   }
@@ -118,8 +129,11 @@ const toastBlocked = async (
   }
 };
 
-const specLink = (plugin: PluginInput): Promise<Hooks> =>
-  Promise.resolve({
+const specLink = (plugin: PluginInput): Promise<Hooks> => {
+  // All reads anchor to the plugin's own directory — cwd may be a subdirectory
+  // or another worktree entirely.
+  const root = plugin.directory;
+  return Promise.resolve({
     "command.execute.before": async (input) => {
       const name = input.command.split(/[/:]/u).pop() ?? "";
       if (name !== "lpwr-implement") {
@@ -133,7 +147,10 @@ const specLink = (plugin: PluginInput): Promise<Hooks> =>
       }
       let raw: string;
       try {
-        raw = await readFile(`docs/specs/${specId}/spec.md`, "utf-8");
+        raw = await readFile(
+          path.join(root, `docs/specs/${specId}/spec.md`),
+          "utf-8"
+        );
       } catch {
         const message = `Blocked: spec ${specId} not found at docs/specs/${specId}/spec.md.`;
         await toastBlocked(plugin, message);
@@ -144,14 +161,14 @@ const specLink = (plugin: PluginInput): Promise<Hooks> =>
         await toastBlocked(plugin, message);
         throw new Error(message);
       }
-      if (await isStateBlocked(specId)) {
+      if (await isStateBlocked(specId, root)) {
         const message =
           `Blocked: spec ${specId} sits in docs/state.md's Blocked section — ` +
           `resolve the escalation before implementing.`;
         await toastBlocked(plugin, message);
         throw new Error(message);
       }
-      if (await designReviewOpen(specId, raw)) {
+      if (await designReviewOpen(specId, raw, root)) {
         const message =
           `Blocked: spec ${specId} requires design review with no accepted adr.md — ` +
           `run lpwr-design first.`;
@@ -160,5 +177,6 @@ const specLink = (plugin: PluginInput): Promise<Hooks> =>
       }
     },
   });
+};
 
 export default specLink;

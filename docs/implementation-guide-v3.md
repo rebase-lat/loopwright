@@ -1,5 +1,11 @@
 # Loopwright — Implementation Guide (v3)
 
+> **Historical.** The inventory tables below (stage/command table, directory layout, agent and
+> skill lists) snapshot the pre-0.4/0.5 state and are kept for design history — the
+> authoritative set lives in `.opencode/commands/`, `.opencode/agents/`, `templates/`, and the
+> root `README.md`. What still holds: the rationale in §1, the prefix policy in §4, and rules
+> 33–37 (now numbered into `implementation-rules.md`).
+
 Supersedes the command directory structure in the earlier harness layout document (the nested
 `commands/<domain>/` path and its `/domain:command` invocation are dropped in favor of a flat,
 prefixed command set, closer to OpenSpec's `opsx-*` convention). Everything else previously
@@ -258,6 +264,8 @@ updated_by: lpwr-onboard   # or lpwr-codebase / lpwr-domain / lpwr-stack for a p
 ---
 
 ## 7. Rule additions (extends the earlier implementation rules and naming conventions)
+
+> Rules 33–37 now live in `implementation-rules.md`, which owns the single numbered sequence.
 
 33. **`lpwr-setup` never writes under `docs/` and never gets a spec ID.** It configures a
     machine, not a project — keep it entirely outside the traceability scheme.

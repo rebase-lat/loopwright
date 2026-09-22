@@ -1,4 +1,9 @@
 node_modules/
+# Generated workspace foundation — harness/ stays pure boilerplate; regenerate
+# via lpwr-install + lpwr-onboard from harness/ (committed record lives at repo root)
+harness/docs/constitution.md
+harness/docs/context.md
+harness/docs/state.md
 # Secrets — never commit (constitution security floors)
 .env
 .env.*

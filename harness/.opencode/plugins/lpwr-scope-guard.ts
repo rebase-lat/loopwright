@@ -114,19 +114,18 @@ const branchSpecId = async (gitDir: string): Promise<string | null> => {
   return specId;
 };
 
-const activeSpecId = (filePath: unknown): Promise<string | null> => {
-  const explicit = process.env.OPENCODE_SPEC_ID;
-  if (explicit) {
-    return Promise.resolve(explicit);
-  }
+const activeSpec = async (
+  filePath: unknown
+): Promise<{ gitDir: string; specId: string } | null> => {
   if (typeof filePath !== "string") {
-    return Promise.resolve(null);
+    return null;
   }
   const gitDir = findGitDir(filePath);
   if (!gitDir) {
-    return Promise.resolve(null);
+    return null;
   }
-  return branchSpecId(gitDir);
+  const specId = process.env.OPENCODE_SPEC_ID ?? (await branchSpecId(gitDir));
+  return specId ? { gitDir, specId } : null;
 };
 
 // Every blockage raises a TUI toast with the same actionable message as the
@@ -163,18 +162,23 @@ const scopeGuard = (plugin: PluginInput): Promise<Hooks> =>
       if (input.tool !== "edit" && input.tool !== "write") {
         return;
       }
-      const specId = await activeSpecId(output.args.filePath);
+      const resolved = await activeSpec(output.args.filePath);
       // No active spec means nothing to guard.
-      if (!specId) {
+      if (!resolved) {
         return;
       }
+      const { gitDir, specId } = resolved;
+      // Match in repo-relative terms so absolute or `../` paths from other
+      // worktrees can't slip past (or falsely trip) the declared surface.
+      const absolute = path.resolve(process.cwd(), output.args.filePath);
+      const relative = path.relative(gitDir, absolute).replaceAll("\\", "/");
       const declaredSurface = await readDeclaredSurface(
-        `docs/specs/${specId}/tasks.md`,
+        path.join(gitDir, `docs/specs/${specId}/tasks.md`),
         specId
       );
-      if (!matchesAny(output.args.filePath, declaredSurface)) {
+      if (relative.startsWith("..") || !matchesAny(relative, declaredSurface)) {
         const message =
-          `Blocked: ${output.args.filePath} is outside the declared surface for ${specId}. ` +
+          `Blocked: ${relative} is outside the declared surface for ${specId}. ` +
           `Update tasks.md first if the declared surface genuinely changed.`;
         await toastBlocked(plugin, message);
         throw new Error(message);

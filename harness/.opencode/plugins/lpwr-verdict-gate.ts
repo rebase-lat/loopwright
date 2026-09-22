@@ -1,23 +1,32 @@
-import { existsSync } from "node:fs";
+import { execFile } from "node:child_process";
 import { readFile } from "node:fs/promises";
+import path from "node:path";
+import { promisify } from "node:util";
 
 import type { Hooks, PluginInput } from "@opencode-ai/plugin";
 
-// Mechanical verdict floor (rules 5/7): /lpwr-commit and /lpwr-release cannot run
-// without a recorded "ship" whose acceptance table is complete — unless incomplete
-// rows are explicitly waived or deferred in the review frontmatter. A prompt sentence
-// ("no ship, no commit") is a request an agent can miss under pressure; this plugin
-// is the gate that holds whether or not the agent cooperates. Checked before the
-// first tool call, not after.
+// Mechanical verdict floor (implementation-rules 5/7): /lpwr-commit, /lpwr-release, and a
+// raw `git commit` on a spec-shaped branch cannot run without a recorded "ship" whose
+// acceptance table is complete — unless incomplete rows are explicitly waived or deferred
+// in the review frontmatter. A prompt sentence ("no ship, no commit") is a request an agent
+// can miss under pressure; this plugin is the gate that holds whether or not the agent
+// cooperates. Checked before the first tool call, not after. lpwr-amend additionally
+// refuses post-ship edits (state Done or a matching commit subject) — amend is pre-commit
+// only (implementation-rules 38).
+const execFileAsync = promisify(execFile);
+
+const SPEC_ID = /^[a-z0-9]+(?:-[a-z0-9]+)*-\d+$/u;
+
 const firstArgument = (args: string): string | undefined =>
   args.trim().split(/\s+/u)[0];
 
-const shipClaimed = (review: string): boolean => /\[x\] *ship/giu.test(review);
+const normalizeEol = (raw: string): string => raw.replaceAll("\r\n", "\n");
 
-const frontmatterBlock = (review: string): string | null => {
-  const match = review.match(/^---\n(?<frontmatter>[\s\S]*?)\n---/u);
-  return match?.groups?.frontmatter ?? null;
-};
+const escapeRegExp = (text: string): string =>
+  text.replaceAll(/[.+^${}()|[\]\\]/gu, "\\$&");
+
+const readFileAt = async (root: string, relative: string): Promise<string> =>
+  normalizeEol(await readFile(path.join(root, relative), "utf-8"));
 
 // Line-based frontmatter list reader: handles `key: value`, `key: [a, b]`,
 // and `- item` lists. Stops at the next key, a blank-line boundary, or `---`.
@@ -95,6 +104,14 @@ const rowCells = (row: string): string[] => {
   return parts.filter((_cell, index) => index > 0 && index < parts.length - 1);
 };
 
+const isPlaceholderRef = (ref: string): boolean =>
+  /^\s*<.*>\s*$/u.test(ref) || /^\s*\(pending\)\s*$/iu.test(ref);
+
+const frontmatterBlock = (review: string): string | null => {
+  const match = review.match(/^---\n(?<frontmatter>[\s\S]*?)\n---/u);
+  return match?.groups?.frontmatter ?? null;
+};
+
 const tableComplete = (review: string): { ok: boolean; reason?: string } => {
   const block = frontmatterBlock(review);
   const waived = block ? parseWaived(block) : new Set<string>();
@@ -120,6 +137,12 @@ const tableComplete = (review: string): { ok: boolean; reason?: string } => {
       };
     }
     seen.add(criterion);
+    if (testRef && isPlaceholderRef(testRef)) {
+      return {
+        ok: false,
+        reason: `criterion ${criterion} cites a placeholder test reference: ${testRef.trim()}`,
+      };
+    }
     if (pass && /^yes$/iu.test(pass) && testRef) {
       continue;
     }
@@ -170,6 +193,73 @@ const frontmatterValue = (review: string, key: string): string | null => {
   );
 };
 
+// Checked boxes in a document's "## Verdict" section, in order of appearance.
+// Templates put all options on one line (`- [ ] Ship  [ ] Block  [ ] Redirect`),
+// so every box in the section is scanned — prose outside the section never counts.
+const verdictChecked = (
+  document: string,
+  labels: readonly string[]
+): { present: boolean; checked: string[] } => {
+  const labelPattern = labels.join("|");
+  const boxPattern = new RegExp(
+    `\\[(?<mark>[ xX])\\]\\s*(?<label>${labelPattern})\\b`,
+    "gu"
+  );
+  const lines = document.split("\n");
+  let inside = false;
+  const checked: string[] = [];
+  for (const line of lines) {
+    if (/^##\s+verdict/iu.test(line)) {
+      inside = true;
+      continue;
+    }
+    if (inside && /^##\s+/u.test(line)) {
+      break;
+    }
+    if (!inside) {
+      continue;
+    }
+    for (const match of line.matchAll(boxPattern)) {
+      const { groups } = match;
+      if (groups?.mark && groups.mark !== " " && groups.label) {
+        checked.push(groups.label.toLowerCase());
+      }
+    }
+  }
+  return { checked, present: inside };
+};
+
+const verdictCheck = (review: string): { ok: boolean; reason?: string } => {
+  const { present, checked } = verdictChecked(review, [
+    "Ship",
+    "Block",
+    "Redirect",
+  ]);
+  if (!present) {
+    return { ok: false, reason: "review.md has no Verdict section" };
+  }
+  if (checked.length === 0) {
+    return {
+      ok: false,
+      reason: "no verdict recorded — tick exactly one of Ship/Block/Redirect",
+    };
+  }
+  if (checked.length > 1) {
+    return {
+      ok: false,
+      reason: `multiple verdicts ticked (${checked.join(", ")}) — exactly one allowed`,
+    };
+  }
+  const [recorded] = checked;
+  if (recorded !== "ship") {
+    return {
+      ok: false,
+      reason: `no recorded "ship" verdict (recorded: ${recorded})`,
+    };
+  }
+  return { ok: true };
+};
+
 // The Security axis must be fully checked — no unchecked boxes allowed.
 // Reviews written before the axis existed fail here: re-render them with the
 // current template rather than carrying an unchecked security posture forward.
@@ -199,6 +289,95 @@ const securityAxisComplete = (review: string): boolean => {
   return inside && checked > 0;
 };
 
+// Threat review must not merely exist — its own verdict has to accept proceeding
+// (same content-aware standard as the ADR `status: accepted` design gate).
+const threatAccepted = (threatReview: string): boolean => {
+  const { present, checked } = verdictChecked(threatReview, [
+    "Acceptable to proceed",
+    "Needs changes before proceeding",
+  ]);
+  return (
+    present && checked.length === 1 && checked[0] === "acceptable to proceed"
+  );
+};
+
+// state.md section membership for a spec id (Blocked escalations, Done closures).
+const stateHasEntry = async (
+  root: string,
+  section: string,
+  specId: string
+): Promise<boolean> => {
+  let state: string;
+  try {
+    state = await readFileAt(root, "docs/state.md");
+  } catch {
+    return false;
+  }
+  const lines = state.split("\n");
+  let inside = false;
+  for (const line of lines) {
+    if (new RegExp(`^##\\s+${section}\\b`, "iu").test(line)) {
+      inside = true;
+      continue;
+    }
+    if (inside && /^##\s+/u.test(line)) {
+      break;
+    }
+    if (
+      inside &&
+      new RegExp(`^- ${escapeRegExp(specId)}(?=[:\\s]|$)`, "u").test(
+        line.trim()
+      )
+    ) {
+      return true;
+    }
+  }
+  return false;
+};
+
+// Post-ship detection for lpwr-amend: state Done (written by lpwr-commit) or a
+// recent commit subject carrying the spec id (id boundary-aware — auth-014 never
+// matches auth-0144).
+const shippedInGit = async (root: string, specId: string): Promise<boolean> => {
+  try {
+    const { stdout } = await execFileAsync(
+      "git",
+      ["-C", root, "log", "--format=%s", "-n", "200"],
+      { timeout: 5000 }
+    );
+    const boundary = new RegExp(
+      `(^|[^a-z0-9-])${escapeRegExp(specId)}([^a-z0-9-]|$)`,
+      "u"
+    );
+    return stdout.split("\n").some((subject) => boundary.test(subject));
+  } catch {
+    return false;
+  }
+};
+
+const currentBranch = async (root: string): Promise<string | null> => {
+  try {
+    const { stdout } = await execFileAsync(
+      "git",
+      ["-C", root, "branch", "--show-current"],
+      { timeout: 5000 }
+    );
+    const branch = stdout.trim();
+    return SPEC_ID.test(branch) ? branch : null;
+  } catch {
+    return null;
+  }
+};
+
+// Any command segment that is a `git … commit` (cd/g -C prefixes, pipes, && chains).
+// `commit-msg` and prose mentioning "commit" do not match.
+const looksLikeGitCommit = (command: string): boolean => {
+  const pattern = /^git(?:\s+\S+)*\s+commit(?:\s|$)/u;
+  return command
+    .split(/&&|\|\||;|\|/u)
+    .some((segment) => pattern.test(segment.trim()));
+};
+
 // Every blockage raises a TUI toast with the same actionable message as the
 // thrown error, then throws. The toast never breaks the gate: with no attached
 // TUI (headless runs) the call is a harmless no-op, and any delivery failure is
@@ -217,57 +396,135 @@ const toastBlocked = async (
   }
 };
 
-const verdictGate = (plugin: PluginInput): Promise<Hooks> =>
-  Promise.resolve({
+// Every blockage raises a TUI toast with the same actionable message as the
+// thrown error, then throws. Typed as an explicit const (not an annotated
+// arrow) so TypeScript's control-flow analysis treats every call as
+// terminating — narrowing otherwise fails. The toast fires best-effort: with
+// no attached TUI (headless runs) it is a harmless no-op, and any delivery
+// failure is swallowed — the thrown error remains the record.
+const block: (plugin: PluginInput, message: string) => never = (
+  plugin,
+  message
+) => {
+  void toastBlocked(plugin, message);
+  throw new Error(message);
+};
+
+// One enforcement path shared by /lpwr-commit, /lpwr-release, and a raw
+// `git commit` on a spec-shaped branch — same checks, same messages.
+const enforceVerdictGate = async (
+  plugin: PluginInput,
+  root: string,
+  label: string,
+  specId: string,
+  options: { release: boolean }
+): Promise<void> => {
+  const review = await readFileAt(root, `docs/specs/${specId}/review.md`).catch(
+    () => null
+  );
+  if (review === null) {
+    block(
+      plugin,
+      `Blocked: no review.md for ${specId} — no ship, no ${label}.`
+    );
+  }
+  const verdict = verdictCheck(review);
+  if (!verdict.ok) {
+    block(plugin, `Blocked: ${specId} / ${label}: ${verdict.reason}.`);
+  }
+  const check = tableComplete(review);
+  if (!check.ok) {
+    block(plugin, `Blocked: ship claimed for ${specId} but ${check.reason}.`);
+  }
+  if (!securityAxisComplete(review)) {
+    block(
+      plugin,
+      `Blocked: ship claimed for ${specId} but the Security axis is incomplete ` +
+        `(missing section or unchecked box) — re-render review.md with the current template.`
+    );
+  }
+  if (await stateHasEntry(root, "blocked", specId)) {
+    block(
+      plugin,
+      `Blocked: spec ${specId} sits in docs/state.md's Blocked section — ` +
+        `resolve the escalation before ${label}.`
+    );
+  }
+  if (options.release && frontmatterValue(review, "risk_tier") === "high") {
+    const threat = await readFileAt(
+      root,
+      `docs/specs/${specId}/threat-review.md`
+    ).catch(() => null);
+    if (threat === null) {
+      block(
+        plugin,
+        `Blocked: ${specId} is high risk with no threat-review.md — ` +
+          `run lpwr-threat-review before releasing.`
+      );
+    }
+    if (!threatAccepted(threat)) {
+      block(
+        plugin,
+        `Blocked: ${specId}'s threat-review.md has no single "Acceptable to proceed" ` +
+          `verdict — resolve its findings before releasing.`
+      );
+    }
+  }
+};
+
+const verdictGate = (plugin: PluginInput): Promise<Hooks> => {
+  const root = plugin.directory;
+  return Promise.resolve({
     "command.execute.before": async (input) => {
       const name = input.command.split(/[/:]/u).pop() ?? "";
+      if (name === "lpwr-amend") {
+        const specId = firstArgument(input.arguments);
+        if (!specId) {
+          return;
+        }
+        const done = await stateHasEntry(root, "done", specId);
+        const committed = done ? true : await shippedInGit(root, specId);
+        if (committed) {
+          block(
+            plugin,
+            `Blocked: ${specId} already shipped — amend is pre-commit only. ` +
+              `Route post-ship changes to a new spec naming ${specId} in supersedes:.`
+          );
+        }
+        return;
+      }
       if (name !== "lpwr-commit" && name !== "lpwr-release") {
         return;
       }
       const specId = firstArgument(input.arguments);
       if (!specId) {
-        const message = `Blocked: /${name} requires a spec id.`;
-        await toastBlocked(plugin, message);
-        throw new Error(message);
+        block(plugin, `Blocked: /${name} requires a spec id.`);
       }
-      let review: string;
-      try {
-        review = await readFile(`docs/specs/${specId}/review.md`, "utf-8");
-      } catch {
-        const message = `Blocked: no review.md for ${specId} — no ship, no ${name}.`;
-        await toastBlocked(plugin, message);
-        throw new Error(message);
+      await enforceVerdictGate(plugin, root, name, specId, {
+        release: name === "lpwr-release",
+      });
+    },
+    "tool.execute.before": async (input, output) => {
+      // Raw `git commit` through bash is the same Retain action as /lpwr-commit
+      // — gated when (and only when) the branch names a spec. Off-spec branches
+      // (bootstrap, harness development) stay ungated, mirroring lpwr-scope-guard's
+      // active-spec model; the human's bash-ask checkpoint remains everywhere.
+      if (input.tool !== "bash") {
+        return;
       }
-      if (!shipClaimed(review)) {
-        const message = `Blocked: no recorded "ship" verdict for ${specId} — no ${name}.`;
-        await toastBlocked(plugin, message);
-        throw new Error(message);
+      const command: unknown = output.args.command;
+      if (typeof command !== "string" || !looksLikeGitCommit(command)) {
+        return;
       }
-      const check = tableComplete(review);
-      if (!check.ok) {
-        const message = `Blocked: ship claimed for ${specId} but ${check.reason}.`;
-        await toastBlocked(plugin, message);
-        throw new Error(message);
+      const branch = await currentBranch(root);
+      if (!branch) {
+        return;
       }
-      if (!securityAxisComplete(review)) {
-        const message =
-          `Blocked: ship claimed for ${specId} but the Security axis is incomplete ` +
-          `(missing section or unchecked box) — re-render review.md with the current template.`;
-        await toastBlocked(plugin, message);
-        throw new Error(message);
-      }
-      if (
-        name === "lpwr-release" &&
-        frontmatterValue(review, "risk_tier") === "high" &&
-        !existsSync(`docs/specs/${specId}/threat-review.md`)
-      ) {
-        const message =
-          `Blocked: ${specId} is high risk with no threat-review.md — ` +
-          `run lpwr-threat-review before releasing.`;
-        await toastBlocked(plugin, message);
-        throw new Error(message);
-      }
+      await enforceVerdictGate(plugin, root, "git commit", branch, {
+        release: false,
+      });
     },
   });
+};
 
 export default verdictGate;

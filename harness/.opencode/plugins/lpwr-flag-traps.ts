@@ -31,7 +31,7 @@ const toastWarning = async (
 const trapFlags = (plugin: PluginInput): Promise<Hooks> =>
   Promise.resolve({
     "tool.execute.after": async (input) => {
-      if (input.tool !== "edit") {
+      if (input.tool !== "edit" && input.tool !== "write") {
         return;
       }
       const file: string = input.args.filePath;
@@ -60,12 +60,20 @@ const trapFlags = (plugin: PluginInput): Promise<Hooks> =>
       }
     },
     "tool.execute.before": (input, output) => {
-      // Before-hooks carry the pending call arguments on output.
+      // Before-hooks carry the pending call arguments on output. Segment-wise
+      // match so `cd x && git commit` resets too; `commit-msg` does not.
       if (input.tool !== "bash") {
         return Promise.resolve();
       }
       const command: unknown = output.args.command;
-      if (typeof command === "string" && command.startsWith("git commit")) {
+      const isGitCommit =
+        typeof command === "string" &&
+        command
+          .split(/&&|\|\||;|\|/u)
+          .some((segment) =>
+            /^git(?:\s+\S+)*\s+commit(?:\s|$)/u.test(segment.trim())
+          );
+      if (isGitCommit) {
         patchCounts.clear();
         fileTimers.clear();
         toasted.clear();

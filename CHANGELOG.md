@@ -3,7 +3,47 @@
 All notable changes to this project, grouped by git tag. See the commit
 history for per-change detail.
 
-## [Current] — 0.6.1
+## [Current] — 0.7.0
+
+- Verdict gate hardened: Verdict section parsed with exactly-one-of
+  Ship/Block/Redirect required, placeholder test references rejected,
+  threat-review needs a real "Acceptable to proceed" tick, state.md Blocked
+  checked on commit/release, post-ship `lpwr-amend` refused (state Done or
+  matching commit subject), and a raw `git commit` gated on spec-shaped
+  branches under the same checks as `/lpwr-commit`.
+- Secret scanning pre-write (pending edit/write content) and on staged
+  diffs at commit; obvious fixture values (`test`, `changeme`, `dummy`,
+  `placeholder`, `xxx…`) no longer count as secrets; oversized files warn
+  instead of skipping silently.
+- Plugins anchor all file reads to their own directory (spec-link, scope-guard,
+  guard-bootstrap, log-handoffs) and normalize CRLF before frontmatter
+  parsing — subdirectory cwd and Windows-authored files no longer bypass gates.
+- Handoff lines written from command hooks carry `origin: "hook"` (no
+  `command.execute.after` exists to tag completion); release journals its
+  spec folder rather than a phantom `review.md` pointer; journal resolution
+  prefers an existing spec folder before stripping trailing sequence digits.
+- Permissions: scribe gains ask-level bash/webfetch (review git history,
+  research primary sources, onboard MCP list — each human-confirmed),
+  reviewer gains ask-level bash; conventions document that the matrix only
+  enumerates known tools and that Blocked entries are human escalations.
+- Review runs against the uncommitted change (`git diff HEAD`), not
+  `HEAD~1..HEAD`; template `diff_ref` and the diff-reading skill match.
+- Diagnose aligns with implement: repro, hypotheses, fix plan — the patch
+  itself runs through `lpwr-implement`, diagnosis grounds `lpwr-propose`
+  when no spec fits; teach drafts lessons for a human/scribe to file.
+- Guide decision path: missing `state.md` → install first, Blocked surfaced
+  early as a human stop, folder-derived resume when nothing is In flight.
+- Specs resumes existing `status: draft` files instead of refusing;
+  commit requires a non-`retain` log line; foundation files
+  (`harness/docs/{constitution,context,state}.md`) gitignored as generated.
+- Bootstrap/docs consistency: README plugin count 10 → 11, constitution
+  template ships `status: draft`, ADR template drops unused `risk_tier`,
+  rules 33–37 moved into `implementation-rules.md` (rule 34 updated to the
+  permission-matrix enforcement), v3 guide banner marks its inventories
+  historical, setup installs `.opencode/package.json` deps and notes the
+  re-run after onboard, check-setup expects `state.md`.
+
+## [0.6.1]
 
 - Improve completeness: full candidate blocks required, no foreign verdicts
   from other domains.

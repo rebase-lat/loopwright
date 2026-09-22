@@ -1,4 +1,5 @@
 import { existsSync } from "node:fs";
+import path from "node:path";
 
 import type { Hooks, PluginInput } from "@opencode-ai/plugin";
 
@@ -41,7 +42,10 @@ const guardBootstrap = (plugin: PluginInput): Promise<Hooks> =>
       if (EXEMPT.has(name)) {
         return;
       }
-      const missing = FOUNDATION.filter((file) => !existsSync(file));
+      // Anchored to the plugin's own directory — cwd may be a subdirectory.
+      const missing = FOUNDATION.filter(
+        (file) => !existsSync(path.join(plugin.directory, file))
+      );
       if (missing.length === 0) {
         return;
       }

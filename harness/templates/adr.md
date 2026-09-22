@@ -1,7 +1,6 @@
 ---
 id: <domain>-<sequence>
 spec_ref: docs/specs/<id>/spec.md
-risk_tier: high
 date: <date>
 status: proposed   # proposed | accepted | superseded
 ---

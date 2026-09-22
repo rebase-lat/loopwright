@@ -35,6 +35,13 @@ const SECRET_PATTERNS: [string, RegExp][] = [
   ],
 ];
 
+// Obvious fixture values are not secrets — test fixtures, example configs, and
+// placeholder templates ship `password: "changeme"` deliberately. Only the
+// matched text itself is consulted; a real credential never trips this.
+const isDummyValue = (matched: string): boolean =>
+  /^(?:test|changeme|dummy|placeholder|xxx)[\w-]*$/iu.test(matched.trim()) ||
+  /['"](?:test|changeme|dummy|placeholder|xxx)[\w-]*['"]/iu.test(matched);
+
 const MAX_SCAN_BYTES = 1024 * 1024;
 const AUDIT_TIMEOUT_MS = 120_000;
 
@@ -52,22 +59,34 @@ const toastBlocked = async (
   }
 };
 
+// Returns the pattern name for a secret found in text, ignoring dummy values.
+const scanContent = (content: string): string | null => {
+  for (const [name, pattern] of SECRET_PATTERNS) {
+    pattern.lastIndex = 0;
+    const match = pattern.exec(content);
+    if (match && !isDummyValue(match[0])) {
+      return name;
+    }
+  }
+  return null;
+};
+
 const scanFile = async (filePath: string): Promise<string | null> => {
   const resolved = path.resolve(process.cwd(), filePath);
   try {
-    if (statSync(resolved).size > MAX_SCAN_BYTES) {
+    const { size } = statSync(resolved);
+    if (size > MAX_SCAN_BYTES) {
+      console.warn(
+        `[security-scan] ${filePath} exceeds ${MAX_SCAN_BYTES} bytes — skipped; ` +
+          `run a dedicated secret scanner over large files before release.`
+      );
       return null;
     }
     const content = await readFile(resolved, "utf-8");
-    for (const [name, pattern] of SECRET_PATTERNS) {
-      if (pattern.test(content)) {
-        return name;
-      }
-    }
+    return scanContent(content);
   } catch {
     return null;
   }
-  return null;
 };
 
 const readAuditCommands = async (): Promise<string[]> => {
@@ -158,6 +177,38 @@ const appendAuditTrace = async (
 const firstArgument = (args: string): string | undefined =>
   args.trim().split(/\s+/u)[0];
 
+// Any command segment that is a `git … commit` (cd/g -C prefixes, pipes, && chains).
+const looksLikeGitCommit = (command: string): boolean => {
+  const pattern = /^git(?:\s+\S+)*\s+commit(?:\s|$)/u;
+  return command
+    .split(/&&|\|\||;|\|/u)
+    .some((segment) => pattern.test(segment.trim()));
+};
+
+// Staged additions only — context lines and deletions can't introduce a secret.
+// `git diff --cached` fails outside a repo; treat that as nothing staged.
+const scanStagedDiff = async (): Promise<string | null> => {
+  let stdout = "";
+  try {
+    ({ stdout } = await execFileAsync(
+      "git",
+      ["diff", "--cached", "--unified=0", "--no-color"],
+      { maxBuffer: 10_485_760, timeout: 15_000 }
+    ));
+  } catch {
+    return null;
+  }
+  const added = stdout
+    .split("\n")
+    .filter((line) => line.startsWith("+") && !line.startsWith("+++"))
+    .map((line) => line.slice(1))
+    .join("\n");
+  if (!added) {
+    return null;
+  }
+  return scanContent(added);
+};
+
 const auditDependencies = async (
   specId: string | undefined
 ): Promise<{ warned?: string }> => {
@@ -232,6 +283,44 @@ const securityScan = (plugin: PluginInput): Promise<Hooks> =>
         `Remove it before continuing.`;
       await toastBlocked(plugin, message);
       throw new Error(message);
+    },
+    "tool.execute.before": async (input, output) => {
+      // Pre-write: scan the pending content so a secret never lands on disk —
+      // the after-hook remains as a backstop for tools that rewrite the file.
+      if (input.tool === "edit" || input.tool === "write") {
+        const args = output.args as Record<string, unknown>;
+        const pending = [args.newText, args.content, args.newString]
+          .filter((value): value is string => typeof value === "string")
+          .join("\n");
+        const file =
+          typeof args.filePath === "string" ? args.filePath : "(pending)";
+        const flagged = pending ? scanContent(pending) : null;
+        if (flagged) {
+          const message =
+            `Blocked: possible secret detected in pending write to ${file} ` +
+            `(pattern: ${flagged}). Remove it before continuing.`;
+          await toastBlocked(plugin, message);
+          throw new Error(message);
+        }
+        return;
+      }
+      // A raw `git commit` is the same irreversible action as /lpwr-commit —
+      // scan what is actually staged, not the working tree.
+      if (input.tool !== "bash") {
+        return;
+      }
+      const command: unknown = output.args.command;
+      if (typeof command !== "string" || !looksLikeGitCommit(command)) {
+        return;
+      }
+      const flagged = await scanStagedDiff();
+      if (flagged) {
+        const message =
+          `Blocked: possible secret in staged changes (pattern: ${flagged}). ` +
+          `Unstage it (\`git restore --staged <file>\`) before committing.`;
+        await toastBlocked(plugin, message);
+        throw new Error(message);
+      }
     },
   });
 

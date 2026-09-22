@@ -1,6 +1,6 @@
 ---
 id: <domain>-<sequence>
-diff_ref: HEAD~<n>..HEAD
+diff_ref: HEAD (uncommitted)   # `git diff HEAD` — switch to the commit range after lpwr-commit
 risk_tier: low   # low | medium | high — carried over from spec.md
 waived: []       # criterion IDs explicitly waived; justify each in Verdict reasoning
 deferred: []     # one `<criterion-id> -> <follow-up spec>` per line; each needs a follow-up

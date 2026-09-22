@@ -5,7 +5,7 @@ agent: scribe
 
 Stage: Specify.
 
-From the approved proposal for $ARGUMENTS, write `docs/specs/<id>/spec.md` via `templates/spec.md` with `basis: proposed`. If `spec.md` already exists for this ID, stop and use `lpwr-amend` — specs creates, it never overwrites.
+From the approved proposal for $ARGUMENTS, write `docs/specs/<id>/spec.md` via `templates/spec.md` with `basis: proposed`. If `spec.md` already exists: `status: draft` means resume it — continue the draft to a human approval verdict, never restart or overwrite the prior text; any other status means use `lpwr-amend` — specs creates and resumes, it never overwrites approved work.
 
 Load first: the proposal (`proposal_ref`), `docs/constitution.md`, `docs/glossary.md`. Use skills `lpwr-writing-ears` and `lpwr-acceptance-criteria`.
 Rules: EARS-typed criteria with sub-IDs `<id>-<n>`; behavior and constraints, never implementation details; explicit non-goals; acceptance table left with an empty test-reference column for Execute to fill. Set `risk_tier` in frontmatter (human-confirmed; suggest medium or higher when the spec touches auth, secrets, permissions, or external network calls). Set `design_review: required` (human call) for new dependencies, schema or API contract changes, or structural refactors. Refuse approval while `design_review: required` without an accepted `adr.md`. Criteria in the Optional features section are pre-declared deferral candidates — flag them as such so the reviewer expects the deferral; the reviewer still confirms. Reject (don't silently correct) any banned substitute from `docs/glossary.md` found in the proposal or draft — glossary-exact terms are required before approval. Present the spec for a human verdict (`status: approved` only on an explicit human verdict).

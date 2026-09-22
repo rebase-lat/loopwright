@@ -1,6 +1,6 @@
 # Glossary
 
-Banned substitutes are enforced, not suggested. `lpwr-specs` must use the exact terms below.
+Banned substitutes are rejected at `lpwr-specs` time — the draft goes back until the exact term replaces them (scribe check, human-confirmed; multi-word phrases are the reliable catches). The terms below are required exactly.
 
 | Term | Definition | Banned substitutes |
 | --- | --- | --- |

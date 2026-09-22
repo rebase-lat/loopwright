@@ -31,7 +31,7 @@ Run from `harness/` (the live workspace). After any config change, quit + restar
 ```
 loopwright/
 ├── README.md
-├── constitution.md             # this repo's own rules (harness ships without one; onboard creates it)
+├── constitution.md             # this repo's own rules — the committed record (harness ships without one; onboard creates it)
 ├── context.md                  # this repo's own context (same: generated per project by onboard)
 ├── harness/                    # pure boilerplate — no prefilled project info (run opencode from here)
 │   ├── AGENTS.md               # protocol only — rules live in docs/constitution.md
@@ -40,8 +40,11 @@ loopwright/
 │   │   ├── agents/             # 8 role files (build, plan, scribe, reviewer, triage seats, scout)
 │   │   ├── commands/           # 25 flat lpwr-* commands, each declaring its Stage:
 │   ├── skills/             # 13 lpwr-* procedures (SKILL.md + trigger descriptions)
-│   │   └── plugins/            # 10 lpwr-* plugins (gates, journaling, advisories — auto-discovered, typechecked)
-│   ├── docs/                   # glossary, conventions + generated docs (constitution, context, state.md appear on first onboard/commit)
+│   │   └── plugins/            # 11 lpwr-* plugins (gates, journaling, advisories — auto-discovered;
+│   │                           #   typechecked in this workspace via root tsconfig.json)
+│   ├── docs/                   # glossary + conventions, kept in git; generated foundation files
+│   │                           #   (constitution, context, state.md) are gitignored — recreate via
+│   │                           #   lpwr-install + lpwr-onboard; repo root files above stay canonical
 │   └── templates/              # fixed record shapes (spec, review, lesson, …)
 ├── docs/                       # guides, rules, plans (design history)
 │   ├── harness-layout.md           # original six-domain layout (v2; command structure
@@ -49,7 +52,7 @@ loopwright/
 │   ├── harness-principles.md       #   banners on file mark what still holds)
 │   ├── implementation-rules.md     # flat build checklist (each rule names its failure)
 │   ├── naming-and-communication-conventions.md
-│   ├── implementation-guide-v3.md  # current picture: flat commands, Bootstrap, prefix policy
+│   ├── implementation-guide-v3.md  # v3 rationale + prefix policy (inventory tables historical — see banner)
 │   ├── harness-implementation-plan.md  # build log, phases 0–5 (history)
 │   └── harness-v3-migration-plan.md    # v3 migration log, phases A–D (history)
 ├── package.json                # npm scripts: lint, fmt, fmt:check, typecheck
@@ -83,7 +86,7 @@ artifact pointers, never inline content.
 npm install          # dev deps: oxlint, oxfmt, ultracite, typescript
 npm run lint         # oxlint + format check
 npm run lint:fix     # oxlint --fix + write formatting (code files only, never prose)
-npm run typecheck    # tsc --noEmit over plugins + configs
+npm run typecheck    # tsc --noEmit over this workspace's plugins + configs
 ```
 
 Markdown docs are excluded from formatting by policy — prose stays human-written.

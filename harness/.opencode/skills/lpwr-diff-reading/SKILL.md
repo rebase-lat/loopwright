@@ -7,6 +7,6 @@ description: Read diffs fully (not just test output) to validate patches. Use wh
 
 When a patch lands: read the diff, ask what could still fail. Validate, not just approve.
 
-- Read the full diff `HEAD~n..HEAD`, never only the test output (constitution verdict floor requires a human to read the diff in full).
+- Read the diff in full, never only the test output (constitution verdict floor requires a human to read the diff in full). Review runs against the uncommitted change (`git diff HEAD`); after commit, against the commit range (`HEAD~n..HEAD`).
 - For each hunk: what changed, why that approach, what it ruled out, what it assumed about the system.
 - Expand and return to the loop: note residual risks explicitly.

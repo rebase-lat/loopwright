@@ -1,5 +1,5 @@
 ---
-status: approved
+status: draft   # draft until a human approves it — never ships approved
 last_amended: <date>
 ---
 

@@ -120,6 +120,22 @@ names the failure it prevents.
 32. **Don't automate `/improve`'s discovery step until it has run manually and proven a query is
     worth repeating.** A scheduled job with no proven signal is noise with a cron trigger.
 
+33. **`lpwr-setup` never writes under `docs/` and never gets a spec ID.** It configures a
+    machine, not a project — keep it entirely outside the traceability scheme.
+34. **`lpwr-guide` is read-only by construction — enforced mechanically by the permission
+    matrix: it runs on `plan`, whose `edit` and `bash` are `deny` in `opencode.json`.** Config,
+    not prompt discipline, is what makes a role read-only (same standard as rule 14).
+35. **`lpwr-onboard` may run in a repo with no code yet.** Its sections are allowed to come back
+    thin on a greenfield project — don't treat a sparse `context.md` as a failure, treat an
+    *unrun* `lpwr-onboard` as the failure.
+36. **The `lpwr-` prefix is not applied to agents, templates, or the traceability ID** (see the
+    prefix table in the v3 guide). Don't "complete the pattern" by prefixing these later; the
+    exceptions are deliberate, not oversights.
+37. **A command's flat name still declares its stage in its own body (frontmatter or an opening
+    line), even though the directory no longer does.** Losing the path-based stage signal from
+    the earlier nested layout means the stage now has to be stated explicitly inside each command
+    file instead of implied by its folder.
+
 38. **Amend an approved spec only through `lpwr-amend`: status returns to `draft`, `review.md`
     is deleted (the old verdict no longer describes the spec, and the missing review blocks
     commit/release mechanically), `tasks.md` reconciles by criterion ID with test refs cleared

@@ -13,6 +13,12 @@ history for per-change detail.
   alternatives to the human.
 - Stale Phase-5 model TODOs reworded to name the real trigger; propose
   journal step deduplicated.
+- Standards placeholders renamed Code Principles / Project Specifics /
+  Business Rules, filled by onboard from discovery.
+- Pure boilerplate: live constitution/context moved to root, empty state
+  dropped; `harness/` ships no prefilled project info.
+- Bootstrap gate (`lpwr-guard-bootstrap`) plus `lpwr-install`: install
+  materializes from templates, setup prepares, onboard fills.
 
 ## [0.6.0]
 

@@ -6,6 +6,8 @@ import { promisify } from "node:util";
 
 import type { Hooks, PluginInput } from "@opencode-ai/plugin";
 
+import { SPEC_ID, toastBlocked } from "./shared.js";
+
 // Blocks edits outside the active spec's declared surface.
 // The active spec resolves as: explicit OPENCODE_SPEC_ID wins; otherwise the git
 // branch of the edited file's worktree, when it looks like a spec ID (worktrees
@@ -89,8 +91,6 @@ const matchesAny = (filePath: string, patterns: string[]): boolean => {
 
 const execFileAsync = promisify(execFile);
 
-const SPEC_ID = /^[a-z0-9]+(?:-[a-z0-9]+)*-\d+$/u;
-
 const specCache = new Map<string, string | null>();
 
 const findGitDir = (filePath: string): string | null => {
@@ -142,25 +142,7 @@ const activeSpec = async (
     return null;
   }
   const specId = process.env.OPENCODE_SPEC_ID ?? (await branchSpecId(gitDir));
-  return specId ? { gitDir, specId } : null;
-};
-
-// Every blockage raises a TUI toast with the same actionable message as the
-// thrown error, then throws. The toast never breaks the gate: with no attached
-// TUI (headless runs) the call is a harmless no-op, and any delivery failure is
-// swallowed — the error below remains the record.
-const toastBlocked = async (
-  plugin: PluginInput,
-  message: string
-): Promise<void> => {
-  try {
-    await plugin.client.tui.showToast({
-      body: { message, title: "Loopwright gate", variant: "error" },
-      query: { directory: plugin.directory },
-    });
-  } catch {
-    // Toast delivery is best-effort only.
-  }
+  return specId && SPEC_ID.test(specId) ? { gitDir, specId } : null;
 };
 
 const scopeGuard = (plugin: PluginInput): Promise<Hooks> =>

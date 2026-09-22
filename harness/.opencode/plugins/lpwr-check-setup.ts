@@ -9,8 +9,8 @@ import type { Hooks, PluginInput } from "@opencode-ai/plugin";
 // OPENCODE_DISABLE_PROJECT_CONFIG, OPENCODE_CONFIG).
 const EXPECTED: [string, string][] = [
   ["AGENTS.md", "protocol file"],
-  ["docs/constitution.md", "run lpwr-onboard"],
-  ["docs/context.md", "run lpwr-onboard"],
+  ["docs/constitution.md", "run lpwr-install then lpwr-onboard"],
+  ["docs/context.md", "run lpwr-install then lpwr-onboard"],
   ["docs/state.md", "run lpwr-install"],
   ["docs/glossary.md", "run lpwr-domain"],
   ["opencode.json", "permission matrix"],

@@ -19,4 +19,4 @@ Banned substitutes are rejected at `lpwr-specs` time — the draft goes back unt
 | Design review | The ADR settling one open technical decision before criteria are written | "design doc" |
 | ADR | Architecture decision record: decision, alternatives, reasoning, consequences | "decision log" |
 | Basis | `observed` (drafted from code by `lpwr-explore`) or `proposed` (from an approved proposal); set at specs time | "origin" |
-| Amend | A post-approval change to `spec.md` + `tasks.md` via `lpwr-amend`; voids the review, routes to re-approval | "revise", "tweak" |
+| Amend | A post-approval change to the Tasks section and criteria of `spec.md` via `lpwr-amend`; voids the review, routes to re-approval | "revise", "tweak" |

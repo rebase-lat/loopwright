@@ -12,8 +12,9 @@ through typed stages — each command declares its `Stage:` — and every handof
 structured line (`intent`, `spec_ref`, artifact-pointer `payload`, `confidence`) to the
 spec's `log.ndjson`. Gates hold whether or not the agent cooperates: `lpwr-spec-link` blocks
 unapproved specs, `lpwr-scope-guard` blocks out-of-surface edits, `lpwr-verdict-gate` blocks
-ship-less commits and deploys, `lpwr-security-scan` blocks secrets and vulnerable dependencies.
-Review weight scales by human-confirmed risk tier; high-tier specs need a threat review before release.
+ship-less commits and deploys, `lpwr-security-scan` blocks secrets (dependency findings
+warn-and-trace to `audit.md`, reviewed at lpwr-review). Review weight scales by
+human-confirmed risk tier; high-tier specs need a threat review before release.
 
 ## Quickstart
 
@@ -38,7 +39,7 @@ loopwright/
 │   ├── opencode.json           # permission matrix (single source), instructions
 │   ├── .opencode/
 │   │   ├── agents/             # 8 role files (build, plan, scribe, reviewer, triage seats, scout)
-│   │   ├── commands/           # 26 flat lpwr-* commands, each declaring its Stage:
+│   │   ├── commands/           # 25 flat lpwr-* commands, each declaring its Stage:
 │   ├── skills/             # 17 lpwr-* procedures (SKILL.md + trigger descriptions)
 │   │   └── plugins/            # 11 lpwr-* plugins (gates, journaling, advisories — auto-discovered;
 │   │                           #   typechecked in this workspace via root tsconfig.json)

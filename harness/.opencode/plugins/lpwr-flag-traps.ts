@@ -1,5 +1,7 @@
 import type { Hooks, PluginInput } from "@opencode-ai/plugin";
 
+import { looksLikeGitCommit } from "./shared.js";
+
 // Advisory only: warns on achievement trap (>3 consecutive patches
 // on one file) and dislodging trap (15 min on one file without a
 // commit). Never blocks; the builder is instructed to heed warnings.
@@ -51,7 +53,7 @@ const trapFlags = (plugin: PluginInput): Promise<Hooks> =>
       if (Date.now() - first > TIMEBOX_MS) {
         const message =
           `[dislodging-trap] ${file}: over 15 minutes without resolution — ` +
-          `stash and reset strategy per the countermeasure.`;
+          `stash and reset strategy per lpwr-root-cause-refactor.`;
         console.warn(message);
         if (!toasted.has(file)) {
           toasted.add(file);
@@ -60,20 +62,12 @@ const trapFlags = (plugin: PluginInput): Promise<Hooks> =>
       }
     },
     "tool.execute.before": (input, output) => {
-      // Before-hooks carry the pending call arguments on output. Segment-wise
-      // match so `cd x && git commit` resets too; `commit-msg` does not.
+      // Before-hooks carry the pending call arguments on output.
       if (input.tool !== "bash") {
         return Promise.resolve();
       }
       const command: unknown = output.args.command;
-      const isGitCommit =
-        typeof command === "string" &&
-        command
-          .split(/&&|\|\||;|\|/u)
-          .some((segment) =>
-            /^git(?:\s+\S+)*\s+commit(?:\s|$)/u.test(segment.trim())
-          );
-      if (isGitCommit) {
+      if (typeof command === "string" && looksLikeGitCommit(command)) {
         patchCounts.clear();
         fileTimers.clear();
         toasted.clear();

@@ -5,6 +5,8 @@ import path from "node:path";
 import { tool } from "@opencode-ai/plugin";
 import type { Hooks, PluginInput } from "@opencode-ai/plugin";
 
+import { commandName } from "./shared.js";
+
 // Journals domain handoffs to docs/specs/<id>/log.ndjson — the one
 // artifact every domain writes to. Each command invocation maps to its
 // domain intent; the payload is always a constructed artifact pointer,
@@ -32,6 +34,7 @@ const COMMAND_INTENTS = {
   "lpwr-release": "verify",
   "lpwr-research": "frame",
   "lpwr-review": "verify",
+  "lpwr-specify": "specify",
   "lpwr-specs": "specify",
   "lpwr-stack": "govern",
   "lpwr-tasks": "specify",
@@ -59,6 +62,7 @@ const COMMAND_ARTIFACTS: Record<CommandName, string> = {
   "lpwr-release": "",
   "lpwr-research": "",
   "lpwr-review": "review.md",
+  "lpwr-specify": "spec.md",
   "lpwr-specs": "spec.md",
   "lpwr-stack": "",
   "lpwr-tasks": "spec.md",
@@ -153,11 +157,17 @@ const journalHandoff = (root: string) =>
           args.confidence ?? "medium"
         );
         if (!written) {
-          return `Refused: "${args.spec_ref}" is not a traceability ID.`;
+          return (
+            `Refused: "${args.spec_ref}" is not a traceability ID ` +
+            `(expected <domain>-<sequence>, lowercase, e.g. auth-014).`
+          );
         }
         return `Recorded ${args.intent} handoff for ${args.spec_ref} in ${written}.`;
       } catch {
-        return `Failed to record handoff for ${args.spec_ref}; logging must never break the loop.`;
+        return (
+          `Failed to record handoff for ${args.spec_ref} — check ` +
+          `docs/specs/ is writable; logging never breaks the loop.`
+        );
       }
     },
   });
@@ -167,7 +177,7 @@ const evidenceLog = (plugin: PluginInput): Promise<Hooks> => {
   return Promise.resolve({
     "command.execute.before": async (input) => {
       try {
-        const name = input.command.split(/[/:]/u).pop() ?? "";
+        const name = commandName(input.command);
         if (!isCommand(name)) {
           return;
         }

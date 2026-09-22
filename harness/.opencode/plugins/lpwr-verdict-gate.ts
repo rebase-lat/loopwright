@@ -5,6 +5,18 @@ import { promisify } from "node:util";
 
 import type { Hooks, PluginInput } from "@opencode-ai/plugin";
 
+import {
+  SPEC_ID,
+  block,
+  commandName,
+  escapeRegExp,
+  firstArgument,
+  frontmatterBlock,
+  frontmatterValue,
+  looksLikeGitCommit,
+  normalizeEol,
+} from "./shared.js";
+
 // Mechanical verdict floor (implementation-rules 5/7): /lpwr-commit, /lpwr-release, and a
 // raw `git commit` on a spec-shaped branch cannot run without a recorded "ship" whose
 // acceptance table is complete — unless incomplete rows are explicitly waived or deferred
@@ -12,28 +24,19 @@ import type { Hooks, PluginInput } from "@opencode-ai/plugin";
 // can miss under pressure; this plugin is the gate that holds whether or not the agent
 // cooperates. Checked before the first tool call, not after. lpwr-amend additionally
 // refuses post-ship edits (state Done or a matching commit subject) — amend is pre-commit
-// only (implementation-rules 38).
+// only (implementation-rules 38). Commit also requires an upstream non-retain handoff
+// in log.ndjson (the "Gate: upstream traceable work" rule on lpwr-commit).
 const execFileAsync = promisify(execFile);
-
-const SPEC_ID = /^[a-z0-9]+(?:-[a-z0-9]+)*-\d+$/u;
-
-const firstArgument = (args: string): string | undefined =>
-  args.trim().split(/\s+/u)[0];
-
-const normalizeEol = (raw: string): string => raw.replaceAll("\r\n", "\n");
-
-const escapeRegExp = (text: string): string =>
-  text.replaceAll(/[.+^${}()|[\]\\]/gu, "\\$&");
 
 const readFileAt = async (root: string, relative: string): Promise<string> =>
   normalizeEol(await readFile(path.join(root, relative), "utf-8"));
 
 // Line-based frontmatter list reader: handles `key: value`, `key: [a, b]`,
 // and `- item` lists. Stops at the next key, a blank-line boundary, or `---`.
-const sectionEntries = (block: string, key: string): string[] => {
+const sectionEntries = (fmBlock: string, key: string): string[] => {
   const entries: string[] = [];
   let inside = false;
-  for (const line of block.split("\n")) {
+  for (const line of fmBlock.split("\n")) {
     if (!inside) {
       const header = line.match(new RegExp(`^${key}:\\s*(?<rest>.*)$`, "iu"));
       const rest = header?.groups?.rest.trim() ?? "";
@@ -64,9 +67,9 @@ const stripBrackets = (entry: string): string =>
 const isEmptyMarker = (token: string): boolean =>
   /^(?:none|null|~|-|\[\])$/iu.test(token);
 
-const parseWaived = (block: string): Set<string> => {
+const parseWaived = (fmBlock: string): Set<string> => {
   const ids = new Set<string>();
-  for (const entry of sectionEntries(block, "waived")) {
+  for (const entry of sectionEntries(fmBlock, "waived")) {
     for (const id of stripBrackets(entry).split(/[\s,]+/u)) {
       if (id && !isEmptyMarker(id)) {
         ids.add(id);
@@ -81,9 +84,9 @@ interface Deferred {
   error?: string;
 }
 
-const parseDeferred = (block: string): Deferred => {
+const parseDeferred = (fmBlock: string): Deferred => {
   const targets = new Map<string, string>();
-  for (const entry of sectionEntries(block, "deferred")) {
+  for (const entry of sectionEntries(fmBlock, "deferred")) {
     for (const chunk of stripBrackets(entry).split(/,/u)) {
       const trimmed = chunk.trim();
       if (!trimmed || isEmptyMarker(trimmed)) {
@@ -123,16 +126,11 @@ const templateLeftovers = (text: string): string | null => {
   return null;
 };
 
-const frontmatterBlock = (review: string): string | null => {
-  const match = review.match(/^---\n(?<frontmatter>[\s\S]*?)\n---/u);
-  return match?.groups?.frontmatter ?? null;
-};
-
 const tableComplete = (review: string): { ok: boolean; reason?: string } => {
-  const block = frontmatterBlock(review);
-  const waived = block ? parseWaived(block) : new Set<string>();
-  const deferred = block
-    ? parseDeferred(block)
+  const fmBlock = frontmatterBlock(review);
+  const waived = fmBlock ? parseWaived(fmBlock) : new Set<string>();
+  const deferred = fmBlock
+    ? parseDeferred(fmBlock)
     : { targets: new Map<string, string>() };
   if (deferred.error) {
     return { ok: false, reason: deferred.error };
@@ -179,7 +177,12 @@ const tableComplete = (review: string): { ok: boolean; reason?: string } => {
         reason: `criterion row lacks a test reference: ${row.trim()}`,
       };
     }
-    return { ok: false, reason: `criterion not passing: ${row.trim()}` };
+    return {
+      ok: false,
+      reason:
+        `criterion not passing: ${row.trim()} — add a passing test reference ` +
+        `or waive/defer it in the review frontmatter`,
+    };
   }
   for (const id of [...waived, ...deferred.targets.keys()]) {
     if (!seen.has(id)) {
@@ -190,23 +193,6 @@ const tableComplete = (review: string): { ok: boolean; reason?: string } => {
     }
   }
   return { ok: true };
-};
-
-const frontmatterValue = (review: string, key: string): string | null => {
-  const block = frontmatterBlock(review);
-  if (!block) {
-    return null;
-  }
-  const line = block
-    .split("\n")
-    .find((candidate) => candidate.trim().toLowerCase().startsWith(`${key}:`));
-  if (!line) {
-    return null;
-  }
-  return (
-    line.split(":").slice(1).join(":").split("#")[0].trim().toLowerCase() ||
-    null
-  );
 };
 
 // Checked boxes in a document's "## Verdict" section, in order of appearance.
@@ -385,45 +371,33 @@ const currentBranch = async (root: string): Promise<string | null> => {
   }
 };
 
-// Any command segment that is a `git … commit` (cd/g -C prefixes, pipes, && chains).
-// `commit-msg` and prose mentioning "commit" do not match.
-const looksLikeGitCommit = (command: string): boolean => {
-  const pattern = /^git(?:\s+\S+)*\s+commit(?:\s|$)/u;
-  return command
-    .split(/&&|\|\||;|\|/u)
-    .some((segment) => pattern.test(segment.trim()));
-};
-
-// Every blockage raises a TUI toast with the same actionable message as the
-// thrown error, then throws. The toast never breaks the gate: with no attached
-// TUI (headless runs) the call is a harmless no-op, and any delivery failure is
-// swallowed — the error below remains the record.
-const toastBlocked = async (
-  plugin: PluginInput,
-  message: string
-): Promise<void> => {
+// Upstream-traceable-work gate (lpwr-commit step 2): the log must carry at
+// least one non-retain handoff for this spec — a change with no upstream
+// frame/specify/execute/verify/govern line is out-of-process work.
+const hasNonRetainHandoff = async (
+  root: string,
+  specId: string
+): Promise<boolean> => {
+  let log: string;
   try {
-    await plugin.client.tui.showToast({
-      body: { message, title: "Loopwright gate", variant: "error" },
-      query: { directory: plugin.directory },
-    });
+    log = await readFileAt(root, `docs/specs/${specId}/log.ndjson`);
   } catch {
-    // Toast delivery is best-effort only.
+    return false;
   }
-};
-
-// Every blockage raises a TUI toast with the same actionable message as the
-// thrown error, then throws. Typed as an explicit const (not an annotated
-// arrow) so TypeScript's control-flow analysis treats every call as
-// terminating — narrowing otherwise fails. The toast fires best-effort: with
-// no attached TUI (headless runs) it is a harmless no-op, and any delivery
-// failure is swallowed — the thrown error remains the record.
-const block: (plugin: PluginInput, message: string) => never = (
-  plugin,
-  message
-) => {
-  void toastBlocked(plugin, message);
-  throw new Error(message);
+  for (const line of log.split("\n")) {
+    if (!line.trim()) {
+      continue;
+    }
+    try {
+      const entry = JSON.parse(line) as { intent?: string };
+      if (entry.intent && entry.intent !== "retain") {
+        return true;
+      }
+    } catch {
+      // Skip malformed lines.
+    }
+  }
+  return false;
 };
 
 // One enforcement path shared by /lpwr-commit, /lpwr-release, and a raw
@@ -441,7 +415,7 @@ const enforceVerdictGate = async (
   if (review === null) {
     block(
       plugin,
-      `Blocked: no review.md for ${specId} — no ship, no ${label}.`
+      `Blocked: no review.md for ${specId} — run lpwr-review first; no ship, no ${label}.`
     );
   }
   const leftover = templateLeftovers(review);
@@ -500,17 +474,33 @@ const enforceVerdictGate = async (
       );
     }
   }
+  // Gate: upstream traceable work (commit and raw git commit only — release
+  // ships after commit, so the log is already populated by then).
+  if (!options.release && !(await hasNonRetainHandoff(root, specId))) {
+    block(
+      plugin,
+      `Blocked: ${specId}'s log.ndjson has no non-retain handoff — run the ` +
+        `upstream domain command first (out-of-process work has no audit trail).`
+    );
+  }
 };
 
 const verdictGate = (plugin: PluginInput): Promise<Hooks> => {
   const root = plugin.directory;
   return Promise.resolve({
     "command.execute.before": async (input) => {
-      const name = input.command.split(/[/:]/u).pop() ?? "";
+      const name = commandName(input.command);
       if (name === "lpwr-amend") {
         const specId = firstArgument(input.arguments);
         if (!specId) {
           return;
+        }
+        if (!SPEC_ID.test(specId)) {
+          block(
+            plugin,
+            `Blocked: "${specId}" is not a traceability ID ` +
+              `(expected <domain>-<sequence>, lowercase, e.g. auth-014).`
+          );
         }
         const done = await stateHasEntry(root, "done", specId);
         const committed = done ? true : await shippedInGit(root, specId);
@@ -529,6 +519,13 @@ const verdictGate = (plugin: PluginInput): Promise<Hooks> => {
       const specId = firstArgument(input.arguments);
       if (!specId) {
         block(plugin, `Blocked: /${name} requires a spec id.`);
+      }
+      if (!SPEC_ID.test(specId)) {
+        block(
+          plugin,
+          `Blocked: "${specId}" is not a traceability ID ` +
+            `(expected <domain>-<sequence>, lowercase, e.g. auth-014).`
+        );
       }
       await enforceVerdictGate(plugin, root, name, specId, {
         release: name === "lpwr-release",

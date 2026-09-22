@@ -9,7 +9,7 @@ names the failure it prevents.
    assigned at `/propose`, not at `/specs` — prevents orphaned proposals with no join key.
 2. **The ID is the worktree name, the branch name, and the folder name — never three different
    strings for one spec.** Prevents the traceability chain breaking at the filesystem boundary.
-3. **Acceptance criteria get sub-IDs (`<id>-3`), assigned in `spec.md`, never in `tasks.md`.**
+3. **Acceptance criteria get sub-IDs (`<id>-3`), assigned in `spec.md`'s criteria, never elsewhere.**
    Tasks reference criterion IDs; they don't mint new ones — prevents two ID sequences drifting
    out of sync.
 4. **Nothing merges without at least one `log.ndjson` line carrying its `spec_ref`.** If a change
@@ -138,9 +138,9 @@ names the failure it prevents.
 
 38. **Amend an approved spec only through `lpwr-amend`: status returns to `draft`, `review.md`
     is deleted (the old verdict no longer describes the spec, and the missing review blocks
-    commit/release mechanically), `tasks.md` reconciles by criterion ID with test refs cleared
-    on reworded rows.** Post-ship changes are not amendments — they go through a new spec
-    naming the old ID in `supersedes:`.
+    commit/release mechanically), the Tasks section reconciles by criterion ID with test refs
+    cleared on reworded rows.** Post-ship changes are not amendments — they go through a new
+    spec naming the old ID in `supersedes:`.
 
 39. **`risk_tier` is set human-confirmed at `lpwr-specs` time and re-confirmed against the
     actual diff at `lpwr-review` time; `high` requires `threat-review.md` before `lpwr-release`,
@@ -178,7 +178,7 @@ names the failure it prevents.
     Criterion-to-task binding and the declared surface live in the Tasks section, not a
     separate file, so neither can drift from the other.
 
-46. **Install materializes, setup prepares, onboard fills.** `lpwr-install` copies templates to
+47. **Install materializes, setup prepares, onboard fills.** `lpwr-install` copies templates to
     missing `docs/` files without overwriting; `lpwr-setup` makes the machine ready; only
     `lpwr-onboard` writes project truth. No domain command runs without `docs/context.md` and
     `docs/constitution.md` — enforced by `lpwr-guard-bootstrap.ts`, with `lpwr-setup`,

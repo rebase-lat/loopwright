@@ -1,8 +1,8 @@
 import type { Hooks } from "@opencode-ai/plugin";
 
-// Compaction policy (rule 23): the hook below customizes the compaction
-// prompt — prune intermediate tool output and scratchpads, retain the
-// system prompt, current goal, and active execution state, and never drop
+// Compaction policy (implementation-rules 23): the hook below customizes the
+// compaction prompt — prune intermediate tool output and scratchpads, retain
+// the system prompt, current goal, and active execution state, and never drop
 // evidence (diff hunks, test results, log lines, recorded rationale).
 // Evidence additionally lives in log.ndjson, outside the compactable
 // window, by construction.

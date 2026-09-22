@@ -8,6 +8,7 @@ Protocol rules (spec ID, handoffs, verdict, voice, exact-once, risk tier): `AGEN
 - **Permissions single source**: the matrix lives in `opencode.json`; agent `.md` files carry role prompts only and must not duplicate `permission` blocks.
 - **Scribe authors, build implements**: authoring commands run on `scribe` (`edit: ask`); `build` stays the only `allow`-writer. Scribe and reviewer hold ask-level `bash` (scribe also ask-level `webfetch`) so git history, primary sources, and MCP listings stay human-approved — rationale per agent in `opencode.json`.
 - **Only orchestrators spawn**: leaf subagents carry `task: deny`; only `plan` (triage/scout) and `build` (scout) may invoke subagents.
+- **Permission denials are logged**: `lpwr-audit-denials` writes `[permission-denied] …` to console — advisory only, never overrides the decision.
 - **Blocked entries are human escalations**: `lpwr-commit` never files `Blocked` in `docs/state.md` — a human escalates there; `lpwr-spec-link` and `lpwr-verdict-gate` refuse until it is removed.
 - **Toasts inform, logs record**: gate blockages raise best-effort TUI toasts; the thrown error and `log.ndjson` remain the record.
 - **Gates can't see who acts**: tool hooks carry no agent identity — frontmatter fields rely on scribe ask-checkpoints plus re-validation at commit/release.

@@ -3,6 +3,8 @@ import path from "node:path";
 
 import type { Hooks, PluginInput } from "@opencode-ai/plugin";
 
+import { commandName, toastBlocked } from "./shared.js";
+
 // Foundation gate: no domain command runs without the Govern foundation it
 // reads — docs/context.md and docs/constitution.md must exist. Exempt are the
 // commands that fix exactly that (setup prepares the machine, install
@@ -17,29 +19,10 @@ const EXEMPT = new Set([
 
 const FOUNDATION = ["docs/context.md", "docs/constitution.md"];
 
-// Every blockage raises a TUI toast with the same actionable message as the
-// thrown error, then throws. The toast never breaks the gate: with no attached
-// TUI (headless runs) the call is a harmless no-op, and any delivery failure is
-// swallowed — the error below remains the record.
-const toastBlocked = async (
-  plugin: PluginInput,
-  message: string
-): Promise<void> => {
-  try {
-    await plugin.client.tui.showToast({
-      body: { message, title: "Loopwright gate", variant: "error" },
-      query: { directory: plugin.directory },
-    });
-  } catch {
-    // Toast delivery is best-effort only.
-  }
-};
-
 const guardBootstrap = (plugin: PluginInput): Promise<Hooks> =>
   Promise.resolve({
     "command.execute.before": async (input) => {
-      const name = input.command.split(/[/:]/u).pop() ?? "";
-      if (EXEMPT.has(name)) {
+      if (EXEMPT.has(commandName(input.command))) {
         return;
       }
       // Anchored to the plugin's own directory — cwd may be a subdirectory.

@@ -16,9 +16,8 @@ spec naming the old ID in `supersedes:`.
 - Edit criteria under `lpwr-specs` rules (glossary-exact terms, banned
   substitutes rejected). Mint new sub-IDs here only, next free number, never
   reused; set `status: draft` for re-approval by explicit human verdict.
-- Void the old review by deleting `review.md` — the old verdict no longer
-  describes the spec, and the missing review blocks commit and release
-  mechanically until re-review happens.
+- Void the old review by deleting `review.md` — commit and release are
+  mechanically blocked until re-review.
 - Reconcile the Tasks section by criterion ID: unchanged keeps test
   references and check state; removed drops tasks (noted in the log); new
   gets unchecked tasks; reworded unchecks with test references cleared.

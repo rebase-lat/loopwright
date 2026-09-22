@@ -5,19 +5,16 @@ description: Ratify a picked option in three steps before the traceability ID is
 
 # Motion
 
-Ratification, not re-evaluation — triage already answered which option is best.
-Motion does three things triage didn't, and only those three. If none surfaces
-anything new, motion is short — that's the expected case, not a sign of
-shallowness. Never re-run triage's evaluation under motion's name.
+Ratification, not re-evaluation — triage already answered which option is
+best. Never re-run triage's evaluation under motion's name.
 
-- Pin the final statement: the human's actual selection, including any tweak or
-  merge of triaged options, as exact literal text. This becomes the proposal's
-  content, not a summary of triage's notes.
-- Check against memory: the final text against `docs/constitution.md`'s floors
-  and `docs/lessons/*` for anything relevant. Triage judged the option on its
-  own merits — not against accumulated constraints or past mistakes. A conflict
-  or a repeated past mistake gets flagged to the human before finalizing;
-  never silently proceed.
+- Pin the final statement: the human's actual selection, including any tweak
+  or merge of triaged options, as exact literal text. This becomes the
+  proposal's content, not a summary of triage's notes.
+- Check against memory: the final text against `docs/constitution.md`'s
+  floors and `docs/lessons/*` for anything relevant. A conflict or a repeated
+  past mistake gets flagged to the human before finalizing; never silently
+  proceed.
 - Capture dissent, if any: ask each triage seat one question only — "does
   anything about this final framing, as pinned above, still concern you?"
   Record a dissent only if the answer is yes and specific. Not a restatement

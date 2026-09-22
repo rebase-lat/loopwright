@@ -1,6 +1,6 @@
 ---
 name: lpwr-adr-drafting
-description: Draft an architecture decision record with two real alternatives. Use when a spec needs design review.
+description: Draft an architecture decision record with two real alternatives. Use when a spec needs design review (host: lpwr-design / lpwr-specify).
 ---
 
 # ADR Drafting

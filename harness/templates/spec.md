@@ -35,6 +35,6 @@ proposal_ref: docs/specs/<id>/proposal.md
 <observed basis only — ambiguities found: a null check that might be intentional or latent, a path with no caller, a comment contradicting the code>
 
 ## Acceptance criteria → test binding
-| Criterion ID | Test reference (filled by /implement) |
+| Criterion ID | Test reference (filled by lpwr-implement) |
 | --- | --- |
 | <id>-1 |  |

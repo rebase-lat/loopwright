@@ -61,11 +61,14 @@ const sectionEntries = (block: string, key: string): string[] => {
 const stripBrackets = (entry: string): string =>
   entry.replace(/^\[/u, "").replace(/\]$/u, "");
 
+const isEmptyMarker = (token: string): boolean =>
+  /^(?:none|null|~|-|\[\])$/iu.test(token);
+
 const parseWaived = (block: string): Set<string> => {
   const ids = new Set<string>();
   for (const entry of sectionEntries(block, "waived")) {
     for (const id of stripBrackets(entry).split(/[\s,]+/u)) {
-      if (id) {
+      if (id && !isEmptyMarker(id)) {
         ids.add(id);
       }
     }
@@ -83,7 +86,7 @@ const parseDeferred = (block: string): Deferred => {
   for (const entry of sectionEntries(block, "deferred")) {
     for (const chunk of stripBrackets(entry).split(/,/u)) {
       const trimmed = chunk.trim();
-      if (!trimmed) {
+      if (!trimmed || isEmptyMarker(trimmed)) {
         continue;
       }
       const move = trimmed.match(/^(?<id>\S+)\s*->\s*(?<target>\S+)$/u);

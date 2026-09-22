@@ -110,6 +110,19 @@ const rowCells = (row: string): string[] => {
 const isPlaceholderRef = (ref: string): boolean =>
   /^\s*<.*>\s*$/u.test(ref) || /^\s*\(pending\)\s*$/iu.test(ref);
 
+// Template scaffolding left unfilled (`<...>`) reads as real content to both
+// humans and agents — a skeleton review must never gate anything. Returns the
+// first offending line, capped, or null when the file is fully filled in.
+const templateLeftovers = (text: string): string | null => {
+  for (const line of text.split("\n")) {
+    const match = line.match(/<[A-Za-z][^<>\n]*>/u);
+    if (match) {
+      return match[0].slice(0, 80);
+    }
+  }
+  return null;
+};
+
 const frontmatterBlock = (review: string): string | null => {
   const match = review.match(/^---\n(?<frontmatter>[\s\S]*?)\n---/u);
   return match?.groups?.frontmatter ?? null;
@@ -431,6 +444,13 @@ const enforceVerdictGate = async (
       `Blocked: no review.md for ${specId} — no ship, no ${label}.`
     );
   }
+  const leftover = templateLeftovers(review);
+  if (leftover) {
+    block(
+      plugin,
+      `Blocked: review.md for ${specId} still contains template placeholders (${leftover}) — fill every field first.`
+    );
+  }
   const verdict = verdictCheck(review);
   if (!verdict.ok) {
     block(plugin, `Blocked: ${specId} / ${label}: ${verdict.reason}.`);
@@ -470,6 +490,13 @@ const enforceVerdictGate = async (
         plugin,
         `Blocked: ${specId}'s threat-review.md has no single "Acceptable to proceed" ` +
           `verdict — resolve its findings before releasing.`
+      );
+    }
+    const threatLeftover = templateLeftovers(threat);
+    if (threatLeftover) {
+      block(
+        plugin,
+        `Blocked: threat-review.md for ${specId} still contains template placeholders (${threatLeftover}) — fill every field first.`
       );
     }
   }

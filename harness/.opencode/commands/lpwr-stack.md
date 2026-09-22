@@ -9,4 +9,4 @@ Write the stack for $ARGUMENTS to the stack section of `docs/context.md`, includ
 
 Project-level output — unkeyed: no `journal_handoff` (spec-ID exemption).
 
-Output: writes stack section of `docs/context.md`; writes nothing else.
+Output: edits stack section of `docs/context.md`; writes nothing else.

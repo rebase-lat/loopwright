@@ -11,7 +11,7 @@ proposal_ref: docs/specs/<id>/proposal.md
 # Spec: <title>
 
 ## Current behavior narrative
-<observed basis only — plain-language explanation of what this module does today, for someone who has never read the code>
+<plain-language explanation of what this module does today, for someone who has never read the code — lpwr-explore fills this from observed code>
 
 ## Ubiquitous
 - <id>-1: The system shall <always-true behavior>.
@@ -32,7 +32,7 @@ proposal_ref: docs/specs/<id>/proposal.md
 - <explicitly out of scope, to prevent scope creep during lpwr-implement>
 
 ## Open questions
-<observed basis only — ambiguities found: a null check that might be intentional or latent, a path with no caller, a comment contradicting the code>
+<ambiguities found — a null check that might be intentional or latent, a path with no caller, a comment contradicting the code — lpwr-explore files these here, not into invented criteria>
 
 ## Acceptance criteria → test binding
 | Criterion ID | Test reference (filled by lpwr-implement) |
@@ -44,7 +44,5 @@ proposal_ref: docs/specs/<id>/proposal.md
 2. [ ] <task> — satisfies <id>-2, <id>-4
 3. [ ] <task> — satisfies <id>-3
 
-Every task binds to its criterion sub-ID(s); the declared surface (files/globs below) is what `lpwr-scope-guard.ts` enforces, so list it exactly.
-
 ### Declared surface
-- `path/or/glob` per line — the only files `lpwr-implement` may touch
+- `<file-or-glob>` per line — the only files `lpwr-implement` may touch

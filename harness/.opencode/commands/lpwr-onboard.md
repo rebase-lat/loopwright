@@ -17,5 +17,5 @@ When a new pass contradicts an earlier one (or the existing files), re-read the 
 
 Project-level output — unkeyed: no `journal_handoff` (spec-ID exemption).
 
-Output: writes `docs/context.md` via templates/context.md and drafts `docs/constitution.md`; writes nothing else.
+Output: writes `docs/context.md` via templates/context.md and drafts `docs/constitution.md` via templates/constitution.md; writes nothing else.
 Next: lpwr-setup.

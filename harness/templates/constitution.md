@@ -41,4 +41,4 @@ A spec may be marked "ship" only when:
 - <rounding, precision, and audit requirements>
 
 ## Glossary pointer
-See `docs/glossary.md` — banned substitutes are enforced, not suggested.
+See `docs/glossary.md`.

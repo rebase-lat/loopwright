@@ -14,5 +14,3 @@ date: <date>
 ## Sources
 - <primary source + what it establishes>
 - <primary source + what it establishes>
-
-Primary sources only: official docs, source code, specs, first-party APIs.

@@ -10,8 +10,8 @@ Banned substitutes are rejected at `lpwr-specs` time — the draft goes back unt
 | Surface | The file/glob list declared in the Tasks section for the active spec | "scope" (too ambiguous — use surface) |
 | Tasks | The criterion-bound work list in `spec.md`'s Tasks section; the declared surface lives here | "todo list" |
 | Waived | A criterion ID listed under `waived:` in `review.md` frontmatter, with justification in Verdict reasoning | "dropped", "abandoned" |
-| Deferred | A criterion ID listed under `deferred:` as `<id> -> <follow-up spec>`, moving it to a follow-up | "postponed", "moved" |
-| Triage | The neutral / deep-expert / applied-judge debate plus ratification motion run by `lpwr-propose`; read-only, never writes `docs/` | "panel", "jury" |
+| Deferred | A criterion ID listed under `deferred:` as `<criterion-id> -> <follow-up spec>`, moving it to a follow-up | "postponed", "moved" |
+| Triage | The neutral / deep-expert / applied-judge debate plus ratification motion run by `lpwr-propose` | "panel", "jury" |
 | Handoff | One intent-tagged A2A line in `log.ndjson` | "ping", "notification" |
 | Motion | The ratification of a picked option: pinned final statement, memory check, dissent capture — never a re-run of triage | "resolution", "measure" |
 | Risk tier | The `low | medium | high` band in `spec.md` frontmatter, human-confirmed, deciding how much review a spec gets | "risk level" |

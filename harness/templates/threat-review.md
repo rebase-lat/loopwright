@@ -1,6 +1,6 @@
 ---
 id: <domain>-<sequence>
-spec_ref: docs/specs/<id>/spec.md
+spec_ref: <domain>-<sequence>
 risk_tier: high
 date: <date>
 ---
@@ -8,7 +8,7 @@ date: <date>
 # Threat review: <title>
 
 ## What could go wrong
-- <specific failure mode 1 — be concrete, not generic>
+- <specific failure mode 1>
 - <specific failure mode 2>
 
 ## Who could exploit it

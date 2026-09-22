@@ -142,6 +142,19 @@ const splitCommand = (command: string): string[] => {
   return parts;
 };
 
+// Per-run dependency audit trace, appended by this plugin to
+// docs/specs/<id>/audit.md. One section per run, newest last. Frontmatter
+// carries the owning spec (written once on creation). Shape:
+//   ---
+//   spec_ref: <domain>-<sequence>
+//   ---
+//   ## <ISO timestamp>
+//   command: <audit command run>
+//   result: clean | findings (exit <code>)
+//   ```<bounded tool output tail>
+//   ```
+// Reviewed at lpwr-review time via the Security axis. This file owns the
+// shape — there is no templates/audit.md.
 const AUDIT_TRACE_CHARS = 4000;
 
 const appendAuditTrace = async (

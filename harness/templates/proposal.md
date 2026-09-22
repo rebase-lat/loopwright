@@ -1,5 +1,6 @@
 ---
 id: <domain>-<sequence>
+date: <date>
 status: draft   # draft | approved
 ---
 
@@ -19,6 +20,3 @@ status: draft   # draft | approved
 
 ### Dissent
 <none | seat: specific, unresolved concern about the final framing above>
-
-## Next
-Proceeds to lpwr-specs once this proposal is approved.

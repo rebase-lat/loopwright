@@ -1,6 +1,6 @@
 ---
 id: <domain>-<sequence>
-spec_ref: docs/specs/<id>/spec.md
+spec_ref: <domain>-<sequence>
 date: <date>
 status: draft   # draft | approved | superseded
 ---

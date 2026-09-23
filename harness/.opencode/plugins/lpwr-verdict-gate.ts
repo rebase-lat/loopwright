@@ -31,15 +31,22 @@ const execFileAsync = promisify(execFile);
 const readFileAt = async (root: string, relative: string): Promise<string> =>
   normalizeEol(await readFile(path.join(root, relative), "utf-8"));
 
+// Strip a trailing YAML ` # …` comment (whitespace before `#` is required for
+// it to be a comment in a plain scalar). Values keep their format-hint comments
+// from the template; those must not become waived IDs or deferred entries.
+const stripYamlComment = (value: string): string =>
+  value.replace(/\s+#.*$/u, "").trim();
+
 // Line-based frontmatter list reader: handles `key: value`, `key: [a, b]`,
 // and `- item` lists. Stops at the next key, a blank-line boundary, or `---`.
+// Inline comments on the value are stripped before the value is collected.
 const sectionEntries = (fmBlock: string, key: string): string[] => {
   const entries: string[] = [];
   let inside = false;
   for (const line of fmBlock.split("\n")) {
     if (!inside) {
       const header = line.match(new RegExp(`^${key}:\\s*(?<rest>.*)$`, "iu"));
-      const rest = header?.groups?.rest.trim() ?? "";
+      const rest = stripYamlComment(header?.groups?.rest ?? "");
       if (header?.groups) {
         inside = true;
         if (rest && rest !== "[]" && rest !== "null" && rest !== "~") {
@@ -50,7 +57,10 @@ const sectionEntries = (fmBlock: string, key: string): string[] => {
     }
     const item = line.match(/^\s*-\s*(?<entry>.+)$/u);
     if (item?.groups) {
-      entries.push(item.groups.entry.trim());
+      const entry = stripYamlComment(item.groups.entry);
+      if (entry) {
+        entries.push(entry);
+      }
       continue;
     }
     if (/^\s*$/u.test(line)) {

@@ -114,11 +114,17 @@ const isPlaceholderRef = (ref: string): boolean =>
   /^\s*<.*>\s*$/u.test(ref) || /^\s*\(pending\)\s*$/iu.test(ref);
 
 // Template scaffolding left unfilled (`<...>`) reads as real content to both
-// humans and agents — a skeleton review must never gate anything. Returns the
-// first offending line, capped, or null when the file is fully filled in.
+// humans and agents — a skeleton review must never gate anything. Inline
+// comments (YAML ` # …`) and code spans document the field format with the
+// same angle-bracket metavars as real slots; strip both first so only
+// genuine unfilled placeholders count. Returns the first offender, capped,
+// or null when the file is fully filled in.
 const templateLeftovers = (text: string): string | null => {
   for (const line of text.split("\n")) {
-    const match = line.match(/<[A-Za-z][^<>\n]*>/u);
+    const cleaned = line
+      .replace(/\s+#\s.*$/u, "")
+      .replaceAll(/`[^`\n]*`/gu, "");
+    const match = cleaned.match(/<[A-Za-z][^<>\n]*>/u);
     if (match) {
       return match[0].slice(0, 80);
     }

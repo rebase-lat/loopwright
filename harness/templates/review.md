@@ -4,7 +4,7 @@ date: <date>
 diff_ref: HEAD (uncommitted)   # `git diff HEAD` — switch to the commit range after lpwr-commit
 risk_tier: low   # low | medium | high — carried over from spec.md
 waived: none   # criterion IDs explicitly waived, comma-separated; justify each in Verdict reasoning
-deferred: none   # `<criterion-id> -> <follow-up spec>`, comma-separated; each needs a follow-up
+deferred: none   # format: criterion-id -> follow-up-spec, comma-separated; each needs a follow-up
 ---
 
 # Review: <title>

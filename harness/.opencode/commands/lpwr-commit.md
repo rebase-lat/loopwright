@@ -16,3 +16,5 @@ Group the diff for $ARGUMENTS (`<id>`, the spec ID) and create one or more commi
 7. File each `deferred:` target from the review frontmatter into `docs/state.md`'s Next section so follow-ups survive this spec's closure.
 
 Output: writes commits, `docs/state.md` via templates/state.md, `docs/lessons/<date>-<id>.md` via templates/lesson.md; journal_handoff retain `<commit-sha>`.
+
+Next: lpwr-release (if this repo deploys) or lpwr-teach.

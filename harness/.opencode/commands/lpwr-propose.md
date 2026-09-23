@@ -15,4 +15,5 @@ Stage: Frame.
 Required reading first: `docs/glossary.md`, `docs/context.md`, relevant `docs/lessons/*`. Use skill `lpwr-context-economy`.
 
 Output: writes `docs/specs/<id>/proposal.md` via templates/proposal.md; journal_handoff frame `docs/specs/<id>/proposal.md`.
+
 Next: lpwr-specify.

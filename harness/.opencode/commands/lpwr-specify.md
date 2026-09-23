@@ -15,3 +15,5 @@ Full pass from an approved proposal to approved tasks in one run, using skills `
 Granular `lpwr-specs`, `lpwr-tasks`, and `lpwr-design` remain for partial states. If `spec.md` already exists for this ID, stop and use `lpwr-amend`. Call `journal_handoff` with intent `specify`, the spec ID, and artifact `docs/specs/<id>/spec.md`.
 
 Output: writes `docs/specs/<id>/spec.md` via templates/spec.md (plus `docs/specs/<id>/adr.md` via templates/adr.md when design review applies); journal_handoff specify `docs/specs/<id>/spec.md`.
+
+Next: lpwr-implement (approved package).

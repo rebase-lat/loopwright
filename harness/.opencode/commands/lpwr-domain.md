@@ -10,3 +10,5 @@ Write precise definitions for $ARGUMENTS (project-wide language or a named modul
 Project-level output — unkeyed: no `journal_handoff` (spec-ID exemption).
 
 Output: writes `docs/glossary.md`; writes nothing else.
+
+Next: lpwr-guide.

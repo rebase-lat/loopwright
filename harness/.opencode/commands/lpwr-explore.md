@@ -14,3 +14,5 @@ Set `risk_tier` (human-confirmed, same heuristics as `lpwr-specs`) and leave the
 Approval answers "does this correctly describe what the code does" — not "is this what it should do." If the behavior itself is wrong, don't approve: run `lpwr-propose` with this draft as grounding, and let the new spec `supersede` it.
 
 Output: writes `docs/specs/<id>/spec.md` via templates/spec.md; journal_handoff specify `docs/specs/<id>/spec.md`.
+
+Next: lpwr-tasks or lpwr-implement (after accuracy approval).

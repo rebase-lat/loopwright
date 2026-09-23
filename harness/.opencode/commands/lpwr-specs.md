@@ -13,3 +13,5 @@ Rules: EARS-typed criteria with sub-IDs `<id>-<n>`; behavior and constraints, ne
 Call `journal_handoff` with intent `specify`, the spec ID, and artifact `docs/specs/<id>/spec.md`.
 
 Output: writes `docs/specs/<id>/spec.md` via templates/spec.md; journal_handoff specify `docs/specs/<id>/spec.md`.
+
+Next: lpwr-tasks (granular) or lpwr-implement (full pass already filled tasks).

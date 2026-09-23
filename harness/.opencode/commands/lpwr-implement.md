@@ -14,3 +14,5 @@ Use skills `lpwr-acceptance-criteria`, `lpwr-diff-reading`, and `lpwr-explain-ba
 On completion, call `journal_handoff` per criterion with intent `execute`, spec_ref set to the task's criterion id, and artifact set to the same criterion id — never a commit SHA (Execute leaves the tree uncommitted; SHAs appear only on the `retain` handoff after `lpwr-commit`) and never the inline diff. Summarize the change in chat by task, not by patch.
 
 Output: inline task-level change summary (code is the artifact); journal_handoff execute per criterion, artifact = criterion id.
+
+Next: lpwr-review.

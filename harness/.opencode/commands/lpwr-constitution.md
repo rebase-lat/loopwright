@@ -11,3 +11,5 @@ Rules: amendments go through `lpwr-propose` → `lpwr-review` like any spec — 
 Call `journal_handoff` with intent `govern` for that spec ID.
 
 Output: writes `docs/constitution.md` via templates/constitution.md; journal_handoff govern `<spec-id>`.
+
+Next: lpwr-guide.

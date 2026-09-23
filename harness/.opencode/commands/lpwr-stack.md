@@ -10,3 +10,5 @@ Write the stack for $ARGUMENTS to the stack section of `docs/context.md`, includ
 Project-level output — unkeyed: no `journal_handoff` (spec-ID exemption).
 
 Output: edits stack section of `docs/context.md`; writes nothing else.
+
+Next: lpwr-guide.

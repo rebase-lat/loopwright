@@ -12,4 +12,5 @@ Never write code. Write the interview notes to `docs/memos/<topic>.md` via `temp
 Frame-stage output before a spec exists — unkeyed: no `journal_handoff` (spec-ID exemption).
 
 Output: writes `docs/memos/<topic>.md` via templates/memo.md; writes nothing else.
+
 Next: lpwr-propose.

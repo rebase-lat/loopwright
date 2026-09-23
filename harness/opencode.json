@@ -5,12 +5,12 @@
   // default. Pin per-agent models here when the team standardizes on providers.
   // Permissions matrix is defined HERE (single source of truth); agent .md
   // files carry role prompts only and must not duplicate permission blocks.
-  // Every known builtin is named on every agent (rule 16 / conventions): a
+  // Every known builtin is named on every agent (rule 48 / conventions): a
   // tool the matrix omits defaults to allow. MCP tools default deny (`mcp_*`)
   // until lpwr-setup evaluates a server and the human grants a phase slot.
-  // Phase profile: Bootstrap→builder/scribe, Govern→scribe, Frame→planner,
-  // Specify→scribe, Execute→builder, Verify→reviewer/scribe, Retain→builder/
-  // planner, Cross-cut→planner.
+  // Phase profile: Bootstrap→builder/scribe, Govern→scribe, Frame→planner/
+  // scribe, Specify→scribe, Execute→builder, Verify→reviewer/scribe/builder
+  // (release), Retain→builder/planner, Cross-cut→planner.
   "default_agent": "builder",
   "permission": {
     "doom_loop": "ask",

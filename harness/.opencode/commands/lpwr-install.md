@@ -12,4 +12,5 @@ Idempotent: running twice on a materialized project is a no-op with a confirmati
 Project-level output — unkeyed: no `journal_handoff` (spec-ID exemption).
 
 Output: writes `docs/constitution.md` via templates/constitution.md, `docs/context.md` via templates/context.md, `docs/state.md` via templates/state.md; writes nothing else.
+
 Next: lpwr-onboard.

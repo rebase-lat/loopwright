@@ -12,3 +12,5 @@ Write a cited Markdown memo to `docs/memos/<topic>.md` via `templates/memo.md` â
 When $ARGUMENTS is keyed to a spec ID, call `journal_handoff` with intent `frame`, that spec ID, and artifact `docs/memos/<topic>.md`; unkeyed research writes the memo with no handoff (spec-ID exemption).
 
 Output: writes `docs/memos/<topic>.md` via templates/memo.md; journal_handoff frame `docs/memos/<topic>.md` (only when keyed to a spec ID).
+
+Next: lpwr-propose (when keyed and grounded).

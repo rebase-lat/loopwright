@@ -10,6 +10,9 @@ what counts as done — criteria and test binding — before solution code exist
 
 - Every criterion carries a sub-ID `<id>-<n>` and binds to at least one test
   reference.
+- Unresolved `Open questions` and unbound threat-review findings have no
+  sub-ID — they cannot use `deferred:`. Resolve/promote them to real criteria
+  before spec approval or review ship.
 - `lpwr-specs` creates the table with empty test-reference cells;
   `lpwr-implement` fills them — never mark a task done without a passing test
   referencing its criterion.

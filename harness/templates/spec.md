@@ -32,7 +32,7 @@ proposal_ref: docs/specs/<id>/proposal.md
 - <explicitly out of scope, to prevent scope creep during lpwr-implement>
 
 ## Open questions
-<ambiguities found — a null check that might be intentional or latent, a path with no caller, a comment contradicting the code — lpwr-explore files these here, not into invented criteria>
+<ambiguities found — a null check that might be intentional or latent, a path with no caller, a comment contradicting the code — lpwr-explore files these here, not into invented criteria; every entry must be resolved before approval: promote to a criterion sub-ID, move to Non-goals, or strike with a one-line resolution>
 
 ## Acceptance criteria → test binding
 | Criterion ID | Test reference (filled by lpwr-implement) |

@@ -17,6 +17,7 @@ status: draft   # draft | approved
 ### Checked against memory
 - Constitution: <no conflict | flagged: describe>
 - Lessons: <none relevant | flagged: describe, with a pointer to the specific lesson file>
+- Memos: <none | pointer to docs/memos/<topic>.md — one line: what it establishes>
 
 ### Dissent
 <none | seat: specific, unresolved concern about the final framing above>

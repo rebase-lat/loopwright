@@ -5,7 +5,7 @@ updated_by: lpwr-onboard   # or lpwr-domain / lpwr-stack for a partial refresh
 
 # Project context
 
-<!-- Section ownership: Codebase drafted by lpwr-onboard; Domain by lpwr-domain (feeds glossary.md); Stack by lpwr-stack (verified by lpwr-setup); Principles pointer only — full rules live in docs/constitution.md. -->
+<!-- Section ownership: Codebase drafted by lpwr-onboard; Domain by lpwr-domain (writes glossary.md and refreshes this section together); Stack by lpwr-stack (verified by lpwr-setup); Principles pointer only — full rules live in docs/constitution.md. -->
 
 ## Codebase
 <structure, key modules, entry points>

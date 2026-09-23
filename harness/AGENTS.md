@@ -11,7 +11,7 @@ Extended rule checklist: `docs/implementation-rules.md`.
 5. Commands are human entry points. Skills are procedures. Plugins enforce. Agents isolate by permission set. Prose advises, plugins enforce, agents isolate.
 6. Before starting any domain command, glance at `docs/state.md` and relevant `docs/lessons/`.
 7. Verdict (`ship` / `block` / `redirect`) is human-owned and recorded in `docs/specs/<id>/review.md`. Nothing downstream routes around it.
-8. Waived/deferred criteria live in `review.md` frontmatter with justification and follow-ups — unlisted gaps never ship.
+8. Waived/deferred criteria live in `review.md` frontmatter with justification and follow-ups — unlisted gaps never ship. Unresolved open questions and unbound threat findings have no criterion ID: promote them to real criteria at specify/review time so the deferred path works.
 9. Behavior changes update the spec first via `lpwr-amend` (review voided, tasks reconciled, re-approval required) — never code first.
 10. Say what's exact exactly; say what's explanatory plainly, once, and move on. When a gate fires, name what happened and what to do — never re-explain the concept; the reader looks it up if it's genuinely new.
 11. Risk tier is set at specs and re-confirmed at review; high-tier specs need `threat-review.md` before release.

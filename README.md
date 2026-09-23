@@ -41,7 +41,7 @@ loopwright/
 ├── PRINCIPLES.md               # design intent (resume of the former principles essays)
 ├── LICENSE                     # MIT
 ├── CHANGELOG.md
-├── package.json                # npm scripts: lint, fmt, fmt:check, typecheck; version 1.1.1
+├── package.json                # npm scripts: lint, fmt, fmt:check, typecheck; version 1.2.0
 ├── constitution.md             # this repo's own rules — the committed record (harness ships without one; onboard creates it)
 ├── context.md                  # this repo's own context (same: generated per project by onboard)
 ├── harness/                    # pure boilerplate — no prefilled project info (run opencode from here)

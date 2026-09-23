@@ -3,6 +3,30 @@
 All notable changes to this project, grouped by git tag. See the commit
 history for per-change detail.
 
+## [1.2.0] — 2026-09-23
+
+- Integration analysis (`harness/docs/integration-analysis.md`): 40-finding
+  cross-phase audit (Wired/Prose/Gap/Ephemeral) plus the three-wave plan that
+  landed with this release.
+- Wave 1: `lpwr-setup` diffs the Stack section of `context.md` and the guide
+  gains a stack-drift step; `lpwr-domain` refreshes the Domain section;
+  propose reads topic memos (`Memos:` line in the proposal template); open
+  questions must resolve to criterion/non-goal/struck before approval;
+  threat findings must be fixed or bound to a criterion ID at review.
+- Waves 2–3: append-only `docs/audit.md` (setup-suggestion, improve-candidate,
+  release-ref) with commit-step reconcile into `state.md` Done; onboard owns
+  the constitution's first approval (amendments-only thereafter);
+  `question` checkpoint for unlisted bash binaries in implement/diagnose;
+  threat-review reads the ADR; diagnose names criterion IDs as regression
+  targets; implement reads the diagnose memo; commit/teach prefer
+  explain-back insights; guide branches block→diagnose and redirect→memo
+  grounding (21-step decision path).
+- Verdict-gate strips inline frontmatter `# …` comments from `waived:` /
+  `deferred:` values so format-hint comments no longer become phantom waiver
+  IDs or deferred-entry errors.
+- Guide/ledger fixes: Next chain, bootstrap order, rule refs, phase profile
+  across all commands.
+
 ## [1.1.1] — 2026-09-23
 
 - Permission matrix names every known builtin on all eight agents (omitted

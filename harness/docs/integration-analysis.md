@@ -182,8 +182,8 @@ Artifacts: commits, `state.md` update, `lessons/<date>-<id>.md`, deferred→Next
 - [x] Domain 8 — Cross-cutting
 - [x] Prioritization / fix waves (plan below)
 - [x] Wave 1 — Critical
-- [ ] Wave 2 — High
-- [ ] Wave 3 — Medium
+- [x] Wave 2 — High
+- [x] Wave 3 — Medium
 
 ---
 

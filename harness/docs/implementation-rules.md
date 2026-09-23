@@ -70,7 +70,8 @@ names the failure it prevents.
     Execute's job, not Specify's.** Don't pre-fill it with placeholder text; an empty cell is the
     honest state until a test exists.
 19. **`docs/state.md` has exactly one writer (`/commit`).** Any other command that's tempted to
-    update it should append to the audit log instead and let `/commit` reconcile.
+    update it should append to `docs/audit.md` instead (the project append-only trail — not the
+    per-spec security `audit.md`) and let `/commit` reconcile.
 
 ## A2A and logging
 

@@ -11,10 +11,11 @@ Group the diff for $ARGUMENTS (`<id>`, the spec ID) and create one or more commi
 2. Gate: `docs/specs/<id>/log.ndjson` must carry at least one line with this spec's `spec_ref` and an intent other than `retain` — a change with no upstream traceable work is out-of-process work, not a gap in the log; retain-only lines (or none), no merge.
 3. Commit: every message carries the spec ID.
 4. Call `journal_handoff` with intent `retain` and artifact pointing at the commit SHA(s), then the log goes archival.
-5. Update `docs/state.md` via `templates/state.md` (single writer — Done, In flight, Next only; never file a Blocked entry, those are human escalations).
-6. Write `docs/lessons/<date>-<id>.md` via `templates/lesson.md` — the single highest-value thing learned, with `failure_bucket` set honestly.
-7. File each `deferred:` target from the review frontmatter into `docs/state.md`'s Next section so follow-ups survive this spec's closure.
+5. Reconcile `docs/audit.md` first: fold any open `improve-candidate` entries with no matching proposal into `docs/state.md`'s Next (mark them consumed in the audit log); fold any open `release-ref` for this `<id>` into the Done line for `<id>` (mark consumed). `setup-suggestion` entries stay until the human marks them applied.
+6. Update `docs/state.md` via `templates/state.md` (single writer — Done, In flight, Next only; never file a Blocked entry, those are human escalations).
+7. Write `docs/lessons/<date>-<id>.md` via `templates/lesson.md` — the single highest-value thing learned, with `failure_bucket` set honestly. Prefer an insight already explained back during implement (per-criterion `execute` handoffs / session notes) over re-deriving one.
+8. File each `deferred:` target from the review frontmatter into `docs/state.md`'s Next section so follow-ups survive this spec's closure.
 
-Output: writes commits, `docs/state.md` via templates/state.md, `docs/lessons/<date>-<id>.md` via templates/lesson.md; journal_handoff retain `<commit-sha>`.
+Output: writes commits, `docs/state.md` via templates/state.md, `docs/lessons/<date>-<id>.md` via templates/lesson.md, reconciles `docs/audit.md`; journal_handoff retain `<commit-sha>`.
 
 Next: lpwr-release (if this repo deploys) or lpwr-teach.

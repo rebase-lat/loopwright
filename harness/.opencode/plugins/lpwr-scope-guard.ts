@@ -91,6 +91,24 @@ const matchesAny = (filePath: string, patterns: string[]): boolean => {
 
 const execFileAsync = promisify(execFile);
 
+// apply_patch carries paths in marker lines (patchText), not args.filePath:
+//   *** Add File: path / *** Update File: path / *** Move to: path / *** Delete File: path
+const patchFilePaths = (patchText: unknown): string[] => {
+  if (typeof patchText !== "string") {
+    return [];
+  }
+  const paths: string[] = [];
+  for (const match of patchText.matchAll(
+    /^\*\*\* (?:Add|Update|Move to|Delete) File: (?<path>.+)$/gmu
+  )) {
+    const entry = match.groups?.path?.trim();
+    if (entry) {
+      paths.push(entry);
+    }
+  }
+  return paths;
+};
+
 const specCache = new Map<string, string | null>();
 
 const findGitDir = (filePath: string): string | null => {
@@ -158,29 +176,50 @@ const scopeGuard = (plugin: PluginInput): Promise<Hooks> =>
       return Promise.resolve();
     },
     "tool.execute.before": async (input, output) => {
-      if (input.tool !== "edit" && input.tool !== "write") {
+      if (
+        input.tool !== "edit" &&
+        input.tool !== "write" &&
+        input.tool !== "apply_patch"
+      ) {
         return;
       }
-      const resolved = await activeSpec(output.args.filePath);
+      let filePaths: string[] = [];
+      if (input.tool === "apply_patch") {
+        filePaths = patchFilePaths(output.args.patchText);
+      } else if (typeof output.args.filePath === "string") {
+        filePaths = [output.args.filePath];
+      }
+      if (filePaths.length === 0) {
+        return;
+      }
+      // All paths in one patch share one spec context (branch / env var).
+      const resolved = await activeSpec(filePaths[0]);
       // No active spec means nothing to guard.
       if (!resolved) {
         return;
       }
       const { gitDir, specId } = resolved;
-      // Match in repo-relative terms so absolute or `../` paths from other
-      // worktrees can't slip past (or falsely trip) the declared surface.
-      const absolute = path.resolve(process.cwd(), output.args.filePath);
-      const relative = path.relative(gitDir, absolute).replaceAll("\\", "/");
       const declaredSurface = await readDeclaredSurface(
         path.join(gitDir, `docs/specs/${specId}/spec.md`),
         specId
       );
-      if (relative.startsWith("..") || !matchesAny(relative, declaredSurface)) {
-        const message =
-          `Blocked: ${relative} is outside the declared surface for ${specId}. ` +
-          `Update the Tasks section first if the declared surface genuinely changed.`;
-        await toastBlocked(plugin, message);
-        throw new Error(message);
+      // oxlint-disable-next-line no-await-in-loop -- first violation wins so the blocked path is deterministic
+      for (const filePath of filePaths) {
+        // Match in repo-relative terms so absolute or `../` paths from other
+        // worktrees can't slip past (or falsely trip) the declared surface.
+        const absolute = path.resolve(process.cwd(), filePath);
+        const relative = path.relative(gitDir, absolute).replaceAll("\\", "/");
+        if (
+          relative.startsWith("..") ||
+          !matchesAny(relative, declaredSurface)
+        ) {
+          const message =
+            `Blocked: ${relative} is outside the declared surface for ${specId}. ` +
+            `Update the Tasks section first if the declared surface genuinely changed.`;
+          // oxlint-disable-next-line no-await-in-loop -- throw stops at first violation
+          await toastBlocked(plugin, message);
+          throw new Error(message);
+        }
       }
     },
   });

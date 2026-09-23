@@ -51,6 +51,40 @@ export const toastBlocked = async (
   }
 };
 
+// One-shot user-facing advisory (warning variant). Best-effort like toastBlocked.
+export const toastWarning = async (
+  plugin: PluginInput,
+  message: string
+): Promise<void> => {
+  try {
+    await plugin.client.tui.showToast({
+      body: { message, title: "Loopwright", variant: "warning" },
+      query: { directory: plugin.directory },
+    });
+  } catch {
+    // Toast delivery is best-effort only.
+  }
+};
+
+// Structured advisory log — the opencode-native replacement for console.warn.
+// Fire-and-forget: never throws, never blocks. Repeating/machine-readable
+// lines go here; one-shot human alerts also raise toastWarning.
+export const logWarn = (
+  plugin: PluginInput,
+  service: string,
+  message: string
+): void => {
+  void (async () => {
+    try {
+      await plugin.client.app.log({
+        body: { level: "warn", message, service },
+      });
+    } catch {
+      // Log delivery is best-effort only.
+    }
+  })();
+};
+
 // Typed as an explicit const so TypeScript's control-flow analysis treats every
 // call as terminating — narrowing otherwise fails.
 export const block: (plugin: PluginInput, message: string) => never = (

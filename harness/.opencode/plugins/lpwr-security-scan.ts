@@ -24,7 +24,9 @@ import {
   commandName,
   firstArgument,
   looksLikeGitCommit,
+  logWarn,
   toastBlocked,
+  toastWarning,
 } from "./shared.js";
 
 const execFileAsync = promisify(execFile);
@@ -65,13 +67,18 @@ const scanContent = (content: string): string | null => {
   return null;
 };
 
-const scanFile = async (filePath: string): Promise<string | null> => {
+const scanFile = async (
+  plugin: PluginInput,
+  filePath: string
+): Promise<string | null> => {
   const resolved = path.resolve(process.cwd(), filePath);
   try {
     const { size } = statSync(resolved);
     if (size > MAX_SCAN_BYTES) {
-      console.warn(
-        `[security-scan] ${filePath} exceeds ${MAX_SCAN_BYTES} bytes — skipped; ` +
+      logWarn(
+        plugin,
+        "lpwr-security-scan",
+        `${filePath} exceeds ${MAX_SCAN_BYTES} bytes — skipped; ` +
           `run a dedicated secret scanner over large files before release.`
       );
       return null;
@@ -264,15 +271,24 @@ const securityScan = (plugin: PluginInput): Promise<Hooks> => {
       }
       const audit = await auditDependencies(root, specId);
       if (audit.warned) {
-        console.warn(`[security-audit] ${audit.warned}`);
+        logWarn(plugin, "lpwr-security-scan", audit.warned);
+        await toastWarning(plugin, audit.warned);
       }
     },
     "tool.execute.after": async (input) => {
-      if (input.tool !== "edit" && input.tool !== "write") {
+      if (
+        input.tool !== "edit" &&
+        input.tool !== "write" &&
+        input.tool !== "apply_patch"
+      ) {
         return;
       }
-      const file: string = input.args.filePath;
-      const flagged = await scanFile(file);
+      const file: unknown = input.args.filePath;
+      if (typeof file !== "string" || file === "") {
+        // apply_patch has no single filePath — pending content is scanned pre-write.
+        return;
+      }
+      const flagged = await scanFile(plugin, file);
       if (!flagged) {
         return;
       }
@@ -285,13 +301,26 @@ const securityScan = (plugin: PluginInput): Promise<Hooks> => {
     "tool.execute.before": async (input, output) => {
       // Pre-write: scan the pending content so a secret never lands on disk —
       // the after-hook remains as a backstop for tools that rewrite the file.
-      if (input.tool === "edit" || input.tool === "write") {
+      if (
+        input.tool === "edit" ||
+        input.tool === "write" ||
+        input.tool === "apply_patch"
+      ) {
         const args = output.args as Record<string, unknown>;
-        const pending = [args.newText, args.content, args.newString]
+        const pending = [
+          args.newText,
+          args.content,
+          args.newString,
+          args.patchText,
+        ]
           .filter((value): value is string => typeof value === "string")
           .join("\n");
-        const file =
-          typeof args.filePath === "string" ? args.filePath : "(pending)";
+        let file = "(pending)";
+        if (typeof args.filePath === "string" && args.filePath !== "") {
+          file = args.filePath;
+        } else if (input.tool === "apply_patch") {
+          file = "(apply_patch)";
+        }
         const flagged = pending ? scanContent(pending) : null;
         if (flagged) {
           const message =

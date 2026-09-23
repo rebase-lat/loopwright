@@ -3,6 +3,32 @@
 All notable changes to this project, grouped by git tag. See the commit
 history for per-change detail.
 
+## [1.1.1] — 2026-09-23
+
+- Permission matrix names every known builtin on all eight agents (omitted
+  tools default allow); global `mcp_*` and `websearch` deny, `doom_loop` /
+  `external_directory` ask; `lsp` allow only on builder, `websearch` allow
+  only on deep-expert; `question` denied on triage leaves.
+- Structured human picks go through the `question` tool (risk tier, design
+  review, verdict, option selection, interview rounds); Execute and Bootstrap
+  seed `todowrite` from their checklists without journaling `todo.updated`
+  (rule 48 + conventions).
+- `lpwr-setup` step 4 evaluates the tool surface and MCP servers report-only —
+  flags rule-16 gaps and emits copy-pasteable permission keys; never patches
+  `opencode.json`. Env flags (`OPENCODE_ENABLE_EXA`/`_PARALLEL`,
+  `OPENCODE_EXPERIMENTAL_LSP_TOOL`) documented, not flipped.
+- `apply_patch` handled across gates: scope-guard parses `*** … File:` marker
+  paths, secret scan pre-writes pending `patchText`, flag-traps counts edits
+  when a real `filePath` is present.
+- Advisories replace `console.warn` with `logWarn` (`client.app.log`) and a
+  shared one-shot `toastWarning`; permission denials and setup gaps log
+  structured warns (setup aggregates one toast).
+- Verdict-gate strips inline comments and code spans before the
+  template-leftover check so format hints no longer false-positive;
+  `templates/review.md` deferred hint de-bracketed.
+- Execute handoff artifact is the criterion id (never a commit SHA — SHAs
+  appear only on the `retain` handoff after `lpwr-commit`).
+
 ## [1.0.0] — 2026-09-22
 
 First stable release.
@@ -24,7 +50,7 @@ First stable release.
   to `harness/docs/`; principles essays synthesized into root `PRINCIPLES.md`.
 - MIT `LICENSE` added; `package.json` version 1.0.0.
 
-## [Current] — 0.7.1
+## [0.7.1]
 
 - Waiver tags go inline (`waived:` / `deferred:` single-line values) so they
   no longer scan as pending tasks; empty markers (`none`, `[]`) and the

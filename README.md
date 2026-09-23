@@ -14,16 +14,19 @@ the worktree, branch, `docs/specs/<id>/` folder, log lines, and commit messages.
 through typed stages — each command declares its `Stage:` — and every handoff appends one
 structured line (`intent`, `spec_ref`, artifact-pointer `payload`, `confidence`) to the
 spec's `log.ndjson`. Gates hold whether or not the agent cooperates: `lpwr-spec-link` blocks
-unapproved specs, `lpwr-scope-guard` blocks out-of-surface edits, `lpwr-verdict-gate` blocks
+unapproved specs, `lpwr-scope-guard` blocks out-of-surface edits (`edit`/`write`/
+`apply_patch`), `lpwr-verdict-gate` blocks
 ship-less commits and deploys, `lpwr-security-scan` blocks secrets (dependency findings
 warn-and-trace to `audit.md`, reviewed at lpwr-review). Review weight scales by
 human-confirmed risk tier; high-tier specs need a threat review before release.
+Structured human picks run through the `question` tool; advisories land in
+`client.app.log` (`logWarn`) and one-shot warning toasts — never raw `console.*`.
 
 ## Quickstart
 
 Run from `harness/` (the live workspace). After any config change, quit + restart opencode.
 
-1. `lpwr-setup` — install deps, check env and runtime (idempotent, machine-level).
+1. `lpwr-setup` — install deps, check env/runtime, evaluate tool surface + MCP (report-only; idempotent).
 2. `lpwr-install` — materialize `docs/` files from templates (missing only, never overwrite).
 3. `lpwr-onboard` — guided pass producing `docs/context.md` + a drafted constitution.
 4. `lpwr-guide` — read-only "what's next" helper; callable any time, from anywhere.
@@ -38,7 +41,7 @@ loopwright/
 ├── PRINCIPLES.md               # design intent (resume of the former principles essays)
 ├── LICENSE                     # MIT
 ├── CHANGELOG.md
-├── package.json                # npm scripts: lint, fmt, fmt:check, typecheck; version 1.0.0
+├── package.json                # npm scripts: lint, fmt, fmt:check, typecheck; version 1.1.1
 ├── constitution.md             # this repo's own rules — the committed record (harness ships without one; onboard creates it)
 ├── context.md                  # this repo's own context (same: generated per project by onboard)
 ├── harness/                    # pure boilerplate — no prefilled project info (run opencode from here)

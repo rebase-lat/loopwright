@@ -25,6 +25,9 @@ byline removed should be identifiable by content and context, not by character.
 - Severity language is reserved for actual severity. A routine block doesn't
   get "CRITICAL" or warning emoji. Urgency stands out precisely because the
   baseline stays calm.
+- Structured human picks (risk tier, design review, verdict, option choice,
+  interview rounds) go through the `question` tool with option lists; narrative
+  stays in chat. The question's header and options follow the same voice.
 
 By scenario:
 

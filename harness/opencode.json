@@ -5,61 +5,162 @@
   // default. Pin per-agent models here when the team standardizes on providers.
   // Permissions matrix is defined HERE (single source of truth); agent .md
   // files carry role prompts only and must not duplicate permission blocks.
+  // Every known builtin is named on every agent (rule 16 / conventions): a
+  // tool the matrix omits defaults to allow. MCP tools default deny (`mcp_*`)
+  // until lpwr-setup evaluates a server and the human grants a phase slot.
+  // Phase profile: Bootstrap→builder/scribe, Govern→scribe, Frame→planner,
+  // Specify→scribe, Execute→builder, Verify→reviewer/scribe, Retain→builder/
+  // planner, Cross-cut→planner.
   "default_agent": "builder",
-  "permission": {},
+  "permission": {
+    "doom_loop": "ask",
+    "external_directory": "ask",
+    "websearch": "deny",
+    "mcp_*": "deny"
+  },
   "agent": {
     "builder": {
-      "permission": { "edit": "allow", "bash": "ask", "webfetch": "deny" }
+      "permission": {
+        "read": "allow",
+        "edit": "allow",
+        "glob": "allow",
+        "grep": "allow",
+        "bash": "ask",
+        "task": "allow",
+        "skill": "allow",
+        "lsp": "allow",
+        "question": "allow",
+        "webfetch": "deny",
+        "websearch": "deny",
+        "external_directory": "ask",
+        "doom_loop": "ask",
+        "mcp_*": "deny"
+      }
     },
     "planner": {
-      "permission": { "edit": "deny", "bash": "deny", "webfetch": "allow" }
+      "permission": {
+        "read": "allow",
+        "edit": "deny",
+        "glob": "allow",
+        "grep": "allow",
+        "bash": "deny",
+        "task": "allow",
+        "skill": "allow",
+        "lsp": "deny",
+        "question": "allow",
+        "webfetch": "allow",
+        "websearch": "deny",
+        "external_directory": "ask",
+        "doom_loop": "ask",
+        "mcp_*": "deny"
+      }
     },
     "neutral": {
       "permission": {
+        "read": "allow",
         "edit": "deny",
+        "glob": "allow",
+        "grep": "allow",
         "bash": "deny",
+        "task": "deny",
+        "skill": "allow",
+        "lsp": "deny",
+        "question": "deny",
         "webfetch": "deny",
-        "task": "deny"
+        "websearch": "deny",
+        "external_directory": "deny",
+        "doom_loop": "ask",
+        "mcp_*": "deny"
       }
     },
     "deep-expert": {
       "permission": {
+        "read": "allow",
         "edit": "deny",
+        "glob": "allow",
+        "grep": "allow",
         "bash": "deny",
+        "task": "deny",
+        "skill": "allow",
+        "lsp": "deny",
+        "question": "deny",
         "webfetch": "allow",
-        "task": "deny"
+        "websearch": "allow",
+        "external_directory": "deny",
+        "doom_loop": "ask",
+        "mcp_*": "deny"
       }
     },
     "applied-judge": {
       "permission": {
+        "read": "allow",
         "edit": "deny",
+        "glob": "allow",
+        "grep": "allow",
         "bash": "deny",
+        "task": "deny",
+        "skill": "allow",
+        "lsp": "deny",
+        "question": "deny",
         "webfetch": "deny",
-        "task": "deny"
+        "websearch": "deny",
+        "external_directory": "deny",
+        "doom_loop": "ask",
+        "mcp_*": "deny"
       }
     },
     "reviewer": {
       "permission": {
+        "read": "allow",
         "edit": "deny",
+        "glob": "allow",
+        "grep": "allow",
         "bash": "ask",
+        "task": "deny",
+        "skill": "allow",
+        "lsp": "deny",
+        "question": "allow",
         "webfetch": "deny",
-        "task": "deny"
+        "websearch": "deny",
+        "external_directory": "ask",
+        "doom_loop": "ask",
+        "mcp_*": "deny"
       }
     },
     "scout": {
       "permission": {
+        "read": "allow",
         "edit": "deny",
+        "glob": "allow",
+        "grep": "allow",
         "bash": "deny",
+        "task": "deny",
+        "skill": "allow",
+        "lsp": "deny",
+        "question": "deny",
         "webfetch": "deny",
-        "task": "deny"
+        "websearch": "deny",
+        "external_directory": "deny",
+        "doom_loop": "ask",
+        "mcp_*": "deny"
       }
     },
     "scribe": {
       "permission": {
+        "read": "allow",
         "edit": "ask",
+        "glob": "allow",
+        "grep": "allow",
         "bash": "ask",
+        "task": "deny",
+        "skill": "allow",
+        "lsp": "deny",
+        "question": "allow",
         "webfetch": "ask",
-        "task": "deny"
+        "websearch": "deny",
+        "external_directory": "ask",
+        "doom_loop": "ask",
+        "mcp_*": "deny"
       }
     }
   }

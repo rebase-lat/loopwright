@@ -183,3 +183,11 @@ names the failure it prevents.
     `lpwr-onboard` writes project truth. No domain command runs without `docs/context.md` and
     `docs/constitution.md` — enforced by `lpwr-guard-bootstrap.ts`, with `lpwr-setup`,
     `lpwr-onboard`, `lpwr-guide`, and `lpwr-install` itself exempt.
+
+48. **Built-in and MCP tools are granted per phase via the agent matrix; omitted tools default
+    allow, so the matrix names every known builtin.** `mcp_*` defaults `deny` until
+    `lpwr-setup` evaluates the enabled servers and the human applies a phase-slot allow —
+    setup reports suggested keys only, never patches `opencode.json`. Structured human picks
+    (risk tier, design review, verdict, option selection, interview rounds) go through the
+    `question` tool; Execute seeds `todowrite` from the Tasks checklist (and Bootstrap from
+    setup's steps) but never journals `todo.updated` (rule 22).

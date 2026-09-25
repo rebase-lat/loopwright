@@ -1,7 +1,13 @@
+import { execFile } from "node:child_process";
+import path from "node:path";
+import { promisify } from "node:util";
+
 import type { Plugin, PluginInput } from "@opencode-ai/plugin";
 
 // Shared helpers for lpwr-* plugins. Named exports carry the logic; the default
 // export is a no-op Plugin so auto-discovery in plugins/ loads this file safely.
+
+const execFileAsync = promisify(execFile);
 
 const noopPlugin = (): Promise<Record<string, never>> => Promise.resolve({});
 
@@ -26,6 +32,43 @@ export const EXPECTED: [string, string][] = [
   ["tui.json", "TUI sidebar config"],
   ["templates/spec.md", "record shapes"],
 ];
+
+// Harness bookkeeping every spec branch owns regardless of its declared
+// surface: the audit trail and the lesson/state/memo reconcile targets written
+// during Retain (lpwr-commit) and occasionally Execute (lpwr-diagnose). Kept
+// out of the Tasks section so the declared surface stays product-only
+// (implementation-rules 46, 49; lpwr-scope-guard).
+export const RETAIN_PATHS: string[] = [
+  "docs/lessons/**",
+  "docs/state.md",
+  "docs/audit.md",
+  "docs/memos/**",
+];
+
+// Trunk is the branch checked out in the main worktree (the one owning the
+// shared `.git` common dir) — never hardcoded. A linked spec worktree reports
+// its own branch, so resolve through git-common-dir first. Returns null on a
+// detached HEAD or when git is unavailable, so callers can refuse with a named
+// reason instead of guessing.
+export const trunkBranch = async (root: string): Promise<string | null> => {
+  try {
+    const { stdout: common } = await execFileAsync(
+      "git",
+      ["-C", root, "rev-parse", "--git-common-dir"],
+      { timeout: 5000 }
+    );
+    const mainRoot = path.dirname(path.resolve(root, common.trim()));
+    const { stdout } = await execFileAsync(
+      "git",
+      ["-C", mainRoot, "branch", "--show-current"],
+      { timeout: 5000 }
+    );
+    const branch = stdout.trim();
+    return branch === "" ? null : branch;
+  } catch {
+    return null;
+  }
+};
 
 export const firstArgument = (args: string): string | undefined =>
   args.trim().split(/\s+/u)[0];

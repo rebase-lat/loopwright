@@ -7,7 +7,7 @@ Stage: Verify.
 
 Delegation: all steps below run on workers you spawn — you hold no shell or write.
 
-Rebase first: `git rebase --autostash develop` (delegated; the human's bash checkpoint approves it) so the review evaluates current trunk, not a stale base — `--autostash` carries the uncommitted change across. On conflicts, stop and let the human resolve before reviewing.
+Rebase first onto the trunk branch (delegated; the human's bash checkpoint approves it) so the review evaluates current trunk, not a stale base — derive trunk as the branch checked out in the main worktree (`git -C <main> branch --show-current`, `<main>` being the parent of `git rev-parse --git-common-dir`); never assume `develop`. Then `git rebase --autostash <trunk>` — `--autostash` carries the uncommitted change across. On conflicts, stop and let the human resolve before reviewing.
 
 Review the uncommitted change `git diff HEAD` for $ARGUMENTS against `docs/specs/<id>/spec.md` (`<id>` from `$ARGUMENTS`) using `templates/review.md` — the working tree is what is being reviewed; after `lpwr-commit` the same review runs against the staged/committed diff for the amend cycle. Full three-axis verdict; for a quick fixed-point pass/fail check use `lpwr-goal`.
 

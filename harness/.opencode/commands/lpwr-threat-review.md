@@ -13,4 +13,4 @@ Write `docs/specs/<id>/threat-review.md` via `templates/threat-review.md`. Requi
 
 Output: writes `docs/specs/<id>/threat-review.md` via templates/threat-review.md; journal_handoff verify `docs/specs/<id>/threat-review.md`.
 
-Next: lpwr-release (high-tier ship path).
+Next: lpwr-commit (then lpwr-release on the high-tier ship path).

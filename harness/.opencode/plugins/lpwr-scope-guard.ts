@@ -6,7 +6,7 @@ import { promisify } from "node:util";
 
 import type { Hooks, PluginInput } from "@opencode-ai/plugin";
 
-import { SPEC_ID, toastBlocked } from "./shared.js";
+import { SPEC_ID, RETAIN_PATHS, toastBlocked } from "./shared.js";
 
 // Blocks edits outside the active spec's declared surface.
 // The active spec resolves as: explicit OPENCODE_SPEC_ID wins; otherwise the git
@@ -14,13 +14,13 @@ import { SPEC_ID, toastBlocked } from "./shared.js";
 // are named per spec ID, so branch-derived resolution needs no manual exports).
 // Declared surface is the backtick-quoted paths/globs in spec.md's Tasks
 // section — section-scoped, so backticks elsewhere in the spec (criterion
-// text, examples) never leak into the surface — plus the spec's own folder,
-// always allowed.
+// text, examples) never leak into the surface — plus the spec's own folder and
+// the shared harness bookkeeping paths (RETAIN_PATHS), always allowed.
 const readDeclaredSurface = async (
   specPath: string,
   specId: string
 ): Promise<string[]> => {
-  const surface = [`docs/specs/${specId}/**`];
+  const surface = [`docs/specs/${specId}/**`, ...RETAIN_PATHS];
   let raw: string;
   try {
     raw = await readFile(specPath, "utf-8");

@@ -22,6 +22,7 @@ import {
   firstArgument,
   logWarn,
   toastWarning,
+  trunkBranch,
 } from "./shared.js";
 
 // Per-spec worktree lifecycle (implementation-rules 2/29/49/50). Minting an
@@ -46,7 +47,9 @@ const WORK_STAGE = new Set([
   "lpwr-tasks",
   "lpwr-design",
   "lpwr-implement",
+  "lpwr-diagnose",
   "lpwr-review",
+  "lpwr-threat-review",
   "lpwr-commit",
   "lpwr-amend",
   "lpwr-goal",
@@ -352,7 +355,7 @@ const ensureWorktree = async (
       `Blocked: ${open} worktrees already open. Close one before starting a new spec, or raise the cap (rule 29) if this is a recurring bottleneck.`
     );
   }
-  const branch = await git(mainRoot, ["branch", "--show-current"]);
+  const branch = await trunkBranch(root);
   if (!branch) {
     throw new Error(
       "Refused: trunk is on a detached HEAD — check out the main branch before minting a spec."

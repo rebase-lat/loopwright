@@ -12,6 +12,21 @@ export const SPEC_ID = /^[a-z0-9]+(?:-[a-z0-9]+)*-\d+$/u;
 // Journal/tool spec ref: also accepts criterion IDs (auth-014-1).
 export const SPEC_REF = /^[a-z0-9]+(?:-[a-z0-9]+)*-\d+(?:-\d+)?$/u;
 
+// Foundation files every harness workspace must have — checked at startup by
+// lpwr-check-setup and displayed as gaps by the TUI sidebar (one source for
+// both surfaces).
+export const EXPECTED: [string, string][] = [
+  ["AGENTS.md", "protocol file"],
+  ["docs/constitution.md", "run lpwr-install then lpwr-onboard"],
+  ["docs/context.md", "run lpwr-install then lpwr-onboard"],
+  ["docs/state.md", "run lpwr-install"],
+  ["docs/audit.md", "run lpwr-install"],
+  ["docs/glossary.md", "run lpwr-domain"],
+  ["opencode.json", "permission matrix"],
+  ["tui.json", "TUI sidebar config"],
+  ["templates/spec.md", "record shapes"],
+];
+
 export const firstArgument = (args: string): string | undefined =>
   args.trim().split(/\s+/u)[0];
 

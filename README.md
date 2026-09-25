@@ -47,18 +47,20 @@ loopwright/
 ├── harness/                    # pure boilerplate — no prefilled project info (run opencode from here)
 │   ├── AGENTS.md               # protocol only — rules live in docs/constitution.md
 │   ├── opencode.json           # permission matrix (single source), instructions
+│   ├── tui.json                # TUI plugin wiring — loads .opencode/tui/ (relative path, no build)
 │   ├── .opencode/
 │   │   ├── agents/             # 9 role files (orchestrator, builder, planner, scribe, reviewer, triage seats, scout)
 │   │   ├── commands/           # 25 flat lpwr-* commands, each declaring its Stage:
 │   │   ├── skills/             # 17 lpwr-* procedures (SKILL.md + trigger descriptions)
-│   │   └── plugins/            # 12 lpwr-* plugins (gates, journaling, advisories, shared helpers —
-│   │                           #   auto-discovered; typechecked via root tsconfig.json)
+│   │   ├── plugins/            # 12 lpwr-* plugins (gates, journaling, advisories, shared helpers —
+│   │   │                       #   auto-discovered; typechecked via root tsconfig.json)
+│   │   └── tui/                # lpwr-tui.tsx — read-only workflow-pulse sidebar (session view)
 │   ├── docs/                   # glossary + conventions + implementation-rules, kept in git;
 │   │                           #   generated foundation files (constitution, context, state.md, audit.md)
 │   │                           #   are gitignored — recreate via lpwr-install + lpwr-onboard
 │   └── templates/              # fixed record shapes (spec, review, lesson, …)
 ├── oxlint.config.ts / oxfmt.config.ts  # ultracite presets
-└── tsconfig.json               # strict, covers plugins + configs
+└── tsconfig.json               # strict, covers plugins + tui + configs
 ```
 
 ## Commands

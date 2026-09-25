@@ -5,12 +5,15 @@
     "target": "ES2022",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
+    "jsx": "react-jsx",
+    "jsxImportSource": "@opentui/solid",
     "skipLibCheck": true,
     "types": ["node"],
     "noEmit": true
   },
   "include": [
     "harness/.opencode/plugins",
+    "harness/.opencode/tui",
     "oxlint.config.ts",
     "oxfmt.config.ts"
   ]

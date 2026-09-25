@@ -8,8 +8,8 @@
   "scripts": {
     "lint": "oxlint && npm run fmt:check",
     "lint:fix": "oxlint --fix && npm run fmt",
-    "fmt": "oxfmt --write \"harness/**/*.ts\" \"*.config.ts\" \"*.json\" \".vscode/*.json\"",
-    "fmt:check": "oxfmt --check \"harness/**/*.ts\" \"*.config.ts\" \"*.json\" \".vscode/*.json\"",
+    "fmt": "oxfmt --write \"harness/**/*.ts\" \"harness/**/*.tsx\" \"harness/*.json\" \"harness/.opencode/*.json\" \"*.config.ts\" \"*.json\" \".vscode/*.json\"",
+    "fmt:check": "oxfmt --check \"harness/**/*.ts\" \"harness/**/*.tsx\" \"harness/*.json\" \"harness/.opencode/*.json\" \"*.config.ts\" \"*.json\" \".vscode/*.json\"",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {

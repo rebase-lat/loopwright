@@ -21,7 +21,7 @@ Read-only: no writes, no shell, no network, no spawning.
 
 ## Skills
 
-`lpwr-option-triage`, `lpwr-motion`.
+`lpwr-option-triage`, `lpwr-motion`, `lpwr-voice`.
 
 ## Limits
 

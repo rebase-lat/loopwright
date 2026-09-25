@@ -152,8 +152,9 @@ const splitCommand = (command: string): string[] => {
 //   result: clean | findings (exit <code>)
 //   ```<bounded tool output tail>
 //   ```
-// Reviewed at lpwr-review time via the Security axis. This file owns the
-// shape — templates/audit.md is the project trail's template, not this one.
+// Reviewed at lpwr-review time via the Security axis. The shape lives in
+// templates/audit-per-spec.md; templates/audit.md is the project trail's
+// template, not this one.
 const AUDIT_TRACE_CHARS = 4000;
 
 const appendAuditTrace = async (

@@ -28,7 +28,7 @@ If heavy retrieval would help, report it — the orchestrator spawns `scout`.
 
 `lpwr-acceptance-criteria`, `lpwr-context-economy`, `lpwr-explain-back`,
 `lpwr-commit-grouping` — procedures live there and in the commands that name
-them. Voice per AGENTS.md rule 12.
+them. Voice per skill `lpwr-voice` (AGENTS.md rule 12).
 
 ## Limits
 

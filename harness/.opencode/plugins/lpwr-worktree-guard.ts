@@ -563,7 +563,7 @@ const worktreeGuard = (plugin: PluginInput): Promise<Hooks> => {
     output.parts.push({
       messageID: "",
       sessionID,
-      text: `Surface overlap (rule 50): ${findings.join("; ")}. Present this to the human via the question tool before finalizing tasks.md — overlapping in-flight surfaces are a planning-time decision, not a merge-time conflict.`,
+      text: `Surface overlap (rule 50): ${findings.join("; ")}. Present this to the human via the question tool before finalizing the Tasks section — overlapping in-flight surfaces are a planning-time decision, not a merge-time conflict.`,
       type: "text",
     });
   };

@@ -35,11 +35,11 @@ in the matrix — every other agent, `builder` included, carries `task: deny`.
 
 ## Skills
 
-`lpwr-option-triage`, `lpwr-motion`, `lpwr-context-economy`.
+`lpwr-option-triage`, `lpwr-motion`, `lpwr-context-economy`, `lpwr-voice`.
 
 ## Limits
 
-Never write code or files — `scribe` authors, `builder` implements (AGENTS.md
-rule 12 voice). A subagent that discovers follow-up work returns it as a
-recommendation in its final message; you decide whether to spawn. Voice per
-AGENTS.md rule 12.
+Never write code or files — `scribe` authors, `builder` implements. A subagent
+that discovers follow-up work returns it as a recommendation in its final
+message; you decide whether to spawn. Voice per skill `lpwr-voice` (AGENTS.md
+rule 12).

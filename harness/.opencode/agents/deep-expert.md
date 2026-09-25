@@ -22,7 +22,7 @@ Read-only with network: no writes; webfetch allowed for sourcing.
 
 ## Skills
 
-`lpwr-option-triage`, `lpwr-motion`, `lpwr-primary-sources`.
+`lpwr-option-triage`, `lpwr-motion`, `lpwr-primary-sources`, `lpwr-voice`.
 
 ## Limits
 

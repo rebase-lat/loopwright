@@ -58,7 +58,8 @@ loopwright/
 ├── PRINCIPLES.md               # design intent (resume of the former principles essays)
 ├── LICENSE                     # MIT
 ├── CHANGELOG.md
-├── package.json                # npm scripts: lint, fmt, fmt:check, typecheck; version 1.3.0
+├── package.json                # npm scripts: lint, fmt, fmt:check, typecheck, test; version 1.3.1
+├── opencode.json               # developer MCP + LSP config — distinct from harness/opencode.json (shipped matrix)
 ├── constitution.md             # this repo's own rules — the committed record (harness ships without one; onboard creates it)
 ├── context.md                  # this repo's own context (same: generated per project by onboard)
 ├── harness/                    # pure boilerplate — no prefilled project info (run opencode from here)
@@ -69,7 +70,7 @@ loopwright/
 │   │   ├── agents/             # 9 role files (orchestrator, builder, planner, scribe, reviewer, triage seats, scout)
 │   │   ├── commands/           # 25 flat lpwr-* commands, each declaring its Stage:
 │   │   ├── skills/             # 17 lpwr-* procedures (SKILL.md + trigger descriptions)
-│   │   ├── plugins/            # 13 lpwr-* plugins (gates, journaling, advisories, worktree lifecycle, shared helpers —
+│   │   ├── plugins/            # 12 lpwr-* plugins + shared helper (gates, journaling, advisories, worktree lifecycle —
 │   │   │                       #   auto-discovered; typechecked via root tsconfig.json)
 │   │   └── tui/                # lpwr-tui.tsx — read-only workflow-pulse sidebar (session view)
 │   ├── docs/                   # glossary + conventions + implementation-rules, kept in git;

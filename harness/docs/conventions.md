@@ -1,7 +1,7 @@
 # Team conventions
 
 Enforced by harness pieces where mechanical, by agreement where human.
-Protocol rules (spec ID, handoffs, verdict, voice, exact-once, risk tier): `AGENTS.md` rules 1, 7–12.
+Protocol rules (spec ID, handoffs, verdict, voice, exact-once, risk tier): `AGENTS.md` rules 1, 3, 7–12.
 
 - **Worktrees per spec ID**, not per person — `lpwr-scope-guard.ts` resolves the spec ID from the worktree's branch (the ID *is* the branch name, rule 2); `OPENCODE_SPEC_ID` in the worktree's `.env` is belt-and-braces, written by the guard at creation.
 - **Mint from trunk, work in the worktree**: `lpwr-propose` / `lpwr-explore` run only on trunk (guard-enforced); the first journal handoff creates `../<id>` and the human restarts opencode there — work-stage commands are blocked outside their spec's worktree.

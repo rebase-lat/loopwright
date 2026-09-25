@@ -1,5 +1,5 @@
 ---
-status: draft   # draft until a human approves it — never ships approved
+status: draft   # draft | approved — approved only via lpwr-onboard's first-approval question; amendments after that travel through lpwr-propose -> lpwr-review (rule 25)
 last_amended: <date>
 ---
 

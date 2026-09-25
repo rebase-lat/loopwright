@@ -3,6 +3,20 @@
 All notable changes to this project, grouped by git tag. See the commit
 history for per-change detail.
 
+## [1.3.1] — 2026-09-25
+
+- Consistency pass (Round 3 Wave C): `conventions.md` cites the right
+  AGENTS.md rules; README plugin count and repo layout document the root
+  `opencode.json` developer MCP config (distinct from the shipped matrix);
+  `templates/audit-per-spec.md` gives the per-spec security trace a real
+  contract, referenced from `lpwr-security-scan`, the review security axis,
+  and `templates/audit.md`; the TUI pulse reads handoff `confidence` as the
+  string enum the journal writes (it read a number and never rendered),
+  handles `waived: []` empty markers, and lists open spec worktrees with
+  shipped/in-flight state; `lpwr-voice` is named by every agent; the
+  constitution template comment matches the onboard approval path; and
+  `integration-analysis.md` gains the Round 3 pass plus a Round 2 close-out.
+
 ## [1.3.0] — 2026-09-25
 
 - Single orchestrator: new `orchestrator` agent is the only interactive

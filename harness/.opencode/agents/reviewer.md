@@ -21,7 +21,7 @@ Read-only: no file writes; shell ask-level for `git` inspection.
 
 ## Skills
 
-`lpwr-diff-reading`. Voice per AGENTS.md rule 12.
+`lpwr-diff-reading`. Voice per skill `lpwr-voice` (AGENTS.md rule 12).
 
 ## Limits
 

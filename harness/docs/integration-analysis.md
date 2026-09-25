@@ -4,7 +4,7 @@ Ongoing audit of how harness phases (domains) feed each other: what artifacts ex
 
 Status legend: **Wired** (command/template/plugin enforces it) · **Prose** (stated, not enforced) · **Gap** (claimed or needed, absent) · **Ephemeral** (output has no durable home).
 
-Last updated: 2026-09-24 — Round 2 (consistency gaps) plan appended; Round 1 plan (below) shipped in `e404877`–`c07af04`.
+Last updated: 2026-09-25 — Round 3 (1.3.0 mechanism consistency) added and landed; Round 1 plan shipped in `e404877`–`c07af04`, Round 2 in `afedc61`/`94d4571`.
 
 ### Decisions (human-confirmed)
 
@@ -382,6 +382,8 @@ Status legend as above (Wired / Prose / Gap / Ephemeral).
 
 **Verdict:** all six live. D6 is the direct "same answer" lever (grounding consulted or not at model discretion); D3/D2 are the security/evidence pair (cross-file contradictions unenforced); D1/D4/D5 are recorded-but-unconsumed / claimed-but-absent / ambiguous-name hygiene.
 
+**Round 2 close-out (2026-09-25):** all six implemented — D1/A4 low-confidence advisory, D2/A2 `diff_ref`, D3/A1 tier equality, D4/B1 archival reword, D5/B2 path discipline, D6/A3 memory receipt; plus F1 (memos → propose) from Wave 1. The findings table above is kept as the as-found record; statuses are not rewritten retroactively.
+
 ---
 
 ## Round 2 plan
@@ -672,8 +674,8 @@ After each wave: `npm run lint` && `npm run typecheck`. Commits only when asked.
 
 ### Status
 
-- [ ] Wave A — mechanism correctness
-- [ ] Wave B — contradictions
-- [ ] Finalize 1.3.0
+- [x] Wave A — mechanism correctness (commit `ccc87d8`)
+- [x] Wave B — contradictions (commit `c7910a5`)
+- [x] Finalize 1.3.0
 - [ ] Wave C — consistency/docs/TUI
 - [ ] Wave D — fixture harness

@@ -25,7 +25,7 @@ confirmation. Matrix lives in `opencode.json`; rationale in
 
 ## Skills
 
-Procedures live in the skills your command names. Voice per AGENTS.md rule 12.
+Procedures live in the skills your command names. Voice per skill `lpwr-voice` (AGENTS.md rule 12).
 
 ## Limits
 

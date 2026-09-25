@@ -5,7 +5,7 @@
 // stays in the server plugins. Refresh: palette command + file-watcher reload.
 // Loads via harness/tui.json (project-level; .opencode/plugins/ is server-only).
 
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 
 import type {
@@ -21,7 +21,12 @@ type Verdict = "ship" | "block" | "redirect" | "pending" | "missing";
 
 interface Handoff {
   readonly intent: string;
-  readonly confidence: number | null;
+  readonly confidence: string | null;
+}
+
+interface WorktreePulse {
+  readonly id: string;
+  readonly shipped: boolean;
 }
 
 interface Pulse {
@@ -37,6 +42,7 @@ interface Pulse {
   readonly blocked: readonly string[];
   readonly auditOpen: number;
   readonly gaps: readonly string[];
+  readonly worktrees: readonly WorktreePulse[];
   readonly asOf: string;
 }
 
@@ -108,10 +114,14 @@ const verdictOf = (review: string): Verdict => {
 };
 
 const countList = (value: string | null): number | null => {
-  if (!value || value === "none") {
-    return value === "none" ? 0 : null;
+  if (value === null) {
+    return null;
   }
-  return value.split(",").length;
+  const cleaned = value.replace(/^\[/u, "").replace(/\]$/u, "").trim();
+  if (cleaned === "" || /^(?:none|null|~|-)$/iu.test(cleaned)) {
+    return 0;
+  }
+  return cleaned.split(",").filter((part) => part.trim() !== "").length;
 };
 
 const activeSpecId = (inFlight: readonly string[]): string | null => {
@@ -144,7 +154,7 @@ const lastHandoff = (file: string): Handoff | null => {
       return null;
     }
     const confidence =
-      typeof record.confidence === "number" ? record.confidence : null;
+      typeof record.confidence === "string" ? record.confidence : null;
     return { confidence, intent: record.intent };
   } catch {
     return null;
@@ -161,13 +171,61 @@ const handoffLine = (handoff: Handoff | null): string | null => {
   }
   return handoff.confidence === null
     ? `handoff: ${handoff.intent}`
-    : `handoff: ${handoff.intent} (conf ${handoff.confidence.toFixed(2)})`;
+    : `handoff: ${handoff.intent} (conf ${handoff.confidence})`;
+};
+
+const specIdOfBullet = (line: string): string | null => {
+  const token = line.split(":")[0].trim();
+  return SPEC_ID.test(token) ? token : null;
+};
+
+const gitRootOf = (start: string): string | null => {
+  let dir = path.resolve(start);
+  for (let attempt = 0; attempt < 12; attempt += 1) {
+    if (existsSync(path.join(dir, ".git"))) {
+      return dir;
+    }
+    const parent = path.dirname(dir);
+    if (parent === dir) {
+      return null;
+    }
+    dir = parent;
+  }
+  return null;
+};
+
+// Open spec worktrees, read from the main repo's .git/worktrees. Only the trunk
+// session sees these — a linked worktree's `.git` is a file, so this returns
+// empty there. Shipped state comes from state.md's Done section.
+const readWorktrees = (
+  harnessRoot: string,
+  shipped: ReadonlySet<string>
+): WorktreePulse[] => {
+  const repo = gitRootOf(harnessRoot);
+  if (!repo) {
+    return [];
+  }
+  let entries: string[];
+  try {
+    entries = readdirSync(path.join(repo, ".git", "worktrees"));
+  } catch {
+    return [];
+  }
+  return entries
+    .filter((id) => SPEC_ID.test(id))
+    .map((id) => ({ id, shipped: shipped.has(id) }));
 };
 
 const loadPulse = (root: string): Pulse => {
   const stateText = readText(path.join(root, "docs", "state.md")) ?? "";
   const inFlight = sectionBullets(stateText, "in flight");
   const blocked = sectionBullets(stateText, "blocked");
+  const shipped = new Set(
+    sectionBullets(stateText, "done")
+      .map(specIdOfBullet)
+      .filter((id): id is string => id !== null)
+  );
+  const worktrees = readWorktrees(root, shipped);
   const specId = activeSpecId(inFlight);
 
   let status: string | null = null;
@@ -214,6 +272,7 @@ const loadPulse = (root: string): Pulse => {
     status,
     verdict,
     waived,
+    worktrees,
   };
 };
 
@@ -315,6 +374,17 @@ const SidebarContent = (props: SidebarProps) => {
             <Show when={model.blocked.length > 0}>
               <text fg={colors().error}>
                 blocked: {model.blocked.join("; ")}
+              </text>
+            </Show>
+
+            <Show when={model.worktrees.length > 0}>
+              <text fg={colors().textMuted}>
+                worktrees: {model.worktrees.length} open —{" "}
+                {model.worktrees
+                  .map(
+                    (wt) => `${wt.id} (${wt.shipped ? "shipped" : "in flight"})`
+                  )
+                  .join("; ")}
               </text>
             </Show>
 

@@ -20,6 +20,7 @@ Read-only: no writes, no shell, no network, no spawning.
 ## Skills
 
 `lpwr-context-economy` — you are its ephemeral-isolation pattern.
+`lpwr-voice` — one voice, shared with every agent.
 
 ## Limits
 

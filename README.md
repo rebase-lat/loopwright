@@ -62,6 +62,7 @@ loopwright/
 ├── opencode.json               # developer MCP + LSP config — distinct from harness/opencode.json (shipped matrix)
 ├── constitution.md             # this repo's own rules — the committed record (harness ships without one; onboard creates it)
 ├── context.md                  # this repo's own context (same: generated per project by onboard)
+├── integration-analysis.md     # workflow cross-phase audit + fix-wave plans (repo history, not shipped)
 ├── harness/                    # pure boilerplate — no prefilled project info (run opencode from here)
 │   ├── AGENTS.md               # protocol only — rules live in docs/constitution.md
 │   ├── opencode.json           # permission matrix (single source), instructions

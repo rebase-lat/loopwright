@@ -84,7 +84,7 @@ history for per-change detail.
 
 ## [1.2.0] — 2026-09-23
 
-- Integration analysis (`harness/docs/integration-analysis.md`): 40-finding
+- Integration analysis (`integration-analysis.md`, repo root): 40-finding
   cross-phase audit (Wired/Prose/Gap/Ephemeral) plus the three-wave plan that
   landed with this release.
 - Wave 1: `lpwr-setup` diffs the Stack section of `context.md` and the guide

@@ -2,6 +2,8 @@
 
 Ongoing audit of how harness phases (domains) feed each other: what artifacts exist, what claims an integration, and whether the wiring is mechanical, prose-only, or missing. One domain per pass, in stage order.
 
+Repo-level history: this is development material for this repository, not harness boilerplate — `harness/` ships without it, and no command, plugin, skill, or template reads it.
+
 Status legend: **Wired** (command/template/plugin enforces it) · **Prose** (stated, not enforced) · **Gap** (claimed or needed, absent) · **Ephemeral** (output has no durable home).
 
 Last updated: 2026-09-25 — Round 3 (1.3.0 mechanism consistency) added and landed; Round 1 plan shipped in `e404877`–`c07af04`, Round 2 in `afedc61`/`94d4571`.

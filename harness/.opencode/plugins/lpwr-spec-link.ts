@@ -10,6 +10,7 @@ import {
   escapeRegExp,
   firstArgument,
   frontmatterValue,
+  normalizeEol,
 } from "./shared.js";
 
 // Refuses /lpwr-implement without an approved spec id.
@@ -41,6 +42,46 @@ const designReviewOpen = async (
     return true;
   }
   return frontmatterValue(adr, "status") !== "approved";
+};
+
+// Memory receipt (Round 2 D6/A3): the motion's "Checked against memory"
+// receipt is the observable that implement-time work consulted constitution
+// floors, lessons, and memos — the root same-question/same-answer gap. One
+// mechanism (presence + fill) enforces all three entries: each line must
+// exist, carry content past its label, and hold no unfilled `<...>` template
+// placeholder (code spans stripped first so a backticked <id> can't
+// false-positive).
+const RECEIPT_KEYS = ["Constitution", "Lessons", "Memos"] as const;
+
+const receiptIncomplete = (proposal: string): string | null => {
+  const lines = normalizeEol(proposal).split("\n");
+  const start = lines.findIndex((line) =>
+    /^#{1,6}\s+checked against memory\s*$/iu.test(line.trim())
+  );
+  if (start === -1) {
+    return 'no "Checked against memory" heading';
+  }
+  const receipt: string[] = [];
+  for (const line of lines.slice(start + 1)) {
+    if (/^#{1,6}\s/u.test(line)) {
+      break;
+    }
+    receipt.push(line);
+  }
+  for (const key of RECEIPT_KEYS) {
+    const entry = receipt.find((line) =>
+      new RegExp(`^\\s*-\\s*${key}\\s*:`, "u").test(line)
+    );
+    if (entry === undefined) {
+      return `missing "${key}:" line`;
+    }
+    const value = entry.replace(/^[\s-]*[\w-]+\s*:\s*/u, "");
+    const cleaned = value.replaceAll(/`[^`\n]*`/gu, "");
+    if (!cleaned.trim() || /<[A-Za-z]/u.test(cleaned)) {
+      return `the "${key}:" line is empty or still holds a template placeholder`;
+    }
+  }
+  return null;
 };
 
 // A spec sitting in docs/state.md's Blocked section is blocked, even when its
@@ -132,6 +173,36 @@ const specLink = (plugin: PluginInput): Promise<Hooks> => {
           plugin,
           `Blocked: spec ${specId} requires design review with no approved adr.md — ` +
             `run lpwr-design first.`
+        );
+      }
+      // Memory receipt (A3): basis: observed specs (lpwr-explore) carry no
+      // proposal by design — the receipt applies to proposed motions only.
+      if (frontmatterValue(raw, "basis") === "observed") {
+        return;
+      }
+      let proposal: string | null;
+      try {
+        proposal = await readFile(
+          path.join(root, `docs/specs/${specId}/proposal.md`),
+          "utf-8"
+        );
+      } catch {
+        proposal = null;
+      }
+      if (proposal === null) {
+        block(
+          plugin,
+          `Blocked: spec ${specId} is basis: proposed but has no ` +
+            `docs/specs/${specId}/proposal.md — restore the motion (lpwr-propose).`
+        );
+      }
+      const gap = receiptIncomplete(proposal);
+      if (gap) {
+        block(
+          plugin,
+          `Blocked: ${specId}'s proposal.md memory receipt is incomplete ` +
+            `(${gap}) — complete the motion's "Checked against memory" ` +
+            `(Constitution / Lessons / Memos) before implementing.`
         );
       }
     },

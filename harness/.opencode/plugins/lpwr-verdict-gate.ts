@@ -15,6 +15,7 @@ import {
   frontmatterValue,
   looksLikeGitCommit,
   normalizeEol,
+  toastWarning,
 } from "./shared.js";
 
 // Mechanical verdict floor (implementation-rules 5/7): /lpwr-commit, /lpwr-release, and a
@@ -416,6 +417,150 @@ const hasNonRetainHandoff = async (
   return false;
 };
 
+// Risk-tier carry-over (implementation-rules 39 + Round 2 A1): the review
+// re-confirms the spec's tier, so both files must name the same tier — a
+// mismatch (or a missing/unknown value on either side) means the review was
+// rendered against the wrong spec version or the tier was edited in prose.
+// Changing the tier travels through lpwr-amend (rule 9), never the review
+// frontmatter; strict equality keeps spec.md the single source of truth.
+const TIER_VALUES = new Set(["low", "medium", "high"]);
+
+const riskTierMismatch = (specRaw: string, review: string): string | null => {
+  const specTier = frontmatterValue(specRaw, "risk_tier");
+  const reviewTier = frontmatterValue(review, "risk_tier");
+  const valid = (tier: string | null): tier is string =>
+    tier !== null && TIER_VALUES.has(tier);
+  if (valid(specTier) && valid(reviewTier) && specTier === reviewTier) {
+    return null;
+  }
+  return `spec.md says "${specTier ?? "absent"}", review.md says "${reviewTier ?? "absent"}"`;
+};
+
+// One rev resolves iff `git rev-parse` names an existing commit — same
+// timeout-bounded, failure-tolerant pattern as shippedInGit.
+const resolvesRev = async (root: string, rev: string): Promise<boolean> => {
+  if (rev.startsWith("-")) {
+    return false;
+  }
+  try {
+    await execFileAsync(
+      "git",
+      ["-C", root, "rev-parse", "--verify", "--quiet", `${rev}^{commit}`],
+      { timeout: 5000 }
+    );
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+// diff_ref form check (Round 2 A2): the review must declare the diff it was
+// rendered against. Commit runs pre-commit against the working tree, so the
+// only accepted value is `HEAD (uncommitted)`; release additionally accepts a
+// committed `<from>..<to>` / `<from>..` range whose endpoints resolve. The
+// field is human-edited prose — this checks the form, not the bytes (diff
+// hashing is explicitly out of scope).
+// Case-preserving read: git refs are case-sensitive (`head~1` is not
+// `HEAD~1`), so unlike frontmatterValue's lowercased view, diff_ref keeps its
+// original casing on the way to `git rev-parse`.
+const diffRefValue = (raw: string): string | null => {
+  const fm = frontmatterBlock(raw);
+  const line = fm
+    ?.split("\n")
+    .find((candidate) =>
+      candidate.trim().toLowerCase().startsWith("diff_ref:")
+    );
+  if (!line) {
+    return null;
+  }
+  return line.split(":").slice(1).join(":").split("#")[0].trim() || null;
+};
+
+const diffRefProblem = async (
+  root: string,
+  review: string,
+  release: boolean
+): Promise<string | null> => {
+  const value = diffRefValue(review);
+  if (!value) {
+    return "review.md diff_ref is missing — re-run lpwr-review with the current template";
+  }
+  if (value.toLowerCase() === "head (uncommitted)") {
+    return null;
+  }
+  if (!release) {
+    return (
+      `review.md diff_ref is "${value}" but must be "HEAD (uncommitted)" ` +
+      `at commit — re-run lpwr-review against the change being committed`
+    );
+  }
+  const range = value.match(/^(?<from>\S+)\.\.(?<to>\S*)$/u);
+  const from = range?.groups?.from;
+  if (!from) {
+    return (
+      `review.md diff_ref "${value}" is neither "HEAD (uncommitted)" ` +
+      `nor a <from>..<to> commit range`
+    );
+  }
+  const to = range?.groups?.to ?? "";
+  const revs = to ? [from, to] : [from];
+  const results = await Promise.all(revs.map((rev) => resolvesRev(root, rev)));
+  const bad = results.findIndex((ok) => !ok);
+  if (bad !== -1) {
+    return (
+      `review.md diff_ref "${value}" names an unresolvable revision ` +
+      `"${revs[bad]}" — use HEAD (uncommitted) or the shipped range`
+    );
+  }
+  return null;
+};
+
+// Low-confidence advisory (Round 2 A4): `confidence` carries a written rubric
+// ("high only with a passing check behind the claim") on every handoff line;
+// surface low-confidence work once at the commit gate so the human can
+// confirm before ship. Advisory only — never blocks; commit path only, since
+// release runs after commit and would double-toast.
+const lowConfidenceAdvisory = async (
+  plugin: PluginInput,
+  root: string,
+  specId: string
+): Promise<void> => {
+  let log: string;
+  try {
+    log = await readFileAt(root, `docs/specs/${specId}/log.ndjson`);
+  } catch {
+    return;
+  }
+  const low: string[] = [];
+  for (const line of log.split("\n")) {
+    if (!line.trim()) {
+      continue;
+    }
+    try {
+      const entry = JSON.parse(line) as {
+        intent?: string;
+        confidence?: string;
+        ts?: string;
+      };
+      if (entry.confidence === "low") {
+        low.push(`${entry.intent ?? "?"}@${entry.ts ?? "?"}`);
+      }
+    } catch {
+      // Skip malformed lines.
+    }
+  }
+  if (low.length === 0) {
+    return;
+  }
+  const shown = low.slice(0, 5).join(", ");
+  const more = low.length > 5 ? `, +${low.length - 5} more` : "";
+  await toastWarning(
+    plugin,
+    `${low.length} low-confidence handoff(s) in ${specId}: ${shown}${more} — ` +
+      `confirm before ship.`
+  );
+};
+
 // One enforcement path shared by /lpwr-commit, /lpwr-release, and a raw
 // `git commit` on a spec-shaped branch — same checks, same messages.
 const enforceVerdictGate = async (
@@ -463,6 +608,32 @@ const enforceVerdictGate = async (
         `resolve the escalation before ${label}.`
     );
   }
+  // Round 2 cross-file checks (A1 tier carry-over, A2 diff basis): both run
+  // before the high-tier threat gate so a mismatch can't be dodged by editing
+  // review.md first; after equality holds, the threat check reading review.md
+  // is safe unchanged.
+  const specRaw = await readFileAt(root, `docs/specs/${specId}/spec.md`).catch(
+    () => null
+  );
+  if (specRaw === null) {
+    block(
+      plugin,
+      `Blocked: no spec.md for ${specId} — cannot verify review.md's ` +
+        `risk_tier against it (check the ID or run lpwr-specs).`
+    );
+  }
+  const tier = riskTierMismatch(specRaw, review);
+  if (tier) {
+    block(
+      plugin,
+      `Blocked: risk_tier mismatch for ${specId} — ${tier} — carry the tier ` +
+        `over, or change it via lpwr-amend (rule 9), then re-review.`
+    );
+  }
+  const diffProblem = await diffRefProblem(root, review, options.release);
+  if (diffProblem) {
+    block(plugin, `Blocked: ${specId} / ${label}: ${diffProblem}.`);
+  }
   if (options.release && frontmatterValue(review, "risk_tier") === "high") {
     const threat = await readFileAt(
       root,
@@ -498,6 +669,9 @@ const enforceVerdictGate = async (
       `Blocked: ${specId}'s log.ndjson has no non-retain handoff — run the ` +
         `upstream domain command first (out-of-process work has no audit trail).`
     );
+  }
+  if (!options.release) {
+    await lowConfidenceAdvisory(plugin, root, specId);
   }
 };
 

@@ -54,7 +54,7 @@ loopwright/
 │   │   └── plugins/            # 12 lpwr-* plugins (gates, journaling, advisories, shared helpers —
 │   │                           #   auto-discovered; typechecked via root tsconfig.json)
 │   ├── docs/                   # glossary + conventions + implementation-rules, kept in git;
-│   │                           #   generated foundation files (constitution, context, state.md)
+│   │                           #   generated foundation files (constitution, context, state.md, audit.md)
 │   │                           #   are gitignored — recreate via lpwr-install + lpwr-onboard
 │   └── templates/              # fixed record shapes (spec, review, lesson, …)
 ├── oxlint.config.ts / oxfmt.config.ts  # ultracite presets

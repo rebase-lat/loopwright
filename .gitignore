@@ -4,6 +4,7 @@ node_modules/
 harness/docs/constitution.md
 harness/docs/context.md
 harness/docs/state.md
+harness/docs/audit.md
 # Secrets — never commit (constitution security floors)
 .env
 .env.*

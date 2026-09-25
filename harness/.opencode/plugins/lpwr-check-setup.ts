@@ -15,6 +15,7 @@ const EXPECTED: [string, string][] = [
   ["docs/constitution.md", "run lpwr-install then lpwr-onboard"],
   ["docs/context.md", "run lpwr-install then lpwr-onboard"],
   ["docs/state.md", "run lpwr-install"],
+  ["docs/audit.md", "run lpwr-install"],
   ["docs/glossary.md", "run lpwr-domain"],
   ["opencode.json", "permission matrix"],
   ["templates/spec.md", "record shapes"],

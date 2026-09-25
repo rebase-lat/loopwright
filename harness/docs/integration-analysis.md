@@ -258,7 +258,7 @@ Convention per rule 5: if it must hold mechanically, it gets a plugin gate; pros
 
 **Blast radius:** setup's suggested MCP keys and improve's candidates die with the conversation; guide cannot surface them next session; `state.md` single-writer blocks direct filing (rule 19).
 
-- **Files:** new `docs/audit.md` (append-only, global — distinct from per-spec `docs/specs/<id>/audit.md` which stays security-scan's), `templates/` gains nothing unless shape needs a stub; `commands/lpwr-setup.md` (step 4 output also appends), `commands/lpwr-improve.md` (report + append), `commands/lpwr-commit.md` (reconcile step), `commands/lpwr-guide.md` (read step), `docs/implementation-rules.md` rule 19 (name the file).
+- **Files:** new `docs/audit.md` (append-only, global — distinct from per-spec `docs/specs/<id>/audit.md` which stays security-scan's), `templates/audit.md` holds the entry shape (live file materialized by `lpwr-install`; shape moved from `docs/` 2026-09-24); `commands/lpwr-setup.md` (step 4 output also appends), `commands/lpwr-improve.md` (report + append), `commands/lpwr-commit.md` (reconcile step), `commands/lpwr-guide.md` (read step), `docs/implementation-rules.md` rule 19 (name the file).
 - **Change:**
   1. Create `docs/audit.md`: append-only sections/entries, newest last, each with date + kind (`setup-suggestion` | `improve-candidate`) + payload pointer/inline block as appropriate. Security findings do **not** move (stay per-spec).
   2. Setup step 4: after emitting suggested keys, append the same block as `setup-suggestion`.

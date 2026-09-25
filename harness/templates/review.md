@@ -19,7 +19,7 @@ deferred: none   # format: criterion-id -> follow-up-spec, comma-separated; each
 | <id>-1 | <test> | yes/no (leave empty if waived/deferred — see frontmatter) |
 
 ## Security axis
-- [ ] Audit findings in `audit.md` (shape: `lpwr-security-scan.ts`) reviewed (or scan clean), no unresolved secrets
+- [ ] Audit findings in `docs/specs/<id>/audit.md` (shape: `lpwr-security-scan.ts`) reviewed (or scan clean), no unresolved secrets
 - [ ] Constitution's security floors are met
 - [ ] Risk tier still looks correct given the actual diff
 - [ ] If risk_tier is high: threat-review.md exists and every finding is fixed, or bound to a criterion ID that is passing / waived / deferred (free prose with no ID cannot tick this box)

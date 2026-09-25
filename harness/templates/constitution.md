@@ -16,7 +16,7 @@ Ubiquitous rules — always true, never re-litigated per spec.
 - The system shall not commit secrets, keys, or credentials to version control.
 - Dependencies shall carry no known critical or high-severity vulnerability at release time.
 
-Audit command: <one audit command per stack — findings are traced to audit.md, never blocking>
+Audit command: <one audit command per stack — findings are traced to docs/specs/<id>/audit.md, never blocking>
 
 ## Verdict floor
 A spec may be marked "ship" only when:

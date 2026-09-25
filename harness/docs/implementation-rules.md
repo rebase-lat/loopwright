@@ -71,7 +71,7 @@ names the failure it prevents.
     honest state until a test exists.
 19. **`docs/state.md` has exactly one writer (`/commit`).** Any other command that's tempted to
     update it should append to `docs/audit.md` instead (the project append-only trail — not the
-    per-spec security `audit.md`) and let `/commit` reconcile.
+    per-spec security `docs/specs/<id>/audit.md`) and let `/commit` reconcile.
 
 ## A2A and logging
 
@@ -145,7 +145,9 @@ names the failure it prevents.
 
 39. **`risk_tier` is set human-confirmed at `lpwr-specs` time and re-confirmed against the
     actual diff at `lpwr-review` time; `high` requires `threat-review.md` before `lpwr-release`,
-    enforced by `lpwr-verdict-gate.ts`.** The scan (`lpwr-security-scan.ts`) runs on every spec
+    enforced by `lpwr-verdict-gate.ts` — which also enforces the carry-over (review tier must
+    equal spec tier; a mismatch blocks commit and release, and a tier change travels through
+    `lpwr-amend`).** The scan (`lpwr-security-scan.ts`) runs on every spec
     regardless of tier — proportional review weight, zero exceptions to the floor.
 
 40. **Motion never re-runs triage's evaluation.** If a motion step asks the same three seats the

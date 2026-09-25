@@ -5,7 +5,7 @@ agent: builder
 
 Stage: Execute.
 
-Implement the tasks in the Tasks section of `docs/specs/<id>/spec.md` (`<id>` from `$ARGUMENTS`) against the approved spec. Gates on the way in: `lpwr-spec-link` (approved status, state, design review), `lpwr-scope-guard` (edits stay inside the declared surface), `lpwr-security-scan` (secrets block; dependency audit traces to `audit.md` and warns — implement continues).
+Implement the tasks in the Tasks section of `docs/specs/<id>/spec.md` (`<id>` from `$ARGUMENTS`) against the approved spec. Gates on the way in: `lpwr-spec-link` (approved status, state, design review), `lpwr-scope-guard` (edits stay inside the declared surface), `lpwr-security-scan` (secrets block; dependency audit traces to `docs/specs/<id>/audit.md` and warns — implement continues).
 
 Tool choice is constrained by the Stack section of `docs/context.md`: prefer the package manager, containers, and CLIs recorded there. Before invoking an unlisted system binary via bash, confirm it with the human via the `question` tool (named binary + why it's needed) — unlisted tools without that ok are out of stack. Freeform non-bash tooling stays prose advice; bash-invoked binaries are the checkpoint.
 

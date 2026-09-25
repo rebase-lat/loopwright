@@ -5,8 +5,9 @@
 //
 // The audit stays language-agnostic: the exact command is declared per project
 // in the constitution (`Audit command:`), never hardcoded here. A nonzero exit
-// means findings-or-failure for the project's chosen tool — recorded in
-// audit.md, reviewed at lpwr-review; it does not stop implement.
+// means findings-or-failure for the project's chosen tool — recorded in the
+// spec's `docs/specs/<id>/audit.md`, reviewed at lpwr-review; it does not stop
+// implement.
 //
 // Block messages name the pattern and the file, never the matched secret text
 // itself — echoing a secret into an error would violate the constitution floor

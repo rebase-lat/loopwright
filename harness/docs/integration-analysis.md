@@ -4,7 +4,7 @@ Ongoing audit of how harness phases (domains) feed each other: what artifacts ex
 
 Status legend: **Wired** (command/template/plugin enforces it) · **Prose** (stated, not enforced) · **Gap** (claimed or needed, absent) · **Ephemeral** (output has no durable home).
 
-Last updated: 2026-09-23 (commit `4aa84f5`); implementation plan appended same day.
+Last updated: 2026-09-24 — Round 2 (consistency gaps) plan appended; Round 1 plan (below) shipped in `e404877`–`c07af04`.
 
 ### Decisions (human-confirmed)
 
@@ -350,3 +350,131 @@ After each wave: `npm run lint` && `npm run typecheck`; wave commit only when as
 - All **Wired** rows (B3–B5, G4–G7/G9, F5–F7, S2–S6, E1–E3/E5/E7, V1–V4/V8, R1–R6, C1): no change.
 - Rule 32 (don't automate improve discovery): respected — W2-1 only persists the report, doesn't schedule it.
 - Per-spec `audit.md` (security-scan): untouched; global `docs/audit.md` is a different file — name collision noted, keep comments explicit to avoid future confusion (consider `docs/audit.md` header: "project audit trail — not the per-spec security audit").
+
+---
+
+# Round 2 — consistency gaps (memory & evidence)
+
+Goal: **same question + same repo state → same answer.** Round 1 wired the phases to each other; Round 2 closes the gaps a memory/evidence review found — places where the harness records something but never checks it, claims a mechanism that doesn't exist, or leaves a cross-file contradiction to prose. Each gap is a variance source: two sessions reading different halves of a pair (spec vs review, receipt vs no receipt) reach different conclusions from the same repo.
+
+Status legend as above (Wired / Prose / Gap / Ephemeral).
+
+### Decisions (human-confirmed, Round 2)
+
+- **Plan location:** this file (this section).
+- **Risk-tier (D3):** strict equality — verdict-gate blocks commit/release when `spec.md` and `review.md` tiers differ; changing tier travels through `lpwr-amend` (rule 9). `spec.md` is the single source of truth.
+- **Memory receipt (D6):** mechanical at spec-link — implement entry blocks on an incomplete `Checked against memory` receipt; specs keeps a prose refusal as the earlier checkpoint.
+- **`confidence` (D1):** consume — advisory (non-blocking toast) at commit listing low-confidence handoffs; commit prose gains a matching checklist line.
+- **`audit.md` collision (D5):** path discipline only — both names stay; every short reference gets qualified with its full path.
+
+---
+
+## Round 2 findings
+
+| ID | Opportunity | From → To | Status | Notes |
+|----|-------------|-----------|--------|-------|
+| D1 | Handoff confidence never read | `log.ndjson` → commit | **Gap** | Writers + rubric in `lpwr-log-handoffs.ts` (108–157); zero consumers. `origin: "hook"` same class — provenance recorded, never inspected. |
+| D2 | `diff_ref` never validated | `review` → commit/release | **Gap** | Sole occurrence is the template comment (`templates/review.md:4`). Nothing checks the review was rendered against the change being committed. |
+| D3 | Risk-tier cross-check missing | `spec.md` ↔ `review.md` | **Prose** | Rule 39: tier "re-confirmed against the actual diff at `lpwr-review`"; verdict-gate:466 reads `review.md` only — a stray `risk_tier: low` in review silently disables the high-tier threat gate. Security box is human-attested only. |
+| D4 | "then the log goes archival" | `commit` step 4 | **Gap** | Phrase implies an archiving process; no mechanism, gitignore rule, or glossary term exists (`lpwr-commit.md:13` is the only hit). |
+| D5 | Two files named `audit.md` | project ↔ per-spec | **Prose** | Headers + full paths in most refs; short refs remain: onboard:8, implement:8, review security box, security-scan comments. |
+| D6 | Memory receipt unchecked | `proposal.md` → implement | **Gap** | `### Checked against memory` (Constitution/Lessons/Memos) is template prose — no plugin verifies it; the model can skip the memory check with no gate noticing. Root gap for the consistency goal. |
+
+**Verdict:** all six live. D6 is the direct "same answer" lever (grounding consulted or not at model discretion); D3/D2 are the security/evidence pair (cross-file contradictions unenforced); D1/D4/D5 are recorded-but-unconsumed / claimed-but-absent / ambiguous-name hygiene.
+
+---
+
+## Round 2 plan
+
+Convention per rule 5 (same as Round 1): anything that must hold mechanically gets a gate; prose items either gain a gate or get honestly re-labeled. Ordered: mechanical gates first (Wave A), prose alignment second (Wave B) — Wave B references Wave A's behavior in its wording.
+
+### Wave A — Mechanical gates
+
+#### A1. Risk-tier strict equality (D3)
+
+**Blast radius:** `review.md` is the only tier the release threat gate reads — one wrong frontmatter line de-risks a high-tier spec with no trace; the same spec answers "needs threat review?" differently depending on which file you open.
+
+- **Files:** `plugins/lpwr-verdict-gate.ts` (`enforceVerdictGate`), `docs/implementation-rules.md` (rule 39 — name the enforcement).
+- **Change:**
+  1. Read `risk_tier` from `docs/specs/<id>/spec.md` and `review.md` (both via `frontmatterValue`). Missing `spec.md` while `review.md` exists → block (broken traceability — name the missing file).
+  2. Values differ, or either side missing/unknown → block with both values named: `risk_tier mismatch — spec.md says "X", review.md says "Y" — carry the tier over, or change it via lpwr-amend (rule 9), then re-review.`
+  3. Position: with the other cross-file checks, **before** the high-tier threat check (line ~466) — a mismatch must not be dodgeable by editing review first. Applies on commit and release paths (shared function). After equality holds, the existing threat check reading `review.md` is safe unchanged.
+- **Mechanical?** Yes — verdict-gate block.
+- **Verify:** fixture `spec: medium` + `review: low` → commit blocked naming both; align review → passes; `high`/`high` → release threat gate still fires; review without spec.md → blocked.
+
+#### A2. `diff_ref` validated at the gate (D2)
+
+**Blast radius:** a review copied from another branch, or rendered against the wrong diff, ships the wrong change — the field that would catch this is never read.
+
+- **Files:** `plugins/lpwr-verdict-gate.ts`.
+- **Change:** parse `diff_ref` from review frontmatter; missing/empty → block both paths (template ships the field).
+  - **Commit path (`!release`):** value must normalize to `HEAD (uncommitted)` — review runs against `git diff HEAD` pre-commit (changelog 0.7.0). Anything else → `review.md diff_ref is "<value>" but must be "HEAD (uncommitted)" at commit — re-run lpwr-review against the change being committed.`
+  - **Release path:** accept `HEAD (uncommitted)` **or** an `A..B` / `A..` range whose endpoints resolve via `git rev-parse --verify <rev>^{commit}` (timeout-bounded, same pattern as `shippedInGit`). Unresolvable → block naming the value.
+  - Default noted: byte-level proof (hashing the reviewed diff) is explicitly out of scope — see below.
+- **Mechanical?** Yes — verdict-gate block.
+- **Verify:** `HEAD (uncommitted)` → commit passes; `main` → blocked; release with resolvable `a1b2c3..d4e5f6` → passes; release with bogus SHA → blocked.
+
+#### A3. Memory receipt checked at spec-link (D6)
+
+**Blast radius:** the consistency root — constitution floors, lessons, and memos are consulted or not at model discretion; a proposal can reach implement with the receipt untouched.
+
+- **Files:** `plugins/lpwr-spec-link.ts`, `commands/lpwr-specs.md` (prose refusal — lands in Wave B).
+- **Change:** after the existing status/state/design checks:
+  1. `basis: observed` → skip (explore path has no proposal by design: `proposal_ref: null`).
+  2. `basis: proposed` (or basis absent → treat as proposed): read `docs/specs/<id>/proposal.md` — missing → block (spec claims a proposal that doesn't exist).
+  3. Require a `Checked against memory` section whose `Constitution:` / `Lessons:` / `Memos:` lines are all present and carry no unfilled template placeholder (`<…>` metavars — same detection idea as `templateLeftovers`, code spans stripped first so backticked `<id>` can't false-positive).
+  4. Block message: `proposal.md for <id> has no completed "Checked against memory" receipt (Constitution / Lessons / Memos) — complete the motion's memory check before implementing.`
+- **Mechanical?** Yes — spec-link block at implement entry; specs refusal is the earlier prose checkpoint.
+- **Verify:** proposed spec + untouched receipt → blocked naming the section; fill with `none relevant`-style values → passes; `basis: observed` without proposal → passes; proposed but proposal.md deleted → blocked.
+
+#### A4. Low-confidence advisory at commit (D1)
+
+**Blast radius:** `confidence` exists as evidence metadata with a rubric ("high only with a passing check behind the claim") and zero consumers — low-confidence work is indistinguishable from high at the exit gate.
+
+- **Files:** `plugins/lpwr-verdict-gate.ts` (helper + call under `!options.release`; `toastWarning` from `shared.js`).
+- **Change:** read `docs/specs/<id>/log.ndjson`, collect lines with `confidence === "low"`; if any → one aggregated **non-blocking** `toastWarning`: `N low-confidence handoff(s) in <id>: <intent>@<ts>, … (capped at 5) — confirm before ship.` Missing log → skip (the non-retain-handoff block already fires). Commit path only — release follows commit and would double-toast.
+- **Mechanical?** Yes, but advisory (warning) — the human still decides; nothing blocks.
+- **Verify:** log line with `confidence: low` → commit emits one toast (and a structured `logWarn` if cheap); all medium/high → silent; release after commit → no duplicate.
+
+### Wave B — Prose alignment
+
+#### B1. Reword "the log goes archival" (D4)
+
+- **Files:** `commands/lpwr-commit.md` step 4.
+- **Change:** replace the phrase with the mechanism that actually exists: the `retain` handoff closes the spec's active loop; the log stays in the repo as append-only history and `state.md` Done is the durable "shipped" signal (guide stops suggesting steps for a Done spec). One sentence, no new process.
+- **Verify:** `rg archival harness/` → 0 hits; step still reads as closing the loop.
+
+#### B2. `audit.md` path discipline (D5)
+
+- **Files:** `commands/lpwr-onboard.md` (~:8), `commands/lpwr-implement.md` (gates line), `templates/review.md` (security box), plus whatever `rg -n '\baudit\.md\b' harness/ --glob '!node_modules'` surfaces (security-scan comments, goal, etc.).
+- **Change:** every short `audit.md` reference qualifies as either `docs/audit.md` (project trail) or `docs/specs/<id>/audit.md` (per-spec security). The review box becomes `` `docs/specs/<id>/audit.md` `` — safe for verdict-gate because `templateLeftovers` strips code spans before matching `<…>` (the backticked `<id>` never counts as a placeholder).
+- **Verify:** the rg sweep returns only full paths, backticked full paths, or the two headers that self-disambiguate.
+
+#### B3. Prose companions for Wave A
+
+- **Files:** `commands/lpwr-specs.md` (approval refusal), `commands/lpwr-review.md` (frontmatter instruction), `commands/lpwr-commit.md` (checklist line), `docs/implementation-rules.md` (rule 39).
+- **Change:**
+  1. Specs: approval refusal gains — motion's `Checked against memory` must be completed (Constitution/Lessons/Memos filled); note it's mechanically checked at implement (A3).
+  2. Review: frontmatter instruction — `risk_tier` carried over verbatim from `spec.md`; a tier change travels through `lpwr-amend` (matches A1's block message).
+  3. Commit: checklist line — name any low-confidence handoffs in the commit summary when the advisory (A4) fired.
+  4. Rule 39: append one clause — carry-over is enforced by `lpwr-verdict-gate.ts` (review tier must equal spec tier).
+- **Verify:** wording lands; `npm run lint` && `npm run typecheck` after the wave.
+
+---
+
+## Round 2 execution order
+
+1. **Wave A:** A1 → A2 → A3 → A4 (one file dominates: verdict-gate takes three of the four — do them in one pass; spec-link A3 separate). `npm run lint` && `npm run typecheck` after the pass.
+2. **Wave B:** B1 → B2 → B3 (md/template only; B3 wording cites Wave A behavior, so it lands second).
+3. Wave commits only when asked ("Create the GIT commit"); A and B as two commits (code gate, then prose alignment).
+
+**Status (2026-09-24):** Waves A + B implemented. Lint + typecheck green; 24-fixture gate suite green (A1 tier equality, A2 diff_ref forms/ranges, A3 receipt, A4 advisory); B1 archival phrase gone from live prose (this doc keeps the historical quotes), B2 sweep clean outside this dated record, B3 wording landed. Commits pending the human's ask.
+
+## Round 2 out of scope
+
+- **Byte-identical answers:** the harness delivers same grounding + same decisions; wording variance is the generation layer (temperature, prompts) — a different problem, not wiring.
+- **Diff content hashing:** proving the review saw the exact committed bytes (vs `diff_ref` form checks) — heavier machinery; revisit only if form checks prove insufficient.
+- **`origin: "hook"` consumer:** provenance field, no decision rides on it — stays write-only.
+- **Renaming either `audit.md`:** explicitly decided against (D5 = path discipline).
+- **Confidence consumed at review/goal:** commit advisory covers the exit gate; revisit if low-confidence work slips through in practice.
+- **Guide surfacing low-confidence:** guide stays read-only with a tight step list; the commit toast is the surface.

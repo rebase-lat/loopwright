@@ -1,6 +1,6 @@
 ---
 description: Suggest the next command to run. Read-only, never writes.
-agent: planner
+agent: orchestrator
 ---
 
 Stage: Cross-cutting.

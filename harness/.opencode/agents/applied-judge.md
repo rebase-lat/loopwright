@@ -26,3 +26,6 @@ Read-only: no writes, no shell, no network, no spawning.
 ## Limits
 
 Never write to `docs/`. Output returns to the orchestrator.
+
+Even when the ask is underspecified, answer with what you have and name
+the gap; the orchestrator acknowledges it and handles the rest.

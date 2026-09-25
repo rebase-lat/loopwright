@@ -1,9 +1,11 @@
 ---
 description: Amend the project constitution (never per-task).
-agent: scribe
+agent: orchestrator
 ---
 
 Stage: Govern.
+
+Delegation: all steps below run on workers you spawn — you hold no shell or write.
 
 Amend `docs/constitution.md` via `templates/constitution.md`. `$ARGUMENTS` is `<spec-id>` followed by the change description — constitution amendments travel with their proposal's spec (rule 25), so the ID is always known. This command is amendments-only: first approval of a fresh draft belongs to `lpwr-onboard`'s approval question, never here.
 

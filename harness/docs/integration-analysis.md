@@ -147,7 +147,7 @@ Artifacts: commits, `state.md` update, `lessons/<date>-<id>.md`, deferred→Next
 
 | ID | Opportunity | From → To | Status | Notes |
 |----|-------------|-----------|--------|-------|
-| C1 | Guide as integration hub | all stages → suggestion | **Wired** | 20-step decision path + side doors; read-only by construction (planner edit/bash deny). |
+| C1 | Guide as integration hub | all stages → suggestion | **Wired** | 20-step decision path + side doors; read-only by construction (orchestrator edit/bash deny). |
 | C2 | Deferred branch grounding | guide step 18 → memo | **Prose** | See F3 — suggests propose directly; memo side door available but unnamed here. |
 | C3 | Block branch grounding | guide step 16 → diagnose | **Prose** | See V6 — block → implement only; diagnose is a side door, not step-16 alternative. |
 | C4 | Improve candidates not visible to guide | improve → guide | **Gap** | See F2 — guide reads files/state; improve output is chat-only, so next-session guide can't surface leftover candidates. |

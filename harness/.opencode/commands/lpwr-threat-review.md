@@ -1,9 +1,11 @@
 ---
 description: Review failure modes for a high-tier change. Runs only on risk_tier high.
-agent: scribe
+agent: orchestrator
 ---
 
 Stage: Verify.
+
+Delegation: all steps below run on workers you spawn — you hold no shell or write.
 
 Run only when `docs/specs/<id>/spec.md` (`<id>` from `$ARGUMENTS`) has `risk_tier: high`.
 

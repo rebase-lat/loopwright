@@ -1,9 +1,11 @@
 ---
 description: Group the diff into spec-tagged commits, update state and lesson.
-agent: builder
+agent: orchestrator
 ---
 
 Stage: Retain.
+
+Delegation: all steps below run on workers you spawn — you hold no shell or write.
 
 Group the diff for $ARGUMENTS (`<id>`, the spec ID) and create one or more commits. Use skill `lpwr-commit-grouping`.
 

@@ -1,9 +1,11 @@
 ---
 description: Draft a spec from a module's actual code. Alternate entry into Specify.
-agent: scribe
+agent: orchestrator
 ---
 
 Stage: Specify.
+
+Delegation: all steps below run on workers you spawn — you hold no shell or write.
 
 Read the module at $ARGUMENTS directly — no upstream proposal — and write `docs/specs/<id>/spec.md` describing current behavior. Assign the traceability ID (`<domain>-<sequence>`) now; set `basis: observed` and `proposal_ref: null` (no proposal exists).
 

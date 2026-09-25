@@ -1,9 +1,11 @@
 ---
 description: Create the EARS specification from an approved proposal.
-agent: scribe
+agent: orchestrator
 ---
 
 Stage: Specify.
+
+Delegation: all steps below run on workers you spawn — you hold no shell or write.
 
 From the approved proposal for $ARGUMENTS, write `docs/specs/<id>/spec.md` via `templates/spec.md` with `basis: proposed`. If `spec.md` already exists: `status: draft` means resume it — continue the draft to a human approval verdict, never restart or overwrite the prior text; any other status means use `lpwr-amend` — specs creates and resumes, it never overwrites approved work.
 

@@ -1,9 +1,11 @@
 ---
 description: Full Specify pass — criteria, design if required, and tasks in one run.
-agent: scribe
+agent: orchestrator
 ---
 
 Stage: Specify.
+
+Delegation: all steps below run on workers you spawn — you hold no shell or write.
 
 Full pass from an approved proposal to approved tasks in one run, using skills `lpwr-writing-ears`, `lpwr-acceptance-criteria`, `lpwr-task-breakdown`, and `lpwr-adr-drafting`:
 

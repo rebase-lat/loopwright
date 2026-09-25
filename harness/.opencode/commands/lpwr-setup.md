@@ -1,9 +1,11 @@
 ---
 description: Bootstrap the dev environment — deps, env, runtime, tool surface + MCP. Idempotent.
-agent: builder
+agent: orchestrator
 ---
 
 Stage: Bootstrap.
+
+Delegation: all steps below run on workers you spawn — you hold no shell or write.
 
 Prepare this machine (or fresh clone) so every other `lpwr-*` command works reliably. This command configures a machine, not a project: it writes nothing under `docs/` and takes no spec ID (rule 33).
 

@@ -1,9 +1,11 @@
 ---
 description: Phased diagnosis of a hard bug — repro, ranked hypotheses, fix plan (no patch).
-agent: builder
+agent: orchestrator
 ---
 
 Stage: Execute.
+
+Delegation: all steps below run on workers you spawn — you hold no shell or write.
 
 Run a phased diagnosis on $ARGUMENTS: build a repro, minimise it, rank hypotheses, instrument (leave no production edits behind), and write the diagnosis with a fix plan and regression-test targets — then stop. Diagnose never patches: applying the fix runs through `lpwr-implement` against an approved spec. Session-error toasts from `lpwr-surface-errors` point here.
 

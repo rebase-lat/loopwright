@@ -1,9 +1,11 @@
 ---
 description: Settle one open technical decision for specs needing design review.
-agent: scribe
+agent: orchestrator
 ---
 
 Stage: Specify.
+
+Delegation: all steps below run on workers you spawn — you hold no shell or write.
 
 Run only when `docs/specs/<id>/spec.md` (`<id>` from `$ARGUMENTS`) has `design_review: required`.
 

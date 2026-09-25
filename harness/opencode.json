@@ -8,10 +8,17 @@
   // Every known builtin is named on every agent (rule 48 / conventions): a
   // tool the matrix omits defaults to allow. MCP tools default deny (`mcp_*`)
   // until lpwr-setup evaluates a server and the human grants a phase slot.
-  // Phase profile: Bootstrap→builder/scribe, Govern→scribe, Frame→planner/
-  // scribe, Specify→scribe, Execute→builder, Verify→reviewer/scribe/builder
-  // (release), Retain→builder/planner, Cross-cut→planner.
-  "default_agent": "builder",
+  // Phase profile (2026-09-24, single-orchestrator): every command pins
+  // agent: orchestrator — the only session the human interacts with.
+  // Orchestrator delegates doer steps via Task (Frame→propose seats,
+  // Specify/Bootstrap→scribe, Execute→builder, Verify→reviewer/scribe,
+  // Release/Retain→builder, advise→planner) and aggregates their reports.
+  // Builtins build/plan disabled so no other primary is interactable.
+  // Orchestrator holds the only task: allow; every other agent, builder
+  // included, carries task: deny — workers always return output (including
+  // what they need); the orchestrator acknowledges, re-delegates, resumes
+  // until completion; workers never delegate.
+  "default_agent": "orchestrator",
   "permission": {
     "doom_loop": "ask",
     "external_directory": "ask",
@@ -19,6 +26,28 @@
     "mcp_*": "deny"
   },
   "agent": {
+    // Only interactive primary: builtin build/plan disabled — orchestrator
+    // is the single agent the human interacts with (2026-09-24).
+    "build": { "disable": true },
+    "plan": { "disable": true },
+    "orchestrator": {
+      "permission": {
+        "read": "allow",
+        "edit": "deny",
+        "glob": "allow",
+        "grep": "allow",
+        "bash": "deny",
+        "task": { "*": "allow", "general": "deny" },
+        "skill": "allow",
+        "lsp": "deny",
+        "question": "allow",
+        "webfetch": "allow",
+        "websearch": "deny",
+        "external_directory": "ask",
+        "doom_loop": "ask",
+        "mcp_*": "deny"
+      }
+    },
     "builder": {
       "permission": {
         "read": "allow",
@@ -26,7 +55,7 @@
         "glob": "allow",
         "grep": "allow",
         "bash": "ask",
-        "task": "allow",
+        "task": "deny",
         "skill": "allow",
         "lsp": "allow",
         "question": "allow",
@@ -44,7 +73,7 @@
         "glob": "allow",
         "grep": "allow",
         "bash": "deny",
-        "task": "allow",
+        "task": "deny",
         "skill": "allow",
         "lsp": "deny",
         "question": "allow",

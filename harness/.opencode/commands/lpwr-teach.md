@@ -1,6 +1,6 @@
 ---
 description: Turn the working topic into a teaching workspace.
-agent: planner
+agent: orchestrator
 ---
 
 Stage: Retain.

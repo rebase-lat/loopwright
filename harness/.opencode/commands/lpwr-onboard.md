@@ -1,9 +1,11 @@
 ---
 description: Guided onboarding pass producing docs/context.md and a drafted constitution; safe to re-run as refresh.
-agent: scribe
+agent: orchestrator
 ---
 
 Stage: Govern.
+
+Delegation: all steps below run on workers you spawn — you hold no shell or write.
 
 Walk the repo once — codebase structure, domain language, stack and tooling (including configured MCP servers: name, transport, required env, what each one is for; plus external services and system binaries the repo needs: containers, databases, CLIs) — and write `docs/context.md` via `templates/context.md`, plus a drafted `docs/constitution.md` built from what you find, never invented in a vacuum. Fill Code Principles (toolchain discovered), Project Specifics (locale, services, environment found), and Business Rules (domain constraints found in code and docs) from discovery — placeholders stay only where nothing was found. Draft one `Audit command:` line per discovered stack (npm audit, pip-audit, govulncheck, trivy, …) matching what the repo actually uses — `lpwr-setup` verifies the binaries; `lpwr-security-scan` runs them at implement time, warns, and traces findings to `docs/specs/<id>/audit.md` (it does not block implement).
 

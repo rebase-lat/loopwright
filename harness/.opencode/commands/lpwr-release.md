@@ -1,9 +1,11 @@
 ---
 description: Deploy only on a recorded ship verdict.
-agent: builder
+agent: orchestrator
 ---
 
 Stage: Verify.
+
+Delegation: all steps below run on workers you spawn — you hold no shell or write.
 
 Release $ARGUMENTS (`<id>`, the spec ID). This command is the only one permitted to trigger deploy, and only fires on a recorded `ship` verdict in `docs/specs/<id>/review.md` plus, for `high` risk tier, a present `threat-review.md`.
 

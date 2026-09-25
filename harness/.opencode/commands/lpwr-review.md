@@ -1,9 +1,11 @@
 ---
 description: Review the diff against the spec on standards and specs axes, render verdict.
-agent: scribe
+agent: orchestrator
 ---
 
 Stage: Verify.
+
+Delegation: all steps below run on workers you spawn — you hold no shell or write.
 
 Review the uncommitted change `git diff HEAD` for $ARGUMENTS against `docs/specs/<id>/spec.md` (`<id>` from `$ARGUMENTS`) using `templates/review.md` — the working tree is what is being reviewed; after `lpwr-commit` the same review runs against the staged/committed diff for the amend cycle. Full three-axis verdict; for a quick fixed-point pass/fail check use `lpwr-goal`.
 

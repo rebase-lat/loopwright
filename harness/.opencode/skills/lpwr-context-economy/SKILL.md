@@ -10,8 +10,9 @@ scratch:
 
 - **Pass-by-reference**: exchange file paths, object URIs, or content hashes —
   never embed raw diffs or full payloads in handoffs.
-- **Ephemeral sub-agent isolation**: delegate heavy retrieval to single-purpose
-  sub-agents (e.g. scout) with fresh windows; only the consolidated result
+- **Ephemeral sub-agent isolation**: heavy retrieval goes to a single-purpose
+  sub-agent (e.g. scout) with a fresh window — the orchestrator spawns it,
+  anyone else reports the need instead; only the consolidated result
   returns.
 - **Prompt/prefix caching**: keep system instructions and schemas static
   across turns.

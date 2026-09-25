@@ -1,6 +1,6 @@
 ---
 description: Interview the user in rounds until a plan seems feasible.
-agent: scribe
+agent: orchestrator
 ---
 
 Stage: Frame.

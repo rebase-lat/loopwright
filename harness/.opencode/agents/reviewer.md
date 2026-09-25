@@ -28,3 +28,7 @@ Read-only: no file writes; shell ask-level for `git` inspection.
 Never create or modify `review.md` — recording belongs to `lpwr-review`
 (scribe). Never render `ship` / `block` / `redirect`; your output is pass/fail
 only. Never write code or files.
+
+Even when the diff or spec is missing, still return output — what you could
+check, what you need, and pointers; the orchestrator acknowledges the need,
+delegates it, and resumes you until completion.

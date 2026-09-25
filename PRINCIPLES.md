@@ -85,7 +85,7 @@ that work answerable — never a model's say-so.
   output shape → template first; different permission/context → own agent
   file; removable-but-still-true → not an instruction.
 - Worktrees per spec ID (capped at two per person until proven binding);
-  only orchestrators (`planner`, `builder`) spawn; `state.md` has one writer.
+  only the `orchestrator` spawns; `state.md` has one writer.
 - Bootstrap is split on purpose: `lpwr-setup` prepares the machine,
   `lpwr-install` materializes, `lpwr-onboard` fills.
 

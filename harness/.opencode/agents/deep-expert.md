@@ -27,3 +27,6 @@ Read-only with network: no writes; webfetch allowed for sourcing.
 ## Limits
 
 Never write to `docs/`. Output returns to the orchestrator.
+
+Even when the ask is underspecified, answer with what you have and name
+the gap; the orchestrator acknowledges it and handles the rest.

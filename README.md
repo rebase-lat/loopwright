@@ -48,7 +48,7 @@ loopwright/
 │   ├── AGENTS.md               # protocol only — rules live in docs/constitution.md
 │   ├── opencode.json           # permission matrix (single source), instructions
 │   ├── .opencode/
-│   │   ├── agents/             # 8 role files (builder, planner, scribe, reviewer, triage seats, scout)
+│   │   ├── agents/             # 9 role files (orchestrator, builder, planner, scribe, reviewer, triage seats, scout)
 │   │   ├── commands/           # 25 flat lpwr-* commands, each declaring its Stage:
 │   │   ├── skills/             # 17 lpwr-* procedures (SKILL.md + trigger descriptions)
 │   │   └── plugins/            # 12 lpwr-* plugins (gates, journaling, advisories, shared helpers —

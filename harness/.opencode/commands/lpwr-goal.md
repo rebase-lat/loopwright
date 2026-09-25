@@ -1,9 +1,11 @@
 ---
 description: Check spec-vs-implementation drift at a fixed point, pass or fail.
-agent: reviewer
+agent: orchestrator
 ---
 
 Stage: Verify.
+
+Delegation: all steps below run on workers you spawn — you hold no shell or write.
 
 Check for deviation between the spec for $ARGUMENTS and the implementation at the given fixed point (commit, branch, or HEAD — pass as second argument, default HEAD). For a full three-axis verdict into `review.md`, use `lpwr-review` instead.
 

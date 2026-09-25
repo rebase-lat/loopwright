@@ -1,9 +1,11 @@
 ---
 description: Build approved tasks against the spec, with tests per criterion.
-agent: builder
+agent: orchestrator
 ---
 
 Stage: Execute.
+
+Delegation: all steps below run on workers you spawn — you hold no shell or write.
 
 Implement the tasks in the Tasks section of `docs/specs/<id>/spec.md` (`<id>` from `$ARGUMENTS`) against the approved spec. Gates on the way in: `lpwr-spec-link` (approved status, state, design review), `lpwr-scope-guard` (edits stay inside the declared surface), `lpwr-security-scan` (secrets block; dependency audit traces to `docs/specs/<id>/audit.md` and warns — implement continues).
 

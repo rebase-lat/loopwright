@@ -1,9 +1,11 @@
 ---
 description: Answer a question from primary sources, leave a cited memo.
-agent: scribe
+agent: orchestrator
 ---
 
 Stage: Frame.
+
+Delegation: all steps below run on workers you spawn — you hold no shell or write.
 
 Answer the question in $ARGUMENTS by reading the sources that own the answer, per skill `lpwr-primary-sources` (which sources count and the citation bar). Never write code.
 

@@ -25,3 +25,7 @@ Read-only: no writes, no shell, no network, no spawning.
 
 Never dump raw histories. Never write files. Never run side-effecting
 commands. Retrieval uses read and search tools only.
+
+Even when the ask is underspecified, return output — what you found and
+what is missing; the orchestrator acknowledges the gap and respawns with
+it if needed.

@@ -677,5 +677,5 @@ After each wave: `npm run lint` && `npm run typecheck`. Commits only when asked.
 - [x] Wave A — mechanism correctness (commit `ccc87d8`)
 - [x] Wave B — contradictions (commit `c7910a5`)
 - [x] Finalize 1.3.0
-- [ ] Wave C — consistency/docs/TUI
-- [ ] Wave D — fixture harness
+- [x] Wave C — consistency/docs/TUI (commit `6242e04`)
+- [x] Wave D — fixture harness (`npm test`)

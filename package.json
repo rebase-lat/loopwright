@@ -10,7 +10,8 @@
     "lint:fix": "oxlint --fix && npm run fmt",
     "fmt": "oxfmt --write \"harness/**/*.ts\" \"harness/**/*.tsx\" \"harness/*.json\" \"harness/.opencode/*.json\" \"*.config.ts\" \"*.json\" \".vscode/*.json\"",
     "fmt:check": "oxfmt --check \"harness/**/*.ts\" \"harness/**/*.tsx\" \"harness/*.json\" \"harness/.opencode/*.json\" \"*.config.ts\" \"*.json\" \".vscode/*.json\"",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "node --test"
   },
   "devDependencies": {
     "@opencode-ai/plugin": "^1.18.31",

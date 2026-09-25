@@ -107,7 +107,8 @@ artifact pointers, never inline content.
 npm install          # dev deps: oxlint, oxfmt, ultracite, typescript
 npm run lint         # oxlint + format check
 npm run lint:fix     # oxlint --fix + write formatting (code files only, never prose)
-npm run typecheck    # tsc --noEmit over this workspace's plugins + configs
+npm run typecheck    # tsc --noEmit over this workspace's plugins, lib, tui + configs
+npm test             # node:test gate fixtures (test/)
 ```
 
 Markdown docs are excluded from formatting by policy — prose stays human-written.

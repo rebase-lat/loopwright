@@ -14,6 +14,7 @@ import { promisify } from "node:util";
 
 import type { Hooks, PluginInput } from "@opencode-ai/plugin";
 
+import { overlaps } from "../lib/gates.js";
 import {
   SPEC_ID,
   block,
@@ -411,30 +412,6 @@ const declaredSurface = async (specPath: string): Promise<string[]> => {
     surfaces.push(value);
   }
   return surfaces;
-};
-
-const normalizeGlob = (glob: string): string => {
-  let value = glob.replace(/^\.\//u, "");
-  if (value.endsWith("/**")) {
-    value = value.slice(0, -3);
-  } else if (value.endsWith("/*")) {
-    value = value.slice(0, -2);
-  } else if (value.endsWith("*")) {
-    value = value.slice(0, -1);
-  }
-  return value.replace(/\/+$/u, "");
-};
-
-// Naive by design (no glob library in .opencode deps): exact paths, trailing
-// /* or /** prefixes, and containment either way. Mid-path ** matches only
-// itself — a broader match is a planning conversation, not a string test.
-const overlaps = (left: string, right: string): boolean => {
-  const a = normalizeGlob(left);
-  const b = normalizeGlob(right);
-  if (a.includes("**") || b.includes("**")) {
-    return a === b;
-  }
-  return a === b || a.startsWith(`${b}/`) || b.startsWith(`${a}/`);
 };
 
 const worktreeGuard = (plugin: PluginInput): Promise<Hooks> => {

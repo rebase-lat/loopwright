@@ -9,11 +9,14 @@
     "jsxImportSource": "@opentui/solid",
     "skipLibCheck": true,
     "types": ["node"],
-    "noEmit": true
+    "noEmit": true,
+    "allowImportingTsExtensions": true
   },
   "include": [
     "harness/.opencode/plugins",
+    "harness/.opencode/lib",
     "harness/.opencode/tui",
+    "test",
     "oxlint.config.ts",
     "oxfmt.config.ts"
   ]

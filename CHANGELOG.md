@@ -16,6 +16,13 @@ history for per-change detail.
   shipped/in-flight state; `lpwr-voice` is named by every agent; the
   constitution template comment matches the onboard approval path; and
   `integration-analysis.md` gains the Round 3 pass plus a Round 2 close-out.
+- Committed gate-fixture harness: the pure gate predicates (`parseWaived`,
+  `parseDeferred`, `tableComplete`, `verdictCheck`, `securityAxisComplete`,
+  `threatAccepted`, `templateLeftovers`, `receiptIncomplete`, `overlaps`)
+  move to `harness/.opencode/lib/gates.ts` and are imported by the
+  enforcing plugins — the tested logic is the enforced logic, never a copy.
+  `node:test` fixtures under `test/` run via `npm test`; `tsconfig.json`
+  gains the `lib`/`test` includes and `allowImportingTsExtensions`.
 
 ## [1.3.0] — 2026-09-25
 

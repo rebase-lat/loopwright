@@ -123,8 +123,10 @@ names the failure it prevents.
 32. **Don't automate `/improve`'s discovery step until it has run manually and proven a query is
     worth repeating.** A scheduled job with no proven signal is noise with a cron trigger.
 
-33. **`lpwr-setup` never writes under `docs/` and never gets a spec ID.** It configures a
-    machine, not a project — keep it entirely outside the traceability scheme.
+33. **`lpwr-setup` never gets a spec ID and writes no spec file; its one `docs/` write is the
+    append-only `docs/audit.md` suggestion log.** It configures a machine, not a project — keep
+    it outside the traceability scheme except for `setup-suggestion` entries, which the human
+    marks applied (not `lpwr-commit`, and never as a spec artifact).
 34. **`lpwr-guide` is read-only by construction — enforced mechanically by the permission
     matrix: it runs on the `orchestrator`, whose `edit` and `bash` are `deny` in `opencode.json`
     (any `planner` consultation it delegates is equally read-only).** Config,

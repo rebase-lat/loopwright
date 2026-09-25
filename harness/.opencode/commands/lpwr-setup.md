@@ -7,7 +7,7 @@ Stage: Bootstrap.
 
 Delegation: all steps below run on workers you spawn — you hold no shell or write.
 
-Prepare this machine (or fresh clone) so every other `lpwr-*` command works reliably. This command configures a machine, not a project: it writes nothing under `docs/` and takes no spec ID (rule 33).
+Prepare this machine (or fresh clone) so every other `lpwr-*` command works reliably. This command configures a machine, not a project: it takes no spec ID and writes no spec file — its one `docs/` write is the append-only `docs/audit.md` suggestion log (rule 33).
 
 Seed `todowrite` with the seven steps below; check each off as it completes (or is confirmed skipped).
 
@@ -25,8 +25,8 @@ Seed `todowrite` with the seven steps below; check each off as it completes (or 
 
 Idempotent: running twice on a configured machine is a no-op with a confirmation, not an error.
 
-Machine-level output — unkeyed: no `journal_handoff` (never writes under `docs/`).
+Machine-level output — unkeyed: no `journal_handoff` (only `docs/audit.md` is written, never a spec file).
 
-Output: inline environment + tool-surface check report (including suggested MCP permission snippets); writes nothing under docs/.
+Output: inline environment + tool-surface check report (including suggested MCP permission snippets); appends `docs/audit.md`; writes no other file under docs/.
 
 Next: lpwr-install (if docs/ foundation missing).

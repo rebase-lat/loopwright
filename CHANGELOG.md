@@ -43,6 +43,23 @@ history for per-change detail.
   branch, squash-merges to trunk (one ID-tagged commit), writes state
   through the shared link, and defers worktree cleanup to the next
   propose. Conventions split mint-on-trunk from work-in-worktree.
+- Round 3 review fixes (mechanism correctness): `lpwr-scope-guard` now
+  always allows the harness bookkeeping paths (`docs/lessons/**`,
+  `docs/state.md`, `docs/audit.md`, `docs/memos/**`) so the Retain writes
+  `lpwr-commit` makes on the spec branch are not blocked by the declared
+  surface; `lpwr-threat-review` and keyed `lpwr-diagnose` join the
+  worktree-contained stage set and `lpwr-threat-review` routes to
+  `lpwr-commit` (commit precedes release); `lpwr-review` derives trunk
+  from the main worktree instead of hardcoding `develop` (shared
+  `trunkBranch`), and mint reuses it; `lpwr-commit` reconciles any open
+  `release-ref`, not only its own id — release appends after commit, so
+  the narrower rule never fired.
+- Round 3 review fixes (contradictions): rule 33 names `docs/audit.md` as
+  `lpwr-setup`'s one `docs/` write; `lpwr-stack` says implement/diagnose
+  *prefer* the recorded tools (the `question` checkpoint is the gate, no
+  plugin enforces choice); `lpwr-amend` deletes `review.md` when it voids
+  the review; `lpwr-improve`, `lpwr-interview`, and `lpwr-propose` carry
+  the explicit `Delegation:` line.
 
 ## [1.2.0] — 2026-09-23
 

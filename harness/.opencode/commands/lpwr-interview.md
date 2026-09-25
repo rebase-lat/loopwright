@@ -5,6 +5,8 @@ agent: orchestrator
 
 Stage: Frame.
 
+Delegation: all steps below run on workers you spawn — you hold no shell or write.
+
 Take the loose idea in $ARGUMENTS and interview the user per skill `lpwr-frontier-interview` (round mechanics and stopping rule). Stop when the skill's stop condition is met — the outcome, constraints and non-goals are explicit enough for `lpwr-propose`.
 
 Never write code. Write the interview notes to `docs/memos/<topic>.md` via `templates/memo.md` — `<topic>` is a kebab-case slug from $ARGUMENTS — for the human to feed into `lpwr-propose`.

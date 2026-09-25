@@ -5,6 +5,8 @@ agent: orchestrator
 
 Stage: Frame.
 
+Delegation: all steps below run on workers you spawn — you hold no shell or write.
+
 1. Draft 2-3 distinct options for the problem at hand.
 2. Run triage per skill `lpwr-option-triage` (three seats evaluate independently).
 3. Present triage results to the human via the `question` tool; human selects one option (or a tweak/merge — free text when merging).

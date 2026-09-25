@@ -3,6 +3,47 @@
 All notable changes to this project, grouped by git tag. See the commit
 history for per-change detail.
 
+## [1.3.0] — 2026-09-25
+
+- Single orchestrator: new `orchestrator` agent is the only interactive
+  primary (builtin `build`/`plan` disabled, `default_agent` switched);
+  all 25 commands repin `agent: orchestrator`, 20 of them gaining an
+  explicit `Delegation:` line. Builder demoted to subagent and every
+  other agent takes `task: deny` — workers never spawn; they end with a
+  complete report (did / needs / artifact pointers) even when blocked,
+  and the orchestrator acknowledges, re-delegates, and resumes them
+  until the command completes. Permission matrix, conventions, and
+  implementation-rules updated to match.
+- Audit trail shape moved to `harness/templates/audit.md`;
+  `lpwr-install` materializes `docs/audit.md` from it (missing-only,
+  never overwrites), `lpwr-setup` seeds it, and the generated file joins
+  the gitignored foundation set.
+- TUI workflow-pulse sidebar: `harness/tui.json` loads
+  `.opencode/tui/lpwr-tui.tsx` via relative path (no build step),
+  rendering a read-only session-view sidebar — active spec frontmatter
+  (status, risk tier, design review), verdict tick, waived/deferred
+  counts, in-flight/blocked, open audit entries, last journal handoff,
+  and foundation gaps. Refresh via the `Refresh Loopwright sidebar`
+  palette command or a debounced file-watcher reload on `docs/**`,
+  `AGENTS.md`, `opencode.json`, and `tui.json`. The `EXPECTED` setup
+  list moves to `plugins/shared.ts` so the setup gate and the sidebar
+  gap view share one source; root `tsconfig.json` gains the JSX/solid
+  settings and fmt globs cover the new `.tsx`/`tui.json`.
+- Branch-per-spec worktrees: new `lpwr-worktree-guard` plugin mints
+  `git worktree add -b <id> ../<id>` from trunk on the first
+  `journal_handoff` (frame/specify), moves `docs/specs/<id>/` into it,
+  and links the gitignored foundation files (state/context/constitution/
+  audit) plus plugin deps from trunk — one physical `state.md` (rule 49).
+  The cap of 2 (rule 29) blocks at `lpwr-propose`/`lpwr-explore` after a
+  prune pass for shipped+clean trees; work-stage commands are blocked
+  outside their spec's worktree; `lpwr-tasks` gets declared-surface
+  overlap warnings across in-flight worktrees (rule 50); `lpwr-guide`
+  leads with worktree status. `lpwr-review` rebases `--autostash` onto
+  trunk first; `lpwr-commit` now writes the lesson and retain line on the
+  branch, squash-merges to trunk (one ID-tagged commit), writes state
+  through the shared link, and defers worktree cleanup to the next
+  propose. Conventions split mint-on-trunk from work-in-worktree.
+
 ## [1.2.0] — 2026-09-23
 
 - Integration analysis (`harness/docs/integration-analysis.md`): 40-finding

@@ -19,8 +19,25 @@ unapproved specs, `lpwr-scope-guard` blocks out-of-surface edits (`edit`/`write`
 ship-less commits and deploys, `lpwr-security-scan` blocks secrets (dependency findings
 warn-and-trace to `audit.md`, reviewed at lpwr-review). Review weight scales by
 human-confirmed risk tier; high-tier specs need a threat review before release.
-Structured human picks run through the `question` tool; advisories land in
+Structured human picks run through the
+`question` tool; advisories land in
 `client.app.log` (`logWarn`) and one-shot warning toasts — never raw `console.*`.
+
+One `orchestrator` agent is the only interactive primary: all 25 commands pin
+to it, it fans doer steps out to subagents (`builder` implements, `scribe`
+authors, `reviewer` verifies), and every other agent carries `task: deny` —
+workers return a complete report and get resumed, never spawn. The TUI adds a
+read-only workflow-pulse sidebar to the session view (spec status, verdict,
+foundation gaps), refreshed by its palette command or a docs file-watcher
+event.
+
+Specs work on branch-per-ID worktrees: `lpwr-propose` / `lpwr-explore` mint
+the ID from trunk, the worktree guard creates branch + worktree `../<id>`
+(name = branch = folder, rule 2), and the session restarts there for
+Specify → Verify; `lpwr-commit` squash-merges back to trunk as one
+ID-tagged commit, and the worktree prunes itself at the next propose.
+Foundation files stay trunk-owned and symlinked in — `state.md` never
+merges.
 
 ## Quickstart
 
@@ -41,7 +58,7 @@ loopwright/
 ├── PRINCIPLES.md               # design intent (resume of the former principles essays)
 ├── LICENSE                     # MIT
 ├── CHANGELOG.md
-├── package.json                # npm scripts: lint, fmt, fmt:check, typecheck; version 1.2.0
+├── package.json                # npm scripts: lint, fmt, fmt:check, typecheck; version 1.3.0
 ├── constitution.md             # this repo's own rules — the committed record (harness ships without one; onboard creates it)
 ├── context.md                  # this repo's own context (same: generated per project by onboard)
 ├── harness/                    # pure boilerplate — no prefilled project info (run opencode from here)
@@ -52,7 +69,7 @@ loopwright/
 │   │   ├── agents/             # 9 role files (orchestrator, builder, planner, scribe, reviewer, triage seats, scout)
 │   │   ├── commands/           # 25 flat lpwr-* commands, each declaring its Stage:
 │   │   ├── skills/             # 17 lpwr-* procedures (SKILL.md + trigger descriptions)
-│   │   ├── plugins/            # 12 lpwr-* plugins (gates, journaling, advisories, shared helpers —
+│   │   ├── plugins/            # 13 lpwr-* plugins (gates, journaling, advisories, worktree lifecycle, shared helpers —
 │   │   │                       #   auto-discovered; typechecked via root tsconfig.json)
 │   │   └── tui/                # lpwr-tui.tsx — read-only workflow-pulse sidebar (session view)
 │   ├── docs/                   # glossary + conventions + implementation-rules, kept in git;

@@ -9,6 +9,8 @@ Suggest the next command — orientation only, never enforcement (enforcement st
 
 Walk this decision path over file existence and state, in order, stopping at the first unmet condition (optional `$ARGUMENTS` names the active spec; otherwise take it from `docs/state.md`'s "In flight" section):
 
+0. Worktree status, when `lpwr-worktree-guard` injects it: at/over the cap (rule 29), lead with closing a shipped worktree — that is the actual next action, whatever the path below would suggest. An open in-flight worktree names the session to resume: steps 8-20 read that spec's folder, so run them inside that worktree's session, not here.
+
 1. Machine not prepared (no `node_modules/`, or runtime/plugin load unverified) → suggest `lpwr-setup`.
 2. Any foundation file missing (`docs/state.md`, `docs/context.md`, `docs/constitution.md`) → suggest `lpwr-install` (materializes only what's missing; do not read state until it exists).
 3. Foundation present but `docs/context.md` or `docs/constitution.md` still holds placeholders (never onboarded) → suggest `lpwr-onboard` (or `lpwr-constitution` if context exists but the constitution was skipped). Constitution is placeholder-free but still `draft` → suggest `lpwr-onboard` to run the first-approval question (it owns initial approval; `lpwr-constitution` is amendments-only).

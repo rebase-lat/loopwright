@@ -197,3 +197,14 @@ names the failure it prevents.
     (risk tier, design review, verdict, option selection, interview rounds) go through the
     `question` tool; Execute seeds `todowrite` from the Tasks checklist (and Bootstrap from
     setup's steps) but never journals `todo.updated` (rule 22).
+49. **`docs/state.md` never enters a spec branch's diff.** It is trunk-owned, gitignored, and
+    shared into each worktree by link — written only by `lpwr-commit`, after the merge (single
+    writer, same as always). A merge conflict naming `state.md` means a branch carried its own
+    copy: unwind that as a process violation, don't resolve it as a diff.
+50. **Surface overlap between in-flight specs is caught at `lpwr-tasks`, not at merge time.**
+    The worktree guard compares declared surfaces across open worktrees and flags shared paths
+    before tasks finalize; a merge conflict on source files between two spec branches means the
+    flag was skipped or overridden — treat it as a process gap to fix, not just a diff to
+    resolve.
+    (Numbered 49-50 — the worktree guide proposed 45-47; 45-48 were taken and its 46
+    restated rule 2.)

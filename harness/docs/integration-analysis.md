@@ -478,3 +478,202 @@ Convention per rule 5 (same as Round 1): anything that must hold mechanically ge
 - **Renaming either `audit.md`:** explicitly decided against (D5 = path discipline).
 - **Confidence consumed at review/goal:** commit advisory covers the exit gate; revisit if low-confidence work slips through in practice.
 - **Guide surfacing low-confidence:** guide stays read-only with a tight step list; the commit toast is the surface.
+
+---
+
+# Round 3 — 1.3.0 mechanism consistency (worktrees / single orchestrator / TUI)
+
+Goal: the 1.3.0 mechanisms (branch-per-spec worktrees, single-orchestrator delegation, TUI pulse) landed on top of gates and prose written before them. Round 3 makes the new surface internally consistent — a Retain-stage write blocked by a worktree guard's own surface rule, a Verify command that escapes its worktree, a trunk name hardcoded to `develop`, and a reconcile step that can never fire. Integration-analysis itself stopped at Round 2 and is now stale against 1.3.0; this section is the overdue pass.
+
+**1.3.0 is held unreleased until Waves A and B land.** Existing 1.3.0 work stays uncommitted; folds into the 1.3.0 release. Wave C + D follow as 1.3.1 unless folded by human decision.
+
+Status legend as above (Wired / Prose / Gap / Ephemeral).
+
+### Decisions (human-confirmed)
+
+- **Release split:** A + B fold into 1.3.0 (still unreleased); C + D land as 1.3.1.
+- **Retain sandbox (R3-01):** harness bookkeeping paths (`docs/lessons/**`, `docs/state.md`, `docs/audit.md`, `docs/memos/**`) are always inside a spec branch's allowed surface — they are the audit trail, not product surface.
+- **Trunk (R3-03):** trunk is derived from the main worktree's current branch, never hardcoded; a small `shared.ts` helper names it once.
+- **Release-ref (R3-04):** `lpwr-commit` reconciles *any* open `release-ref` into the matching spec's Done line, not only the committing spec's — the only ordering that ever fires.
+- **Rule 33 carve-out (R3-05):** `lpwr-setup` may append machine-level suggestions to `docs/audit.md` (no spec ID, append-only); rule 33 reworded to exempt that one file rather than leaving setup three-way self-contradictory.
+- **Per-spec audit shape (R3-12):** gets `templates/audit-per-spec.md` (full name keeps the D5 path discipline), not a rename of either `audit.md`.
+- **MCP grants (R3-16):** setup stays report-only; no agent is granted `mcp_*` in this round — the deny default is intentional until a phase needs a server.
+- **Tests (R3-17):** gate predicates get exported and covered by a committed `node:test` fixture harness; the ad-hoc 46-fixture runs are not enough to catch worktree regressions.
+
+---
+
+### Round 3 findings
+
+| ID | Finding | File(s) | Blast radius | Status |
+|----|---------|---------|--------------|--------|
+| R3-01 | Retain writes (lesson, state, audit) fall outside the spec-branch declared surface → `lpwr-scope-guard` blocks `lpwr-commit` | `plugins/lpwr-scope-guard.ts:19-52,178-224`, `commands/lpwr-commit.md:14,18-19` | Commit cannot complete in the worktree | **Gap** |
+| R3-02 | `lpwr-threat-review` (and keyed `lpwr-diagnose`) absent from worktree `WORK_STAGE`; spec folder is worktree-only after mint; threat-review `Next:` skips commit | `plugins/lpwr-worktree-guard.ts:43-53`, `commands/lpwr-threat-review.md:10,16` | Diverging `docs/specs/<id>/` written on trunk; wrong route | **Gap** |
+| R3-03 | `lpwr-review` hardcodes trunk as `develop` | `commands/lpwr-review.md:10` | Non-portable; review rebases a non-existent branch off `develop` | **Gap** |
+| R3-04 | `release-ref` reconcile targets "the next `/commit` for this ID" — commit precedes release and the worktree prunes at next propose | `commands/lpwr-release.md:12`, `commands/lpwr-commit.md:18,25` | Release ref never reaches `state.md` Done on the happy path | **Gap** |
+| R3-05 | `lpwr-setup` writes/seeds `docs/audit.md` while `:10,28,30` and rule 33 say it never writes under `docs/` | `commands/lpwr-setup.md:10,21,28,30`, `docs/implementation-rules.md:126-127` | Self-contradiction; a rule is violated by its own command | **Gap** |
+| R3-06 | `lpwr-stack` claims implement/diagnose "may only choose tools listed there"; both use a `question` checkpoint and no plugin enforces | `commands/lpwr-stack.md:10` vs `lpwr-implement.md:12`, `lpwr-diagnose.md:12` | Prose masquerading as a gate (rule 5) | **Prose** |
+| R3-07 | `lpwr-amend` never deletes `review.md` despite rule 38; a stale `ship` can survive re-approval | `commands/lpwr-amend.md:10-14`, `docs/implementation-rules.md:143-147` | Voided verdict not mechanically voided | **Gap** |
+| R3-08 | `lpwr-improve` / `lpwr-interview` write files with no `Delegation:` line while pinned to deny-edit orchestrator; `lpwr-propose` same but recovers in prose | `commands/lpwr-improve.md:8`, `lpwr-interview.md:10`, `lpwr-propose.md:12` | Write has no route on the pinned agent | **Gap** |
+| R3-09 | `conventions.md:4` cites "AGENTS.md rules 1, 7–12" for a set that includes handoffs (= rule 3) | `docs/conventions.md:4` | Stale cross-ref | **Prose** |
+| R3-10 | README says "13 `lpwr-*` plugins" (12 `lpwr-*` + `shared.ts`) | `README.md:72-73` | Count wrong | **Prose** |
+| R3-11 | Integration-analysis stops at Round 2; D1–D6/F1 tables still read Gap though implemented; guide step refs shifted (16/17/18 → 17/18/19); worktree-guard comment names a non-existent `tasks.md` | this file, `plugins/lpwr-worktree-guard.ts:563` | Audit artifact contradicts reality | **Gap** |
+| R3-12 | Per-spec `docs/specs/<id>/audit.md` has no template; shape only in a code comment | `plugins/lpwr-security-scan.ts:144-156` | Security trace has no contract | **Gap** |
+| R3-13 | TUI reads handoff `confidence` as a number but the journal writes the enum `high|medium|low`; `countList` mishandles `[]` | `tui/lpwr-tui.tsx:110-115,146-148`, `plugins/lpwr-log-handoffs.ts:135,157` | Confidence never renders; phantom "waived 1" | **Gap** |
+| R3-14 | `lpwr-voice` referenced by no command/agent by name — rule 12 only | `AGENTS.md:18`, `skills/lpwr-voice/SKILL.md` | Name-level orphan | **Prose** |
+| R3-15 | `templates/constitution.md:2` says it "never ships approved", against onboard's approval flow; root `constitution.md` still `draft` + placeholders | `templates/constitution.md:2`, `commands/lpwr-onboard.md:14` | Template contradicts the owned approval path | **Prose** |
+| R3-16 | Root `opencode.json` untracked and absent from README layout; all configured MCP servers unusable under `mcp_*: deny` | root `opencode.json`, `harness/opencode.json:26`, `README.md:55-81` | Dev config invisible; MCP surface inert | **Gap** |
+| R3-17 | No committed test/fixture harness for the mechanical gates; verification is ad-hoc | repo root (no `test/`), `package.json` | Gate regressions uncatchable | **Gap** |
+
+---
+
+## Round 3 plan
+
+Same convention as prior rounds: anything that must hold mechanically gets a gate; prose items either gain a gate or are honestly relabeled. Ordered by blast radius — the 1.3.0 mechanism is wrong before its documentation is.
+
+### Wave A — 1.3.0 mechanism correctness (P0)
+
+#### A1. Retain sandbox in scope-guard (R3-01)
+
+- **Files:** `plugins/shared.ts` (new `RETAIN_PATHS` export), `plugins/lpwr-scope-guard.ts` (`readDeclaredSurface` seed list).
+- **Change:** seed the allowed surface with `docs/specs/<id>/**` **plus** `docs/lessons/**`, `docs/state.md`, `docs/audit.md`, `docs/memos/**`. These are harness bookkeeping, not declared product surface, so they must not be required in the Tasks section. Keep the Tasks-backtick extraction as-is.
+- **Mechanical?** Yes — plugin allow-list.
+- **Verify:** fixture spec branch: edit `docs/lessons/<date>-<id>.md`, `docs/state.md`, `docs/audit.md` → allowed; edit an undeclared source file → still blocked naming it. Re-run the commit flow end-to-end in a throwaway worktree.
+
+#### A2. Worktree WORK_STAGE completeness + threat-review route (R3-02)
+
+- **Files:** `plugins/lpwr-worktree-guard.ts:43-53`, `commands/lpwr-threat-review.md:16`.
+- **Change:** add `lpwr-threat-review` and `lpwr-diagnose` to `WORK_STAGE` (the guard's `wrongTree` already no-ops when the first arg is not a spec ID, so unkeyed diagnose stays runnable from anywhere). Fix `lpwr-threat-review` `Next:` → `lpwr-commit` (high-tier path is review → threat-review → commit → release).
+- **Mechanical?** Yes — command gate.
+- **Verify:** from trunk with a minted worktree, `/lpwr-threat-review <id>` → blocked with the restart-in-worktree message; from the worktree → runs. Threat-review `Next:` names commit.
+
+#### A3. Derive trunk, never hardcode it (R3-03)
+
+- **Files:** `plugins/shared.ts` (new `trunkBranch(plugin)` helper: `git -C <mainRoot> branch --show-current`), `commands/lpwr-review.md:10`; audit `lpwr-commit.md:17` and `lpwr-worktree-guard.ts` mint for the same helper.
+- **Change:** replace `git rebase --autostash develop` with the derived trunk. Worktree-guard already mints from `git branch --show-current` on the main worktree — reuse the helper there for one definition.
+- **Mechanical?** Partly — the command is prose; the helper is code. Optionally fail `lpwr-review` from a shared plugin check when trunk can't be derived (detached HEAD).
+- **Verify:** fixture repo whose trunk is `main` → review rebases `main`; detached-HEAD main worktree → review refuses with a named reason.
+
+#### A4. Make release-ref reconcile reachable (R3-04)
+
+- **Files:** `commands/lpwr-commit.md:18`, `commands/lpwr-release.md:12`.
+- **Change:** commit step 7 reconciles **any** open `release-ref` entry (for any spec) into that spec's `state.md` Done line and marks it consumed — not only the committing spec's. Release keeps appending the audit entry (single-writer intact). Reword release's prose accordingly.
+- **Mechanical?** Prose in the single-writer command; acceptable (commit already owns state).
+- **Verify:** ship → commit → release (open `release-ref` remains) → next commit anywhere folds it into the Done line; no second commit for the same ID required.
+
+**Wave A gate:** `npm run lint` && `npm run typecheck`; run the A1 fixture end-to-end.
+
+### Wave B — 1.3.0 contradictions (P1)
+
+#### B1. Setup ↔ rule 33 (R3-05)
+
+- **Files:** `commands/lpwr-setup.md:10,28,30`, `docs/implementation-rules.md:126-127`.
+- **Change:** reword rule 33 to exempt `docs/audit.md` (append-only machine suggestions, no spec ID) and make setup's "writes nothing under docs/" lines say "writes nothing under `docs/` except `docs/audit.md`". `lpwr-install` seeding stays.
+- **Verify:** `rg -n "never writes under|writes nothing under" harness/` returns only the qualified wording; setup step 4 still appends the suggestion block.
+
+#### B2. Stack tool-choice relabel (R3-06)
+
+- **Files:** `commands/lpwr-stack.md:10`.
+- **Change:** "implement/diagnose **prefer** the tools recorded there; before invoking an unlisted system binary via bash, confirm with the human via `question` (see `lpwr-implement` step line). Freeform non-bash tooling is advice." — matches the actual checkpoint; no plugin.
+- **Verify:** the word "may only" is gone from `lpwr-stack.md`; the three commands agree on "prefer + question".
+
+#### B3. Amend deletes the voided review (R3-07)
+
+- **Files:** `commands/lpwr-amend.md`, `skills/lpwr-spec-amendment/SKILL.md` (if it restates the sequence).
+- **Change:** add an explicit step: after approval returns to draft, delete `docs/specs/<id>/review.md` (delegated to a worker); the missing review is what re-blocks commit/release until re-review. Keep the `question` re-approval.
+- **Mechanical?** Command step; verdict-gate already blocks a missing `review.md` (`lpwr-verdict-gate.ts:576-581`), so the delete is the only missing half.
+- **Verify:** amend → `review.md` absent → `/lpwr-commit <id>` blocked "no review.md"; re-review → commit opens.
+
+#### B4. Delegation lines (R3-08)
+
+- **Files:** `commands/lpwr-improve.md`, `commands/lpwr-interview.md`, `commands/lpwr-propose.md`.
+- **Change:** add the standard `Delegation: all steps below run on workers you spawn — you hold no shell or write.` line. Propose already says "scribe writes"; line makes it uniform.
+- **Verify:** all 25 commands that write now carry `Delegation:`; `lpwr-guide`/`lpwr-teach` remain the legitimate read-only exceptions.
+
+**Wave B gate:** `npm run lint` && `npm run typecheck`. Then update `CHANGELOG.md` 1.3.0 with a "Round 3 review" bullet and commit the whole 1.3.0 tree (see D2).
+
+### Wave C — consistency, docs, TUI (P2, = 1.3.1)
+
+#### C1. Doc cross-refs and counts (R3-09, R3-10)
+
+- **Files:** `docs/conventions.md:4`, `README.md:72-73`.
+- **Change:** conventions → "AGENTS.md rules 1, 3, 7–12"; README → "12 `lpwr-*` plugins + `shared.ts` helper".
+- **Verify:** refs name the rules they mean; counts match `ls`.
+
+#### C2. Refresh this analysis (R3-11)
+
+- **Files:** this file, `plugins/lpwr-worktree-guard.ts:563`.
+- **Change:** re-status Round 2 D1–D6/F1 as implemented (or move to a closed table); fix guide step references to 17/18/19 and "22-step"; change the guard's overlap message/comment from "tasks.md" to "`spec.md`'s Tasks section".
+- **Verify:** no stale Gap remains for shipped items; guard message names the real file.
+
+#### C3. Per-spec audit template (R3-12)
+
+- **Files:** new `templates/audit-per-spec.md`; reference from `plugins/lpwr-security-scan.ts:144-156` comment, `commands/lpwr-implement.md:10`, `commands/lpwr-review.md:14`, `templates/review.md` security box, `commands/lpwr-onboard.md:10`.
+- **Change:** materialize the existing comment shape as a real template (frontmatter `spec_ref`; `## <timestamp>` / command / result / bounded output). It is not installed into `docs/`, so no `lpwr-install` change.
+- **Verify:** `rg "docs/specs/<id>/audit.md"` refs point at the template; a fresh security trace matches the template's shape.
+
+#### C4. TUI pulse correctness + worktree awareness (R3-13)
+
+- **Files:** `tui/lpwr-tui.tsx`.
+- **Change:** (1) `Handoff.confidence` becomes `string | null`, parse the enum, display it; (2) `countList` treats `[]`, `null`, `~` as 0 and strips brackets before splitting; (3) optional worktree block: read `.git/worktrees/*/gitdir` + each `HEAD` ref to list open spec branches and mark `state.md`-Done as shipped, mirroring the guard's `guideStatus`.
+- **Verify:** log with `confidence: "low"` renders `(conf low)`; `waived: []` shows nothing, not "waived 1"; two open worktrees render with shipped/in-flight.
+
+#### C5. Voice wiring (R3-14)
+
+- **Files:** `AGENTS.md:18` (already names it) or each `agents/*.md` Skills line.
+- **Change:** smallest honest fix — either accept rule 12 as the wiring (mark Wired in this doc) or name `lpwr-voice` in each agent's `## Skills`. Prefer naming it in the agents' voice line; a shared-voice rule with zero named consumers is fragile.
+- **Verify:** `rg -l "lpwr-voice" agents/` is non-empty; the skill is no longer name-orphaned.
+
+#### C6. Constitution template wording (R3-15)
+
+- **Files:** `templates/constitution.md:2`.
+- **Change:** comment → "starts `draft`; becomes `approved` only through `lpwr-onboard`'s first-approval question (rule 25 governs amendments after that)". Root `constitution.md` approval is a human project action, out of harness scope — note it, don't auto-approve.
+- **Verify:** template comment matches `lpwr-onboard.md:14`; no "never ships approved".
+
+#### C7. Root config and MCP surface (R3-16)
+
+- **Files:** root `opencode.json`, `README.md` repo layout, `commands/lpwr-setup.md:19-21`.
+- **Change:** commit the root `opencode.json` (dev config) and add it to the README layout with a one-line note that it is the developer's MCP config, distinct from `harness/opencode.json` (shipped matrix). Keep `mcp_*: deny`; setup already reports suggested per-agent grants. No grant this round.
+- **Verify:** `git ls-files opencode.json` non-empty; README layout lists it; no agent gains `mcp_*: allow`.
+
+### Wave D — missing opportunities (1.3.1)
+
+#### D1. Committed gate fixture harness (R3-17)
+
+- **Files:** new `harness/.opencode/lib/gates.ts` (or export predicates from the plugins), new `test/` with `node:test`, `package.json` `test` script.
+- **Change:** extract the pure predicates already living inline — `parseWaived` / `parseDeferred` / `tableComplete` / `verdictCheck` / `receiptIncomplete` / `diffRefProblem` / `declaredSurface` / `overlaps` — into exported helpers the plugins import; cover them with `node:test` fixtures (the same cases the ad-hoc 46-fixture runs used) plus the new Round 3 cases (Retain sandbox, WORK_STAGE, release-ref). Add `npm run test`.
+- **Verify:** `npm test` green in CI/local; deleting a guard case fails a named fixture.
+- **Mechanical?** This is the regression net the whole harness currently lacks — highest-value follow-up.
+
+#### D2. Finalize 1.3.0 (from the hold decision)
+
+- **Files:** `CHANGELOG.md` 1.3.0, `package.json`.
+- **Change:** after Wave A + B are green, add a 1.3.0 "Round 3 review" bullet (scope-guard Retain sandbox, worktree WORK_STAGE completeness, derived trunk, release-ref reconcile, setup/amend/delegation fixes), run lint + typecheck, and commit the previously-untracked `lpwr-worktree-guard.ts` plus all pending 1.3.0 files. Then bump to 1.3.1 for Wave C + D.
+- **Verify:** `git status` clean; README/CHANGELOG claims match tracked files; 1.3.0 plugin count and command counts true.
+
+---
+
+## Round 3 execution order
+
+1. **Wave A** (A1 scope-guard → A2 WORK_STAGE → A3 trunk → A4 release-ref). Code gates, one pass per file; lint + typecheck; A1 end-to-end fixture.
+2. **Wave B** (B1 → B2 → B3 → B4) — prose + one mechanical delete step; then update CHANGELOG 1.3.0 and commit 1.3.0 (D2).
+3. **Wave C** (C1 → C2 → C3 → C4 → C5 → C6 → C7) as 1.3.1.
+4. **Wave D** (D1 harness) as 1.3.1.
+
+After each wave: `npm run lint` && `npm run typecheck`. Commits only when asked.
+
+## Round 3 out of scope
+
+- **Byte-identical reviews / diff hashing:** unchanged from Round 2.
+- **`origin: "hook"` consumer:** stays write-only.
+- **`confidence` at review/goal:** still the commit advisory (now rendered by the TUI); revisit only if low-confidence work slips.
+- **Auto-granting MCP servers:** setup remains report-only and human-applied.
+- **Approving the root constitution:** a project-governance action, not a harness change.
+- **Renaming either `audit.md`:** D5 path discipline holds; R3-12 adds a template, not a rename.
+
+### Status
+
+- [ ] Wave A — mechanism correctness
+- [ ] Wave B — contradictions
+- [ ] Finalize 1.3.0
+- [ ] Wave C — consistency/docs/TUI
+- [ ] Wave D — fixture harness

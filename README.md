@@ -73,6 +73,7 @@ loopwright/
 │   │   ├── skills/             # 17 lpwr-* procedures (SKILL.md + trigger descriptions)
 │   │   ├── plugins/            # 12 lpwr-* plugins + shared helper (gates, journaling, advisories, worktree lifecycle —
 │   │   │                       #   auto-discovered; typechecked via root tsconfig.json)
+│   │   ├── lib/                # gates.ts — pure gate predicates (imported by plugins, covered by npm test)
 │   │   └── tui/                # lpwr-tui.tsx — read-only workflow-pulse sidebar (session view)
 │   ├── docs/                   # glossary + conventions + implementation-rules, kept in git;
 │   │                           #   generated foundation files (constitution, context, state.md, audit.md)

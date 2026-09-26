@@ -3,6 +3,40 @@
 All notable changes to this project, grouped by git tag. See the commit
 history for per-change detail.
 
+## [1.4.0] — 2026-09-26
+
+- Harness distribution via `loopwright.sh` (shell-first installer):
+  - `install` stages a release tarball (`gh`/`GITHUB_TOKEN`, or
+    `--source local`), copies `harness/` into the project root, and merges
+    into existing files with JSONC comment preservation: the matrix wins in
+    `opencode.json` (project keys outside it survive, `instructions`
+    unions), `.gitignore` line-unions, and a pre-existing `AGENTS.md` is
+    kept while the protocol lands in `AGENTS.lpwr.md`. Colliding files
+    require `--yes`; every pre-write backup lands in `.loopwright/backups/`;
+    a checksummed `.loopwright/manifest.json` plus payload cache record
+    what was installed.
+  - `update` 3-way merges from the cached base — `git merge-file` for plain
+    files, JSONC-aware merge for configs — so local edits and upstream
+    changes both land. Real conflicts keep markers and set manifest state
+    `conflict`: `doctor` flags them until the human resolves and `fix`
+    records the resolution; upstream-removed files are pruned only when
+    untouched.
+  - `doctor`/`fix`/`status`/`uninstall`/`--dry-run`: payload integrity vs
+    manifest, JSONC validation, dependency-layout checks
+    (`@opencode-ai/plugin`, `solid-js`, `@opentui/solid`), `opencode agent
+    list` smoke, gitignore/secrets hygiene — mechanical problems are
+    repaired (restore from cache, `npm install`, re-inject harness config
+    keys), workflow-state gaps only point at `lpwr-install`/`lpwr-onboard`/
+    `lpwr-domain`. Exit codes: 0 clean, 1 findings, 2 not installed.
+  - `harness/.opencode/package.json` is now tracked as the payload's
+    dependency manifest (plugins value-import `@opencode-ai/plugin`, the
+    TUI imports `solid-js`), with `@opentui/solid`/`solid-js` pins;
+    `.opencode/lib/installer-lib.mjs` ships the JSONC merge/manifest/report
+    engine the script drives.
+  - Tests: `test/install.test.mjs` covers the lifecycle (guards, 3-way
+    merge, conflict bookkeeping, fix restores/heals, uninstall restore) —
+    18 tests total.
+
 ## [1.3.3] — 2026-09-25
 
 - Second workflow simulation (Round 5) fixes — the three proven findings:

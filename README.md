@@ -50,6 +50,33 @@ Run from `harness/` (the live workspace). After any config change, quit + restar
 5. `lpwr-propose` → `lpwr-specs` → `lpwr-tasks` → `lpwr-implement` → `lpwr-review` →
    `lpwr-commit` → `lpwr-teach` — the idea-to-lesson spine.
 
+## Install into a project
+
+One script installs, updates, and health-checks the harness in any project:
+
+```sh
+gh api repos/rebase-lat/loopwright/contents/loopwright.sh \
+  -H "Accept: application/vnd.github.raw" > loopwright.sh && chmod +x loopwright.sh
+./loopwright.sh install    # fetch a release, merge the harness into this project
+./loopwright.sh doctor     # detect errors — exit 0 clean, 1 findings, 2 not installed
+./loopwright.sh update     # 3-way merge a newer release over local edits
+./loopwright.sh fix        # restore drifted files, install deps, heal config keys
+```
+
+`install` copies `harness/` into the project root, merges the permission
+matrix into an existing `opencode.json` (JSONC comments preserved; project
+keys win outside the matrix, `instructions` unions, and a pre-existing
+`AGENTS.md` is kept while the protocol lands in `AGENTS.lpwr.md`), records a
+checksummed `.loopwright/manifest.json`, and caches the payload for later
+3-way updates. On `update`, local edits and upstream changes both merge
+(`git merge-file` for files, JSONC-aware merge for configs); real conflicts
+keep markers, are flagged by `doctor`, and are recorded by `fix` once the
+human resolves them. Colliding files need `--yes`; every overwrite is backed
+up under `.loopwright/backups/`. Auth is `gh auth login` or `GITHUB_TOKEN`
+(the repository is private); `--source local <dir>` installs from a checkout
+and `--version <tag>` pins a release. `status`, `uninstall`, and `--dry-run`
+cover the rest of the lifecycle — see `./loopwright.sh --help`.
+
 ## Repo layout
 
 ```
@@ -58,7 +85,8 @@ loopwright/
 ├── PRINCIPLES.md               # design intent (resume of the former principles essays)
 ├── LICENSE                     # MIT
 ├── CHANGELOG.md
-├── package.json                # npm scripts: lint, fmt, fmt:check, typecheck, test; version 1.3.3
+├── package.json                # npm scripts: lint, fmt, fmt:check, typecheck, test; version 1.4.0
+├── loopwright.sh               # installer: install/update/doctor/fix/status/uninstall for harness/
 ├── opencode.json               # developer MCP + LSP config — distinct from harness/opencode.json (shipped matrix)
 ├── constitution.md             # this repo's own rules — the committed record (harness ships without one; onboard creates it)
 ├── context.md                  # this repo's own context (same: generated per project by onboard)
@@ -74,7 +102,8 @@ loopwright/
 │   │   ├── skills/             # 17 lpwr-* procedures (SKILL.md + trigger descriptions)
 │   │   ├── plugins/            # 12 lpwr-* plugins + shared helper (gates, journaling, advisories, worktree lifecycle —
 │   │   │                       #   auto-discovered; typechecked via root tsconfig.json)
-│   │   ├── lib/                # gates.ts — pure gate predicates (imported by plugins, covered by npm test)
+│   │   ├── lib/                # gates.ts (pure gate predicates, npm test) + installer-lib.mjs
+│   │   │                       #   (JSONC merge / manifest / verify for loopwright.sh)
 │   │   └── tui/                # lpwr-tui.tsx — read-only workflow-pulse sidebar (session view)
 │   ├── docs/                   # glossary + conventions + implementation-rules, kept in git;
 │   │                           #   generated foundation files (constitution, context, state.md, audit.md)

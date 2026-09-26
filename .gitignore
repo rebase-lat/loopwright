@@ -1,4 +1,5 @@
 node_modules/
+/dist/
 # Generated workspace foundation — harness/ stays pure boilerplate; regenerate
 # via lpwr-install + lpwr-onboard from harness/ (committed record lives at repo root)
 harness/docs/constitution.md

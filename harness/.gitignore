@@ -15,3 +15,7 @@ secrets/
 
 # Installed dependencies
 node_modules/
+
+# Loopwright installer state — manifest.json stays tracked; cache + backups do not
+.loopwright/cache/
+.loopwright/backups/

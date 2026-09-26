@@ -18,6 +18,7 @@
   // included, carries task: deny — workers always return output (including
   // what they need); the orchestrator acknowledges, re-delegates, resumes
   // until completion; workers never delegate.
+  // Worktree cap override (default 2, rule 29): "lpwr": { "max_worktrees": 4 }.
   "default_agent": "orchestrator",
   "permission": {
     "doom_loop": "ask",

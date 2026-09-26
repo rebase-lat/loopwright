@@ -4,7 +4,7 @@ Enforced by harness pieces where mechanical, by agreement where human.
 Protocol rules (spec ID, handoffs, verdict, voice, exact-once, risk tier): `AGENTS.md` rules 1, 3, 7–12.
 
 - **Worktrees per spec ID**, not per person — `lpwr-scope-guard.ts` resolves the spec ID from the worktree's branch (the ID *is* the branch name, rule 2); `OPENCODE_SPEC_ID` in the worktree's `.env` is belt-and-braces, written by the guard at creation.
-- **Mint from trunk, work in the worktree**: `lpwr-propose` / `lpwr-explore` run only on trunk (guard-enforced); the first journal handoff creates `../<id>` and the human restarts opencode there — work-stage commands are blocked outside their spec's worktree.
+- **Mint from trunk, work in the worktree**: `lpwr-propose` / `lpwr-explore` run only on trunk (guard-enforced); after journaling they call `worktree_mint`, which creates `../<id>` and moves the spec folder into it — the human restarts opencode there, and work-stage commands are blocked outside their spec's worktree.
 - **Shared foundation, per-spec branches**: `docs/{state,context,constitution,audit}.md` and the `docs/memos/` dir are trunk-owned, gitignored, and symlinked into every worktree — one physical copy, `lpwr-commit` the sole state writer (rule 49); `lpwr-tasks` flags declared-surface overlap across in-flight worktrees (rule 50).
 - **Config precedence**: repo `.opencode/` is authoritative for output quality; personal `~/.config/opencode/` holds only ergonomics.
 - **Permissions single source**: the matrix lives in `opencode.json`; agent `.md` files carry role prompts only and must not duplicate `permission` blocks.
@@ -19,5 +19,5 @@ Protocol rules (spec ID, handoffs, verdict, voice, exact-once, risk tier): `AGEN
 - **Permission matrix enumerates known tools**: any tool opencode adds later defaults to allow until the matrix names it — re-read `opencode.json` after upgrades.
 - **MCP tools default deny**: global `mcp_*` is `deny`; `lpwr-setup` step 4 evaluates enabled servers and reports phase-slot suggestions (report-only — setup never patches `opencode.json`). Grant `allow` only on the agent whose phase needs the server.
 - **Harness changes reviewed like code** — a new skill or amended instruction goes through `lpwr-propose` → `lpwr-review`.
-- **Concurrent worktrees per person capped at 2**, raised only if the team reports the cap is binding; shipped + clean worktrees prune themselves at the next `lpwr-propose`, before the cap check.
+- **Concurrent open worktrees capped at 2 by default** — raise it per project via `LPWR_MAX_WORKTREES` (env) or `"lpwr": { "max_worktrees": N }` in `opencode.json`, never by editing code; raised for real only if the team reports the cap is binding (rule 29). Cleanup is self-service: `lpwr-commit` marks its worktree pending cleanup in `.loop-worktrees/manifest.json`, `lpwr-worktree-prune` closes shipped or pending-cleanup worktrees on demand (dirty only via force, behind a permission confirmation), and the next `lpwr-propose` prunes the same set opportunistically before its cap check (rule 52).
 - **Inline completion off by default** — the interruption-trap countermeasure, team-wide.

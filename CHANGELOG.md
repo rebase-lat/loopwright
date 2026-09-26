@@ -3,6 +3,66 @@
 All notable changes to this project, grouped by git tag. See the commit
 history for per-change detail.
 
+## [1.4.2] — 2026-09-26
+
+- Worktree lifecycle rework — the 17-fix audit plan (workarounds W1–W9,
+  drift D1–D7, traps T1–T7), landed in phases:
+  - **Worktree service**: new `.opencode/lib/worktree.ts` owns minting,
+    foundation provisioning, status, the cap, pruning, and the
+    pending-cleanup manifest; `lpwr-worktree-guard` shrinks to a thin
+    adapter (command gates, three tools, the `lpwr-commit` completion
+    event, squash preflight). Decision logic (`pruneDecision`,
+    `capBlocked`, `statusReport`, `mergeBlockingFiles`, `resolveCap`,
+    `stateHasEntry`) is exported pure so fixtures test the enforced code
+    (D1, D5).
+  - **Explicit minting** (W1): the `tool.execute.after` coupling to
+    `journal_handoff` is gone — `lpwr-propose` step 7 and `lpwr-explore`
+    call the new `worktree_mint` tool right after journaling, so creation
+    is a deterministic call instead of a side effect of journal args.
+  - **Self-service pruning** (W7, W8, D3): new `lpwr-worktree-prune`
+    (status → human pick → `worktree_prune`) closes shipped or
+    pending-cleanup worktrees; dirty or in-flight ones only via `force`,
+    which always raises a human permission confirmation naming the path
+    (`worktree_prune.force` defaults to ask). A session never prunes the
+    worktree it runs from. Cap errors, guide steps 0/18, and
+    prune advisories now name the command instead of `git worktree remove`.
+  - **Pending-cleanup manifest** (W7, D2): `lpwr-commit` records its
+    worktree in `.loop-worktrees/manifest.json` (gitignored; written only
+    after `state.md` Done lands — rule 52), so cleanup no longer waits for
+    a future `lpwr-propose`; the prune command reads the manifest, and the
+    next propose still prunes the same eligible set opportunistically.
+  - **Configurable cap** (T4): `LPWR_MAX_WORKTREES` env → `opencode.json`
+    `"lpwr": { "max_worktrees": N }` → 2. opencode ignores unknown config
+    keys (`onExcessProperty: "ignore"`), so the service parses the raw
+    JSONC itself; rule 29 documents the knob and the in-band recovery.
+  - **Provisioning honesty** (W2–W4, T7): silent catches replaced with
+    `logInfo`/`logWarn`/`logError` plus one aggregated gap toast; missing
+    link targets name `lpwr-install` / `lpwr-setup`; the guard no longer
+    `mkdir`s `docs/memos` (lpwr-install owns it), and `docs/memos` joins
+    `EXPECTED` so `lpwr-check-setup` and the TUI sidebar surface the gap
+    instead of hidden state.
+  - **Merge-tail contract** (W9, T3, D6): `TAIL_ALLOWED` declares which
+    trunk-dirty files may ride the squash — documented as rule 51, enforced
+    from that data by the preflight (tails of tracked
+    `docs/specs/*/log.ndjson` pass; untracked phantom copies and everything
+    else block).
+  - **Flag-safe argument parsing** (T2): `specIdArgument` finds the first
+    spec-ID token — `lpwr-commit --amend auth-014` now keys on `auth-014`,
+    used by wrongTree, the surface-overlap advisory, and the commit event.
+  - **Terminology + lifecycle docs** (D-section): glossary gains canonical
+    Trunk / Worktree / Mint / Prune / Shipped / Open rows; strings
+    normalised ("Worktree cap reached (max: N)", "restart opencode in the
+    trunk worktree (…)", no more "close by hand"); AGENTS.md protocol line
+    13, a PRINCIPLES "Worktree lifecycle" section (mint → work → commit →
+    prune, cap, prune conditions, manual last resort), and
+    conventions/guide/lpwr-commit/README updated to match; new read-only
+    `lpwr-worktree-status` command (27 commands total).
+  - Tests: `test/worktree.test.ts` (mocked porcelain output, prune
+    decisions, cap resolution, tail contract, manifest, `specIdArgument`) +
+    `test/worktree-integration.test.ts` (real temp repo: mint → work →
+    squash-merge → mark → prune with no orphans, cap block, force
+    confirmation, own-worktree protection) — 32 tests total.
+
 ## [1.4.1] — 2026-09-26
 
 - Third workflow simulation (Round 6) fixes — findings table and wave record

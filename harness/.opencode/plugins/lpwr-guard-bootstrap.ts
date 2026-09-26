@@ -14,13 +14,17 @@ import {
 // Foundation gate: no domain command runs without the Govern foundation it
 // reads — docs/context.md and docs/constitution.md must exist. Exempt are the
 // commands that fix exactly that (setup prepares the machine, install
-// materializes files from templates, onboard fills them) plus read-only guide,
-// which must stay runnable to point at onboard.
+// materializes files from templates, onboard fills them) plus the read-only
+// orientation pair — guide and worktree status — and lpwr-worktree-prune,
+// which closes stale worktrees precisely when a project is being cleaned up;
+// all four must stay runnable to point at the repair.
 const EXEMPT = new Set([
   "lpwr-setup",
   "lpwr-onboard",
   "lpwr-guide",
   "lpwr-install",
+  "lpwr-worktree-prune",
+  "lpwr-worktree-status",
 ]);
 
 const FOUNDATION = ["docs/context.md", "docs/constitution.md"];

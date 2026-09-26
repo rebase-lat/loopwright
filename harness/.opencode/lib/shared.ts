@@ -27,6 +27,7 @@ export const EXPECTED: [string, string][] = [
   ["docs/context.md", "run lpwr-install then lpwr-onboard"],
   ["docs/state.md", "run lpwr-install"],
   ["docs/audit.md", "run lpwr-install"],
+  ["docs/memos", "run lpwr-install"],
   ["docs/glossary.md", "run lpwr-domain"],
   [".gitignore", "generated foundation and secrets stay untracked"],
   ["opencode.json", "permission matrix"],
@@ -74,6 +75,16 @@ export const trunkBranch = async (root: string): Promise<string | null> => {
 export const firstArgument = (args: string): string | undefined =>
   args.trim().split(/\s+/u)[0];
 
+// First argument that IS a traceability ID: skips flags (`lpwr-commit --amend
+// auth-014` must key on `auth-014`, not `--amend` — a flag-token firstArgument
+// would silently skip gates that test the ID). Tokens starting with `-` are
+// never spec IDs; the first token that matches SPEC_ID wins.
+export const specIdArgument = (args: string): string | undefined =>
+  args
+    .trim()
+    .split(/\s+/u)
+    .find((token) => SPEC_ID.test(token));
+
 // Registered git worktrees (main + linked), parsed from `worktree list
 // --porcelain`. Returns [] when git is unavailable or the path is not a repo,
 // so callers decide whether that is an empty result or an error.
@@ -82,6 +93,27 @@ export interface WorktreeInfo {
   branch: string | null;
 }
 
+// Pure parser for `git worktree list --porcelain` output, kept separate from
+// the git call so fixtures can exercise it directly (test/worktree.test.ts).
+export const parseWorktreeList = (raw: string): WorktreeInfo[] => {
+  const out: WorktreeInfo[] = [];
+  for (const chunk of raw.split(/\n{2,}/u)) {
+    const lines = chunk.split("\n");
+    const wtLine = lines.find((line) => line.startsWith("worktree "));
+    if (!wtLine || lines.some((line) => line.startsWith("bare"))) {
+      continue;
+    }
+    const branchLine = lines.find((line) => line.startsWith("branch "));
+    out.push({
+      branch: branchLine
+        ? branchLine.slice("branch ".length).replace(/^refs\/heads\//u, "")
+        : null,
+      path: wtLine.slice("worktree ".length),
+    });
+  }
+  return out;
+};
+
 export const worktreeList = async (cwd: string): Promise<WorktreeInfo[]> => {
   try {
     const { stdout } = await execFileAsync(
@@ -89,22 +121,7 @@ export const worktreeList = async (cwd: string): Promise<WorktreeInfo[]> => {
       ["-C", cwd, "worktree", "list", "--porcelain"],
       { timeout: 15_000 }
     );
-    const out: WorktreeInfo[] = [];
-    for (const chunk of stdout.split(/\n{2,}/u)) {
-      const lines = chunk.split("\n");
-      const wtLine = lines.find((line) => line.startsWith("worktree "));
-      if (!wtLine || lines.some((line) => line.startsWith("bare"))) {
-        continue;
-      }
-      const branchLine = lines.find((line) => line.startsWith("branch "));
-      out.push({
-        branch: branchLine
-          ? branchLine.slice("branch ".length).replace(/^refs\/heads\//u, "")
-          : null,
-        path: wtLine.slice("worktree ".length),
-      });
-    }
-    return out;
+    return parseWorktreeList(stdout);
   } catch {
     return [];
   }
@@ -232,23 +249,44 @@ export const toastWarning = async (
 };
 
 // Structured advisory log — the opencode-native replacement for console.warn.
-// Fire-and-forget: never throws, never blocks. Repeating/machine-readable
-// lines go here; one-shot human alerts also raise toastWarning.
-export const logWarn = (
+// Fire-and-forget: never throws, never blocks. Levels carry the weight the
+// message deserves (`info` for expected absences, `warn` for degraded state,
+// `error` for failed operations); repeating/machine-readable lines go here,
+// one-shot human alerts also raise toastWarning.
+export const logAt = (
   plugin: PluginInput,
   service: string,
+  level: "debug" | "error" | "info" | "warn",
   message: string
 ): void => {
   void (async () => {
     try {
       await plugin.client.app.log({
-        body: { level: "warn", message, service },
+        body: { level, message, service },
       });
     } catch {
       // Log delivery is best-effort only.
     }
   })();
 };
+
+export const logInfo = (
+  plugin: PluginInput,
+  service: string,
+  message: string
+): void => logAt(plugin, service, "info", message);
+
+export const logWarn = (
+  plugin: PluginInput,
+  service: string,
+  message: string
+): void => logAt(plugin, service, "warn", message);
+
+export const logError = (
+  plugin: PluginInput,
+  service: string,
+  message: string
+): void => logAt(plugin, service, "error", message);
 
 // Typed as an explicit const so TypeScript's control-flow analysis treats every
 // call as terminating — narrowing otherwise fails.

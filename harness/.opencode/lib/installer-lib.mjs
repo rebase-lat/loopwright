@@ -11,6 +11,7 @@ const EXPECTED = [
   ["docs/context.md", "run lpwr-install then lpwr-onboard", "foundation"],
   ["docs/state.md", "run lpwr-install", "foundation"],
   ["docs/audit.md", "run lpwr-install", "foundation"],
+  ["docs/memos", "run lpwr-install", "foundation"],
   ["docs/glossary.md", "run lpwr-domain", "foundation"],
   [".gitignore", "generated foundation and secrets stay untracked", "installer"],
   ["opencode.json", "permission matrix", "installer"],

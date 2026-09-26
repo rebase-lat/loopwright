@@ -84,10 +84,37 @@ that work answerable — never a model's say-so.
 - Placement tests: command longer than ~40 lines → extract a skill; required
   output shape → template first; different permission/context → own agent
   file; removable-but-still-true → not an instruction.
-- Worktrees per spec ID (capped at two per person until proven binding);
-  only the `orchestrator` spawns; `state.md` has one writer.
+- Worktrees per spec ID (see below); only the `orchestrator` spawns;
+  `state.md` has one writer.
 - Bootstrap is split on purpose: `lpwr-setup` prepares the machine,
   `lpwr-install` materializes, `lpwr-onboard` fills.
+
+## Worktree lifecycle
+
+One flow, four explicit stops — mint → work → commit → prune; nothing waits
+on a future command to clean up after itself:
+
+- **Mint** (trunk): `lpwr-propose` / `lpwr-explore` journal the frame/specify
+  handoff, then call `worktree_mint` — branch + worktree `../<id>` beside the
+  project (name = branch = folder, rule 2), foundation files symlinked in,
+  spec folder moved out of trunk. The human restarts opencode in the
+  reported path.
+- **Work** (the spec's worktree): every work-stage command is gated to that
+  session; trunk mints specs, it never works them.
+- **Commit**: `lpwr-commit` squash-merges one ID-tagged commit onto trunk and
+  marks the worktree pending cleanup (`.loop-worktrees/manifest.json`, written
+  only after `state.md` records `Done`) — the session cannot delete the
+  directory it runs from.
+- **Prune**: `lpwr-worktree-prune` closes worktrees that are shipped (a `Done`
+  entry in `state.md`) or pending cleanup, when clean; dirty or in-flight
+  ones only via `force`, which always raises a human confirmation naming the
+  path. The next `lpwr-propose` prunes the same eligible set opportunistically
+  before its cap check. A session never prunes its own worktree.
+- **Cap**: 2 open worktrees by default; raise per project with
+  `LPWR_MAX_WORKTREES` or `"lpwr": { "max_worktrees": N }` in `opencode.json`
+  (rule 29). At the cap, resume an open session, prune, or mark a spec
+  `Done`; last resort by hand: `git worktree remove <path> && git branch -D
+  <id>`.
 
 ## Code quality
 

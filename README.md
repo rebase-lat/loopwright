@@ -23,7 +23,7 @@ Structured human picks run through the
 `question` tool; advisories land in
 `client.app.log` (`logWarn`) and one-shot warning toasts — never raw `console.*`.
 
-One `orchestrator` agent is the only interactive primary: all 25 commands pin
+One `orchestrator` agent is the only interactive primary: all 27 commands pin
 to it, it fans doer steps out to subagents (`builder` implements, `scribe`
 authors, `reviewer` verifies), and every other agent carries `task: deny` —
 workers return a complete report and get resumed, never spawn. The TUI adds a
@@ -31,13 +31,15 @@ read-only workflow-pulse sidebar to the session view (spec status, verdict,
 foundation gaps), refreshed by its palette command or a docs file-watcher
 event.
 
-Specs work on branch-per-ID worktrees: `lpwr-propose` / `lpwr-explore` mint
-the ID from trunk, the worktree guard creates branch + worktree `../<id>`
+Specs work on branch-per-ID worktrees: `lpwr-propose` / `lpwr-explore` journal
+from trunk, then `worktree_mint` creates branch + worktree `../<id>`
 (name = branch = folder, rule 2), and the session restarts there for
 Specify → Verify; `lpwr-commit` squash-merges back to trunk as one
-ID-tagged commit, and the worktree prunes itself at the next propose.
-Foundation files and the shared `docs/memos/` stay trunk-owned and
-symlinked in — `state.md` never merges.
+ID-tagged commit and marks the worktree pending cleanup —
+`lpwr-worktree-prune` (or the next propose) closes shipped or
+pending-cleanup worktrees, behind a default cap of 2 open worktrees
+(`LPWR_MAX_WORKTREES` raises it). Foundation files and the shared `docs/memos/`
+stay trunk-owned and symlinked in — `state.md` never merges.
 
 ## Quickstart
 
@@ -85,7 +87,7 @@ loopwright/
 ├── PRINCIPLES.md               # design intent (resume of the former principles essays)
 ├── LICENSE                     # MIT
 ├── CHANGELOG.md
-├── package.json                # npm scripts: lint, fmt, fmt:check, typecheck, test; version 1.4.1
+├── package.json                # npm scripts: lint, fmt, fmt:check, typecheck, test; version 1.4.2
 ├── loopwright.sh               # installer: install/update/doctor/fix/status/uninstall for harness/
 ├── opencode.json               # developer MCP + LSP config — distinct from harness/opencode.json (shipped matrix)
 ├── constitution.md             # this repo's own rules — the committed record (harness ships without one; onboard creates it)
@@ -98,11 +100,12 @@ loopwright/
 │   ├── tui.json                # TUI plugin wiring — loads .opencode/tui/ (relative path, no build)
 │   ├── .opencode/
 │   │   ├── agents/             # 9 role files (orchestrator, builder, planner, scribe, reviewer, triage seats, scout)
-│   │   ├── commands/           # 25 flat lpwr-* commands, each declaring its Stage:
+│   │   ├── commands/           # 27 flat lpwr-* commands, each declaring its Stage:
 │   │   ├── skills/             # 17 lpwr-* procedures (SKILL.md + trigger descriptions)
 │   │   ├── plugins/            # 12 lpwr-* plugins (gates, journaling, advisories, worktree lifecycle —
 │   │   │                       #   auto-discovered; typechecked via root tsconfig.json)
-│   │   ├── lib/                # shared.ts (plugin helpers, worktree/journal resolution) + gates.ts (pure gate predicates, npm test)
+│   │   ├── lib/                # worktree.ts (worktree lifecycle service, npm test) + shared.ts (plugin helpers,
+│   │   │                       #   worktree/journal resolution) + gates.ts (pure gate predicates, npm test)
 │   │   │                       #   + installer-lib.mjs (JSONC merge / manifest / verify for loopwright.sh)
 │   │   └── tui/                # lpwr-tui.tsx — read-only workflow-pulse sidebar (session view)
 │   ├── docs/                   # glossary + conventions + implementation-rules, kept in git;
@@ -124,7 +127,7 @@ loopwright/
 | Execute | `lpwr-implement`, `lpwr-diagnose` |
 | Verify | `lpwr-review`, `lpwr-goal`, `lpwr-release`, `lpwr-threat-review` (high tier only) |
 | Retain | `lpwr-commit`, `lpwr-teach` |
-| Cross-cutting | `lpwr-guide` |
+| Cross-cutting | `lpwr-guide`, `lpwr-worktree-status`, `lpwr-worktree-prune` |
 
 Cross-cutting rules: amendments (including harness changes) go through
 `lpwr-propose` → `lpwr-review`; approved specs change only via `lpwr-amend`

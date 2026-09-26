@@ -91,6 +91,8 @@ const materializeFoundation = (project) => {
       path.join(project, "docs", `${name}.md`)
     );
   }
+  // lpwr-install also ensures the shared memo dir (no template ships for it).
+  mkdirSync(path.join(project, "docs", "memos"), { recursive: true });
 };
 
 const manifest = (project) =>

@@ -108,8 +108,14 @@ names the failure it prevents.
 28. **The patch counter resets on commit, not on file close.** A file touched across three
     separate short sessions still counts toward the achievement-trap threshold if none of those
     sessions ended in a commit.
-29. **Concurrent worktrees per person start capped at 2.** Raise it only after the team reports
-    the cap is the actual bottleneck — don't raise it preemptively because the tooling allows more.
+29. **Concurrent worktrees per person start capped at 2** — configurable per project
+    (`LPWR_MAX_WORKTREES` env var, or `"lpwr": { "max_worktrees": N }` in `opencode.json`;
+    never by editing the harness). Raise it only after the team reports the cap is the actual
+    bottleneck — don't raise it preemptively because the tooling allows more. When the cap
+    blocks, the in-band recovery is: resume an open spec's session, run
+    `lpwr-worktree-prune` (closes shipped or pending-cleanup worktrees), or mark a shipped
+    spec `Done` in `docs/state.md` so the next `lpwr-propose` prunes it. Last resort by hand:
+    `git worktree remove <path> && git branch -D <id>`.
 
 ## Sequencing
 
@@ -210,3 +216,23 @@ names the failure it prevents.
     resolve.
     (Numbered 49-50 — the worktree guide proposed 45-47; 45-48 were taken and its 46
     restated rule 2.)
+
+51. **Only tracked `docs/specs/<id>/log.ndjson` tails may sit dirty on trunk at the
+    squash-merge — nothing else, and never an untracked copy.** Tails are appended to trunk by
+    `lpwr-release` / `lpwr-teach` after their own commits; `lpwr-commit` step 6 stages them
+    into the next spec's squash so trunk goes clean. They are allowed because the alternative
+    is worse: any other dirty file either blocks the merge forever (git tolerates unstaged and
+    untracked changes, so nothing else ever clears them) or silently rides an unrelated file
+    into an ID-tagged commit (staged files travel with the squash). Untracked files under
+    `docs/specs/` — stale phantom journal copies — block by design. The allowed set is data,
+    not prose: `TAIL_ALLOWED` in `.opencode/lib/worktree.ts` declares exactly these patterns,
+    and `lpwr-worktree-guard`'s squash preflight enforces that list (adding a new tail-riding
+    file means adding an entry here and one there — the contract and the gate cannot drift).
+
+52. **Worktree cleanup is self-service, never deferred to a future command.** `lpwr-commit`
+    marks its worktree pending cleanup in `.loop-worktrees/manifest.json` (trunk-owned,
+    gitignored) once `docs/state.md` records `Done`; `lpwr-worktree-prune` closes worktrees
+    that are shipped or pending-cleanup and clean — directly, while dirty or in-flight ones
+    require `force`, which always raises a human permission confirmation naming the path. A
+    session never prunes the worktree it runs from; the next `lpwr-propose` prunes the same
+    eligible set opportunistically before its cap check (rule 29).

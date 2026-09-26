@@ -21,3 +21,7 @@ node_modules/
 # Loopwright installer state — manifest.json stays tracked; cache + backups do not
 .loopwright/cache/
 .loopwright/backups/
+
+# Worktree lifecycle bookkeeping — the pending-cleanup manifest lpwr-commit
+# writes (implementation-rules 52); trunk-owned, never part of a diff
+.loop-worktrees/

@@ -9,7 +9,7 @@ import {
   frontmatterValue,
   logWarn,
   toastBlocked,
-} from "./shared.js";
+} from "../lib/shared.js";
 
 // Foundation gate: no domain command runs without the Govern foundation it
 // reads — docs/context.md and docs/constitution.md must exist. Exempt are the

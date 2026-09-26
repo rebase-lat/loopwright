@@ -3,7 +3,7 @@ set -euo pipefail
 
 [ -n "${BASH_VERSION:-}" ] || { printf 'error: run this script with bash\n' >&2; exit 1; }
 
-SCRIPT_VERSION="1.4.0"
+SCRIPT_VERSION="1.4.1"
 OWNER="rebase-lat"
 REPO="loopwright"
 STATE_DIR=".loopwright"
@@ -316,6 +316,7 @@ stage_local() {
       --exclude='harness/docs/context.md' \
       --exclude='harness/docs/state.md' \
       --exclude='harness/docs/audit.md' \
+      --exclude='harness/docs/memos' \
       --exclude='harness/.env' --exclude='harness/.env.*' \
       --exclude='harness/*.pem' --exclude='harness/*.key' \
       --exclude='harness/secrets' \
@@ -694,7 +695,7 @@ guard_self_install() {
   if git -C "$PROJECT" remote get-url origin 2>/dev/null | grep -qi "github.com/$OWNER/$REPO"; then
     die "refusing to install into the loopwright repository itself"
   fi
-  if [ -f "$PROJECT/harness/.opencode/plugins/shared.ts" ] && [ -f "$PROJECT/integration-analysis.md" ]; then
+  if { [ -f "$PROJECT/harness/.opencode/lib/shared.ts" ] || [ -f "$PROJECT/harness/.opencode/plugins/shared.ts" ]; } && [ -f "$PROJECT/integration-analysis.md" ]; then
     die "target already contains harness/ — refusing a nested install (is this a loopwright checkout?)"
   fi
 }

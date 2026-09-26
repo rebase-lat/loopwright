@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -11,7 +12,8 @@ import {
   escapeRegExp,
   firstArgument,
   frontmatterValue,
-} from "./shared.js";
+  worktreeList,
+} from "../lib/shared.js";
 
 // Refuses /lpwr-implement without an approved spec id.
 // The spec id is the first token of the command arguments string.
@@ -108,6 +110,36 @@ const specLink = (plugin: PluginInput): Promise<Hooks> => {
           "utf-8"
         );
       } catch {
+        // "Not at this path" has three real causes, and which gate reports it
+        // first depends on the install's plugin load order (Round 6 S6-03) —
+        // so this message diagnoses them itself instead of trusting order:
+        // unmaterialized foundation, a spec that lives in its own worktree
+        // (restart there — never suggest lpwr-specs, which would mint a
+        // divergent copy on trunk), or an unknown ID.
+        const foundationMissing = [
+          "docs/context.md",
+          "docs/constitution.md",
+        ].filter((file) => !existsSync(path.join(root, file)));
+        if (foundationMissing.length > 0) {
+          block(
+            plugin,
+            `Blocked: missing ${foundationMissing.join(" and ")} — run ` +
+              `lpwr-install for a fresh project (foundation before specs), ` +
+              `then lpwr-onboard.`
+          );
+        }
+        const worktrees = await worktreeList(root);
+        const worktree = worktrees.find(
+          (wt) => wt.branch === specId || path.basename(wt.path) === specId
+        );
+        if (worktree) {
+          block(
+            plugin,
+            `Blocked: ${specId} has its own worktree at ${worktree.path} — ` +
+              `quit this session, restart opencode there, and run ` +
+              `lpwr-implement ${specId} from that session.`
+          );
+        }
         block(
           plugin,
           `Blocked: spec ${specId} not found at docs/specs/${specId}/spec.md — ` +

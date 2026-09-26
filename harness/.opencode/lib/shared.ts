@@ -2,16 +2,16 @@ import { execFile } from "node:child_process";
 import path from "node:path";
 import { promisify } from "node:util";
 
-import type { Plugin, PluginInput } from "@opencode-ai/plugin";
+import type { PluginInput } from "@opencode-ai/plugin";
 
-// Shared helpers for lpwr-* plugins. Named exports carry the logic; the default
-// export is a no-op Plugin so auto-discovery in plugins/ loads this file safely.
+// Shared helpers for the lpwr-* plugins and the TUI. This module lives in
+// lib/, not plugins/, on purpose: opencode loads every file in plugins/ as a
+// plugin and requires each of its exports to be a function, so the RegExps and
+// arrays exported here made discovery throw "Plugin export is not a function"
+// on every startup. Plugin entry modules default-export one factory and import
+// everything else from here (Round 6, S6-01).
 
 const execFileAsync = promisify(execFile);
-
-const noopPlugin = (): Promise<Record<string, never>> => Promise.resolve({});
-
-export default noopPlugin satisfies Plugin;
 
 // Branch/command-arg spec ID: single sequence suffix (auth-014).
 export const SPEC_ID = /^[a-z0-9]+(?:-[a-z0-9]+)*-\d+$/u;
@@ -74,6 +74,73 @@ export const trunkBranch = async (root: string): Promise<string | null> => {
 export const firstArgument = (args: string): string | undefined =>
   args.trim().split(/\s+/u)[0];
 
+// Registered git worktrees (main + linked), parsed from `worktree list
+// --porcelain`. Returns [] when git is unavailable or the path is not a repo,
+// so callers decide whether that is an empty result or an error.
+export interface WorktreeInfo {
+  path: string;
+  branch: string | null;
+}
+
+export const worktreeList = async (cwd: string): Promise<WorktreeInfo[]> => {
+  try {
+    const { stdout } = await execFileAsync(
+      "git",
+      ["-C", cwd, "worktree", "list", "--porcelain"],
+      { timeout: 15_000 }
+    );
+    const out: WorktreeInfo[] = [];
+    for (const chunk of stdout.split(/\n{2,}/u)) {
+      const lines = chunk.split("\n");
+      const wtLine = lines.find((line) => line.startsWith("worktree "));
+      if (!wtLine || lines.some((line) => line.startsWith("bare"))) {
+        continue;
+      }
+      const branchLine = lines.find((line) => line.startsWith("branch "));
+      out.push({
+        branch: branchLine
+          ? branchLine.slice("branch ".length).replace(/^refs\/heads\//u, "")
+          : null,
+        path: wtLine.slice("worktree ".length),
+      });
+    }
+    return out;
+  } catch {
+    return [];
+  }
+};
+
+// Directories that may hold docs/specs/<id>/ for this session: the session's
+// own harness root first, then every registered worktree's harness dir at the
+// same subpath (harness/ sits one level in on a nested layout, at the root
+// otherwise). Journaling resolves through this list so a keyed command run
+// from trunk appends into the spec's worktree log instead of minting a
+// divergent copy on trunk (Round 6, S6-02). Git failure degrades to [root].
+export const specWorktreeBases = async (root: string): Promise<string[]> => {
+  const bases = [root];
+  try {
+    const [{ stdout: common }, { stdout: top }] = await Promise.all([
+      execFileAsync("git", ["-C", root, "rev-parse", "--git-common-dir"], {
+        timeout: 5000,
+      }),
+      execFileAsync("git", ["-C", root, "rev-parse", "--show-toplevel"], {
+        timeout: 5000,
+      }),
+    ]);
+    const mainRoot = path.dirname(path.resolve(root, common.trim()));
+    const rel = path.relative(path.resolve(top.trim()), root);
+    for (const wt of await worktreeList(mainRoot)) {
+      const base = rel === "" ? wt.path : path.join(wt.path, rel);
+      if (!bases.includes(base)) {
+        bases.push(base);
+      }
+    }
+  } catch {
+    // Not a git repo (or git unavailable) — the session root is all we have.
+  }
+  return bases;
+};
+
 export const commandName = (command: string): string =>
   command.split(/[/:]/u).pop() ?? "";
 
@@ -90,6 +157,45 @@ export const looksLikeGitCommit = (command: string): boolean => {
   return command
     .split(/&&|\|\||;|\|/u)
     .some((segment) => pattern.test(segment.trim()));
+};
+
+// Any command segment that is a `git … merge --squash` — the squash-merge is
+// the Retain commit's last clean stop, so lpwr-worktree-guard preflights trunk
+// dirt there (implementation-rules 5: prose advises, plugins enforce).
+export const looksLikeGitMergeSquash = (command: string): boolean => {
+  const pattern = /^git(?:\s+\S+)*\s+merge\s+(?:\S+\s+)*--squash(?:\s|$)/u;
+  return command
+    .split(/&&|\|\||;|\|/u)
+    .some((segment) => pattern.test(segment.trim()));
+};
+
+// The directory a git command targets: its first `-C <path>` flag (the commit
+// flow runs `git -C <main> merge --squash`, against the trunk worktree, not
+// the session root), else the nearest leading `cd <dir>` segment — bash cwd
+// persists across `&&`, and a relative dir resolves against the same
+// process/session cwd both spellings share. `fallback` when neither appears
+// (e.g. `git commit` straight from the session cwd).
+export const gitCommandDir = (command: string, fallback: string): string => {
+  let cdDir: string | null = null;
+  for (const segment of command.split(/&&|\|\||;|\|/u)) {
+    const trimmed = segment.trim();
+    const cd = trimmed.match(/^cd\s+(?<dir>\S+)\s*$/u);
+    if (cd?.groups?.dir) {
+      cdDir = cd.groups.dir;
+      continue;
+    }
+    if (!/^git\s/u.test(trimmed)) {
+      continue;
+    }
+    const match = trimmed.match(/(?:^|\s)-C\s+(?<dir>\S+)/u);
+    if (match?.groups?.dir) {
+      return match.groups.dir;
+    }
+    if (cdDir) {
+      return cdDir;
+    }
+  }
+  return fallback;
 };
 
 // Every blockage raises a TUI toast with the same actionable message as the

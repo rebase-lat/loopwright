@@ -36,8 +36,8 @@ the ID from trunk, the worktree guard creates branch + worktree `../<id>`
 (name = branch = folder, rule 2), and the session restarts there for
 Specify → Verify; `lpwr-commit` squash-merges back to trunk as one
 ID-tagged commit, and the worktree prunes itself at the next propose.
-Foundation files stay trunk-owned and symlinked in — `state.md` never
-merges.
+Foundation files and the shared `docs/memos/` stay trunk-owned and
+symlinked in — `state.md` never merges.
 
 ## Quickstart
 
@@ -85,7 +85,7 @@ loopwright/
 ├── PRINCIPLES.md               # design intent (resume of the former principles essays)
 ├── LICENSE                     # MIT
 ├── CHANGELOG.md
-├── package.json                # npm scripts: lint, fmt, fmt:check, typecheck, test; version 1.4.0
+├── package.json                # npm scripts: lint, fmt, fmt:check, typecheck, test; version 1.4.1
 ├── loopwright.sh               # installer: install/update/doctor/fix/status/uninstall for harness/
 ├── opencode.json               # developer MCP + LSP config — distinct from harness/opencode.json (shipped matrix)
 ├── constitution.md             # this repo's own rules — the committed record (harness ships without one; onboard creates it)
@@ -100,14 +100,14 @@ loopwright/
 │   │   ├── agents/             # 9 role files (orchestrator, builder, planner, scribe, reviewer, triage seats, scout)
 │   │   ├── commands/           # 25 flat lpwr-* commands, each declaring its Stage:
 │   │   ├── skills/             # 17 lpwr-* procedures (SKILL.md + trigger descriptions)
-│   │   ├── plugins/            # 12 lpwr-* plugins + shared helper (gates, journaling, advisories, worktree lifecycle —
+│   │   ├── plugins/            # 12 lpwr-* plugins (gates, journaling, advisories, worktree lifecycle —
 │   │   │                       #   auto-discovered; typechecked via root tsconfig.json)
-│   │   ├── lib/                # gates.ts (pure gate predicates, npm test) + installer-lib.mjs
-│   │   │                       #   (JSONC merge / manifest / verify for loopwright.sh)
+│   │   ├── lib/                # shared.ts (plugin helpers, worktree/journal resolution) + gates.ts (pure gate predicates, npm test)
+│   │   │                       #   + installer-lib.mjs (JSONC merge / manifest / verify for loopwright.sh)
 │   │   └── tui/                # lpwr-tui.tsx — read-only workflow-pulse sidebar (session view)
 │   ├── docs/                   # glossary + conventions + implementation-rules, kept in git;
-│   │                           #   generated foundation files (constitution, context, state.md, audit.md)
-│   │                           #   are gitignored — recreate via lpwr-install + lpwr-onboard
+│   │                           #   generated foundation files (constitution, context, state.md, audit.md,
+│   │                           #   memos/) are gitignored — recreate via lpwr-install + lpwr-onboard
 │   └── templates/              # fixed record shapes (spec, review, lesson, …)
 ├── oxlint.config.ts / oxfmt.config.ts  # ultracite presets
 └── tsconfig.json               # strict, covers plugins + tui + configs

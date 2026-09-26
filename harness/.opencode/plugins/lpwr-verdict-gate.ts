@@ -23,7 +23,7 @@ import {
   looksLikeGitCommit,
   normalizeEol,
   toastWarning,
-} from "./shared.js";
+} from "../lib/shared.js";
 
 // Mechanical verdict floor (implementation-rules 5/7): /lpwr-commit, /lpwr-release, and a
 // raw `git commit` on a spec-shaped branch cannot run without a recorded "ship" whose

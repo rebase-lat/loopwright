@@ -11,4 +11,4 @@ Change the spec for `$ARGUMENTS` (`<spec-id>`, then the change description) afte
 
 Output: edits `docs/specs/<id>/spec.md`; journal_handoff specify `docs/specs/<id>/spec.md`.
 
-Next: lpwr-implement (after re-approval; review was voided).
+Next: lpwr-specs (resume to a human approval verdict — status is draft again, review deleted), then lpwr-implement.

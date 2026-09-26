@@ -15,17 +15,19 @@ import type {
 } from "@opencode-ai/plugin/tui";
 import { createEffect, createSignal, onCleanup, Show } from "solid-js";
 
-import { EXPECTED, SPEC_ID, frontmatterValue } from "../plugins/shared.js";
+import { EXPECTED, SPEC_ID, frontmatterValue } from "../lib/shared.js";
 
 type Verdict = "ship" | "block" | "redirect" | "pending" | "missing";
 
 interface Handoff {
   readonly intent: string;
   readonly confidence: string | null;
+  readonly origin: string | null;
 }
 
 interface WorktreePulse {
   readonly id: string;
+  readonly path: string;
   readonly shipped: boolean;
 }
 
@@ -134,31 +136,69 @@ const activeSpecId = (inFlight: readonly string[]): string | null => {
   return null;
 };
 
+// OPENCODE_SPEC_ID written into a spec worktree's .env at mint — the live
+// spec of THIS session even when state.md's optional In flight section is
+// empty (Round 6: worktrees are the in-flight record).
+const envSpecId = (root: string): string | null => {
+  const raw = readText(path.join(root, ".env"));
+  if (!raw) {
+    return null;
+  }
+  const line = raw
+    .split("\n")
+    .find((candidate) => candidate.startsWith("OPENCODE_SPEC_ID="));
+  const value = line?.slice("OPENCODE_SPEC_ID=".length).trim() ?? "";
+  return SPEC_ID.test(value) ? value : null;
+};
+
+const parseHandoff = (line: string): Handoff | null => {
+  try {
+    const parsed: unknown = JSON.parse(line);
+    if (typeof parsed !== "object" || parsed === null) {
+      return null;
+    }
+    const record = parsed as {
+      intent?: unknown;
+      confidence?: unknown;
+      origin?: unknown;
+    };
+    if (typeof record.intent !== "string") {
+      return null;
+    }
+    return {
+      confidence:
+        typeof record.confidence === "string" ? record.confidence : null,
+      intent: record.intent,
+      origin: typeof record.origin === "string" ? record.origin : null,
+    };
+  } catch {
+    return null;
+  }
+};
+
+// The sidebar shows the agent's most recent explicit handoff; the
+// post-command backstop line (origin: hook, confidence medium) is a fallback
+// only when it is all there is — since journaling moved to command.executed
+// it lands last and would otherwise mask the agent's claim (Round 6 review).
 const lastHandoff = (file: string): Handoff | null => {
   const raw = readText(file);
   if (!raw) {
     return null;
   }
   const lines = raw.split("\n").filter((line) => line.trim().length > 0);
-  const tail = lines.at(-1);
-  if (!tail) {
-    return null;
-  }
-  try {
-    const parsed: unknown = JSON.parse(tail);
-    if (typeof parsed !== "object" || parsed === null) {
-      return null;
+  let fallback: Handoff | null = null;
+  let explicit: Handoff | null = null;
+  for (const line of lines) {
+    const entry = parseHandoff(line);
+    if (!entry) {
+      continue;
     }
-    const record = parsed as { intent?: unknown; confidence?: unknown };
-    if (typeof record.intent !== "string") {
-      return null;
+    fallback = entry;
+    if (entry.origin !== "hook") {
+      explicit = entry;
     }
-    const confidence =
-      typeof record.confidence === "string" ? record.confidence : null;
-    return { confidence, intent: record.intent };
-  } catch {
-    return null;
   }
+  return explicit ?? fallback;
 };
 
 const countAuditOpen = (text: string): number =>
@@ -194,6 +234,27 @@ const gitRootOf = (start: string): string | null => {
   return null;
 };
 
+// The spec folder for the active id: this root when it holds the spec, else
+// the owning worktree's harness dir (trunk sessions list worktrees but the
+// folders live in them — round 6: pulse reads status/verdict from there).
+const specDirOf = (
+  root: string,
+  specId: string,
+  worktrees: readonly WorktreePulse[]
+): string => {
+  const local = path.join(root, "docs", "specs", specId);
+  if (existsSync(path.join(local, "spec.md"))) {
+    return local;
+  }
+  const wt = worktrees.find((entry) => entry.id === specId);
+  const repo = gitRootOf(root);
+  if (!wt || !repo) {
+    return local;
+  }
+  const rel = path.relative(repo, root);
+  return path.join(wt.path, rel, "docs", "specs", specId);
+};
+
 // Open spec worktrees, read from the main repo's .git/worktrees. Only the trunk
 // session sees these — a linked worktree's `.git` is a file, so this returns
 // empty there. Shipped state comes from state.md's Done section.
@@ -213,7 +274,21 @@ const readWorktrees = (
   }
   return entries
     .filter((id) => SPEC_ID.test(id))
-    .map((id) => ({ id, shipped: shipped.has(id) }));
+    .map((id) => {
+      // `.git/worktrees/<id>/gitdir` points at the worktree's own .git file;
+      // its dirname is the checkout root the pulse reads spec folders from.
+      let worktreeRoot = path.join(repo, ".git", "worktrees", id);
+      try {
+        const gitdir = readFileSync(
+          path.join(worktreeRoot, "gitdir"),
+          "utf-8"
+        ).trim();
+        worktreeRoot = path.dirname(gitdir);
+      } catch {
+        // Metadata unreadable — keep the id so the listing still renders.
+      }
+      return { id, path: worktreeRoot, shipped: shipped.has(id) };
+    });
 };
 
 const loadPulse = (root: string): Pulse => {
@@ -226,7 +301,13 @@ const loadPulse = (root: string): Pulse => {
       .filter((id): id is string => id !== null)
   );
   const worktrees = readWorktrees(root, shipped);
-  const specId = activeSpecId(inFlight);
+  // Active spec: this session's worktree (.env), then optional state In
+  // flight bookkeeping, then the first in-flight worktree (trunk session).
+  const specId =
+    envSpecId(root) ??
+    activeSpecId(inFlight) ??
+    worktrees.find((entry) => !entry.shipped)?.id ??
+    null;
 
   let status: string | null = null;
   let riskTier: string | null = null;
@@ -237,7 +318,7 @@ const loadPulse = (root: string): Pulse => {
   let handoff: Handoff | null = null;
 
   if (specId) {
-    const specDir = path.join(root, "docs", "specs", specId);
+    const specDir = specDirOf(root, specId, worktrees);
     const specText = readText(path.join(specDir, "spec.md"));
     if (specText) {
       status = frontmatterValue(specText, "status");

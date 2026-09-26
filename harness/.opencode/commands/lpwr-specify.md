@@ -14,7 +14,7 @@ Full pass from an approved proposal to approved tasks in one run, using skills `
 3. Fill the Tasks section: every task bound to its criterion sub-ID, declared surface exact.
 4. Present the package — `docs/specs/<id>/spec.md` (criteria + tasks) plus `docs/specs/<id>/adr.md` if any — for one human approval via `question` covering criteria, tasks, and design together.
 
-Granular `lpwr-specs`, `lpwr-tasks`, and `lpwr-design` remain for partial states. If `spec.md` already exists for this ID, stop and use `lpwr-amend`. Call `journal_handoff` with intent `specify`, the spec ID, and artifact `docs/specs/<id>/spec.md`.
+Granular `lpwr-specs`, `lpwr-tasks`, and `lpwr-design` remain for partial states. If `spec.md` already exists for this ID: `status: draft` → hand off to `lpwr-specs` to resume it (same rule `lpwr-specs` states — draft resumes, never restarts); any other status → `lpwr-amend` — specify creates once, it never overwrites. Call `journal_handoff` with intent `specify`, the spec ID, and artifact `docs/specs/<id>/spec.md`.
 
 Output: writes `docs/specs/<id>/spec.md` via templates/spec.md (plus `docs/specs/<id>/adr.md` via templates/adr.md when design review applies); journal_handoff specify `docs/specs/<id>/spec.md`.
 

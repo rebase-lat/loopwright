@@ -9,6 +9,7 @@ import {
   parseWaived,
   receiptIncomplete,
   securityAxisComplete,
+  specDirNames,
   tableComplete,
   templateLeftovers,
   threatAccepted,
@@ -164,4 +165,18 @@ test("declaredSurfaceFrom: surface bullets, with Tasks-backtick fallback", () =>
     "## Tasks\n1. [ ] touch `src/b.ts` — satisfies a-1\n";
   assert.deepEqual(declaredSurfaceFrom(fallback), ["src/b.ts"]);
   assert.deepEqual(declaredSurfaceFrom("# Spec: nothing declared\n"), []);
+});
+
+test("specDirNames: spec and criterion refs, slugs and prose refused", () => {
+  assert.deepEqual(specDirNames("auth-014"), ["auth-014"]);
+  // Criterion refs prefer their own folder, then the parent spec folder.
+  assert.deepEqual(specDirNames("auth-014-1"), ["auth-014-1", "auth-014"]);
+  // Id-shaped topic slugs yield only their own name; when no folder exists
+  // anywhere, the journal refuses instead of mkdir-ing a phantom
+  // docs/specs entry (S5-04).
+  assert.deepEqual(specDirNames("null-pointer-500"), ["null-pointer-500"]);
+  assert.deepEqual(specDirNames("login-2"), ["login-2"]);
+  assert.deepEqual(specDirNames("login"), []);
+  assert.deepEqual(specDirNames("Auth-014"), []);
+  assert.deepEqual(specDirNames("docs/context.md"), []);
 });

@@ -3,7 +3,7 @@ import path from "node:path";
 
 import type { Hooks, PluginInput } from "@opencode-ai/plugin";
 
-import { EXPECTED, logWarn, toastWarning } from "./shared.js";
+import { EXPECTED, logWarn, toastWarning } from "../lib/shared.js";
 
 // Startup validation, once at init: warns about missing harness pieces with
 // the command that produces each one. One toast aggregates the gaps (user

@@ -3,6 +3,62 @@
 All notable changes to this project, grouped by git tag. See the commit
 history for per-change detail.
 
+## [1.4.1] — 2026-09-26
+
+- Third workflow simulation (Round 6) fixes — findings table and wave record
+  in `integration-analysis.md` (9 new findings fixed; all 7 open Round 5
+  items closed):
+  - **Order-independent journaling**: `lpwr-log-handoffs` writes its
+    backstop auto-line from opencode's `command.executed` event —
+    published only after every `command.execute.before` gate passed and
+    the command ran — so a blocked command never journals, whatever order
+    the install loads its plugins in (directory-scan order is
+    filesystem-dependent; two `opencode debug config` captures proved two
+    installs of the same harness disagree). The spec folder resolves
+    through the session root plus every registered worktree; a
+    spec-shaped ref with no folder anywhere is refused instead of
+    `mkdir`-ing a phantom — that phantom later blocked `git merge
+    --squash` with an untracked-collision abort (reproduced).
+    `lpwr-commit` keeps no auto-line: its step-5 retain line rides the
+    merge, and an end-of-command line would dirty the worktree the next
+    propose must prune.
+  - **`shared.ts` moves from `plugins/` to `lib/`**: opencode requires
+    every plugin export to be a function, so its RegExps/arrays made
+    discovery throw `Plugin export is not a function` on every startup —
+    the 1.0.0 "no-op default loads safely" claim never held. New
+    `test/plugin-shape.test.ts` keeps plugin entry modules
+    default-export-only, and `lpwr-spec-link` now diagnoses missing
+    foundation / worktree-resident spec / unknown ID itself instead of
+    trusting which hook runs first.
+  - **Squash-merge preflight**: `lpwr-worktree-guard` gates
+    `git … merge --squash` on pending trunk changes — journal tails
+    (`docs/specs/*/log.ndjson` left by `lpwr-release` / `lpwr-teach`)
+    ride the squash (commit step 6 stages them), staged strangers are
+    blocked (git would silently absorb them into the ID-tagged commit),
+    and everything else names its recovery; harness-subpath aware for
+    nested layouts. The staged-secret scan and this gate follow the
+    command's `-C` target or a leading `cd <dir>`.
+  - **In-flight = worktrees**: guide and the TUI sidebar derive the
+    active spec from the session `.env` → state `In flight` → open
+    worktrees (reading status/verdict from the owning worktree);
+    `templates/state.md` ships empty sections so the sidebar never
+    renders placeholder `blocked:` lines; guide step 6 conditions on
+    "no active spec" instead of the always-empty state section; redirect
+    verdicts name manual worktree closure (only shipped specs prune).
+  - **Memos join FOUNDATION**: `docs/memos/` is gitignored, trunk-owned,
+    and symlinked into spec worktrees like `state.md` (rule 49);
+    `.gitkeep` is untracked, `lpwr-install` materializes the dir, and
+    release tarballs exclude it. Existing installs run `git rm --cached
+    docs/memos/.gitkeep` once — the Round 6 migration note.
+  - Round 5 leftovers + prose alignments: guide step 11 flags
+    template-placeholder tasks; `lpwr-specify` shares `lpwr-specs`'
+    resume rule; `.opencode/package.json` gains `"type": "module"`;
+    `lpwr-review` collects the verdict through the `question` tool (rule
+    48's claim now true); builder's journal artifact matches implement
+    (criterion id); guide step 3 drops the `lpwr-constitution` misroute;
+    `lpwr-amend`'s Next names the `lpwr-specs` re-approval hop.
+  - Tests: `specDirNames` + plugin-shape fixtures — 20 tests total.
+
 ## [1.4.0] — 2026-09-26
 
 - Harness distribution via `loopwright.sh` (shell-first installer):

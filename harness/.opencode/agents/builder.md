@@ -22,7 +22,9 @@ If heavy retrieval would help, report it — the orchestrator spawns `scout`.
 - Limit tool choice to the stack section of `docs/context.md`.
 - Keep handoffs pointer-light per skill `lpwr-context-economy`.
 - On completion, call `journal_handoff` per criterion: intent `execute`,
-  `spec_ref` = criterion ID, artifact = diff pointer — never inline the diff.
+  `spec_ref` = criterion ID, artifact = the same criterion ID — never a
+  commit SHA (those appear on the `retain` handoff after `lpwr-commit`) and
+  never the inline diff.
 
 ## Skills
 

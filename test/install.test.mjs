@@ -20,7 +20,7 @@ import {
   parseJsonc,
   unionGitignore,
 } from "../harness/.opencode/lib/installer-lib.mjs";
-import { EXPECTED as SHARED_EXPECTED } from "../harness/.opencode/plugins/shared.ts";
+import { EXPECTED as SHARED_EXPECTED } from "../harness/.opencode/lib/shared.ts";
 
 const REPO = path.resolve(import.meta.dirname, "..");
 const LW = path.join(REPO, "loopwright.sh");
@@ -181,8 +181,8 @@ test("install: fresh project, guards, dry-run, then green doctor", () => {
   assert.ok(!existsSync(path.join(project, ".loopwright")), "dry-run writes nothing");
 
   const nested = makeProject("nested");
-  mkdirSync(path.join(nested, "harness", ".opencode", "plugins"), { recursive: true });
-  writeFileSync(path.join(nested, "harness", ".opencode", "plugins", "shared.ts"), "");
+  mkdirSync(path.join(nested, "harness", ".opencode", "lib"), { recursive: true });
+  writeFileSync(path.join(nested, "harness", ".opencode", "lib", "shared.ts"), "");
   writeFileSync(path.join(nested, "integration-analysis.md"), "");
   const refused = sh(["install", "--project", nested, "--source", "local", payload,
     "--version", "1.0.0", "--no-deps"]);

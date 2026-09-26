@@ -24,11 +24,12 @@ import {
   SPEC_ID,
   commandName,
   firstArgument,
+  gitCommandDir,
   looksLikeGitCommit,
   logWarn,
   toastBlocked,
   toastWarning,
-} from "./shared.js";
+} from "../lib/shared.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -334,7 +335,11 @@ const securityScan = (plugin: PluginInput): Promise<Hooks> => {
         return;
       }
       // A raw `git commit` is the same irreversible action as /lpwr-commit —
-      // scan what is actually staged, not the working tree.
+      // scan what is actually staged, not the working tree. The commit flow
+      // stages in the trunk worktree (`git -C <main> …`) while this plugin
+      // runs from the spec worktree session, so follow the command's -C
+      // target — scanning the session index would miss the staged squash
+      // (Round 6, S5-08).
       if (input.tool !== "bash") {
         return;
       }
@@ -342,7 +347,7 @@ const securityScan = (plugin: PluginInput): Promise<Hooks> => {
       if (typeof command !== "string" || !looksLikeGitCommit(command)) {
         return;
       }
-      const flagged = await scanStagedDiff(root);
+      const flagged = await scanStagedDiff(gitCommandDir(command, root));
       if (flagged) {
         const message =
           `Blocked: possible secret in staged changes (pattern: ${flagged}). ` +

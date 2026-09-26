@@ -6,6 +6,7 @@ harness/docs/constitution.md
 harness/docs/context.md
 harness/docs/state.md
 harness/docs/audit.md
+harness/docs/memos
 # Secrets — never commit (constitution security floors)
 .env
 .env.*

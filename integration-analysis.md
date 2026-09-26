@@ -6,7 +6,7 @@ Repo-level history: this is development material for this repository, not harnes
 
 Status legend: **Wired** (command/template/plugin enforces it) · **Prose** (stated, not enforced) · **Gap** (claimed or needed, absent) · **Ephemeral** (output has no durable home).
 
-Last updated: 2026-09-25 — Round 3 (1.3.0 mechanism consistency) added and landed; Round 1 plan shipped in `e404877`–`c07af04`, Round 2 in `afedc61`/`94d4571`.
+Last updated: 2026-09-26 — Round 6 (third runtime simulation, post-1.4.0) added and implemented in waves; Round 5 table below is the as-found record (statuses not rewritten retroactively).
 
 ### Decisions (human-confirmed)
 
@@ -723,3 +723,82 @@ A second end-to-end dry-run (same method as Round 4: real plugin hooks, throwawa
 
 Verified working in the same run: mint + move + restart note, no-op specify in the worktree, spec-link, verdict gates (including raw `git commit`), state-through-symlink, release from trunk, prune with a Done entry; `npm test` 10/10, typecheck + lint clean.
 
+
+---
+
+# Round 6 — workflow simulation (third pass, post-1.4.0)
+
+A third end-to-end dry-run of the spine from `harness/`, method extended with
+opencode-runtime evidence: the hook model was read from opencode's source
+(`plugin/index.ts` `getLegacyPlugins` + `Plugin.trigger`; `prompt.ts`
+`command.executed` publish), plugin load order captured from two
+`opencode debug config` runs, and the headline blockage reproduced in a
+throwaway git repo. All four decisions below were confirmed through the
+`question` tool before implementation.
+
+## Decisions (human-confirmed, Round 6)
+
+- **Journal timing (S6-03):** event-based. Auto-handoffs move from
+  `command.execute.before` to opencode's `command.executed` event —
+  published only after every before-gate passed and the command actually ran
+  — so a blocked command never journals, in any install order. No plugin
+  relocation; `lpwr-commit` is exempt (its step-5 retain line rides the
+  merge; an end-of-command line would dirty the prunable worktree).
+- **In-flight record (S6-04):** worktrees are the source. Guide preamble and
+  the TUI derive the active spec from the session `.env`, then optional
+  state `In flight` bookkeeping, then the open worktree list;
+  `templates/state.md` ships empty sections; rule 19 untouched.
+- **Verdict pick (S6-06):** `lpwr-review` gains the `question` round —
+  rule 48's "verdicts go through the question tool" claim becomes true.
+- **Memos (S5-05):** `docs/memos/` joins FOUNDATION — gitignored,
+  provision-symlinked like `state.md` (rule 49 pattern); `.gitkeep`
+  untracked; `lpwr-install` materializes the dir.
+
+## Round 6 findings
+
+| ID | Finding | Evidence | Status |
+|----|---------|----------|--------|
+| S6-01 | `plugins/shared.ts` failed plugin discovery on every startup (`Plugin export is not a function` — opencode requires every export to be a function; `SPEC_ID`/`EXPECTED`/`RETAIN_PATHS` are not) — the 1.0.0 "no-op default loads safely" claim was false | opencode source `getLegacyPlugins`; 23 ERROR lines in the local opencode log incl. 2026-09-26T03:06 from `harness/` | **Fixed (W1)** — moved to `lib/shared.ts`; `test/plugin-shape.test.ts` keeps `plugins/` default-export-only |
+| S6-02 | Keyed `lpwr-research` / `lpwr-constitution` (legitimately run from trunk) journaled into a phantom `docs/specs/<id>/log.ndjson` on trunk — the later `git merge --squash` aborted on the untracked collision and the handoff line was lost | `resolveSpecDir` mkdir semantics; reproduced: `error: The following untracked working tree files would be overwritten by merge … Aborting` | **Fixed (W1)** — journal resolves through session root + every registered worktree (`specWorktreeBases`), refuses (never mints) folderless refs; `gates.specDirNames` + fixtures |
+| S6-03 | Hook registration order is per-install (directory scan; dev order ≠ consumer order — two `opencode debug config` captures) and `Plugin.trigger` aborts at the first throw, so side-effect-before-gate behavior and block-message precedence silently varied per install | config captures; opencode source | **Fixed (W1)** — post-command journaling (order-independent); `lpwr-spec-link` diagnoses foundation/worktree/unknown-ID itself instead of trusting which hook ran first |
+| S6-04 | `state.md` "In flight" had no writer (rule 19 gives state to `lpwr-commit` alone) — guide's stated primary orientation path and the TUI active-spec read never populated; template placeholders rendered as a phantom `blocked:` sidebar line | grep: no command writes In flight; TUI `sectionBullets` | **Fixed (W2)** — worktrees are the live record (decision above); empty template sections with comment hints |
+| S6-05 | A redirect verdict never closes its spec — only shipped specs prune, so the redirected spec's worktree occupied a cap slot until manual removal, and guide step 0 suggested resuming it (looping back to step 18) | gate trace; `pruneShipped` needs state Done | **Fixed (W2)** — guide step 18 names the manual closure and why the prune will never take it |
+| S6-06 | Rule 48 + conventions + CHANGELOG 1.1.1 claimed the verdict is a `question` pick; `lpwr-review` never mentioned the tool | grep: 0 hits in lpwr-review | **Fixed (W3)** — question round added to review; claim now true |
+| S6-07 | `lpwr-release` / `lpwr-teach` append journal tails to trunk's `docs/specs/<id>/log.ndjson` after their commits, leaving trunk permanently dirty — commit step 6's prose "refuse while trunk is dirty" then tripped on every later spec with no documented resolution | code trace (release runs post-merge from trunk; nothing commits the tail); kintsugi consumer shows no tails only because no release has run there | **Fixed (W2)** — step 6 stages tails into the squash; `lpwr-worktree-guard` gates `merge --squash` on remaining trunk dirt (tails allowed; staged strangers blocked — empirically they would ride the ID-tagged commit silently) |
+| S6-08 | `builder.md` said journal `artifact = diff pointer`; `lpwr-implement.md` says `artifact = criterion id` | side-by-side | **Fixed (W3)** |
+| S6-09 | Guide step 3 suggested `lpwr-constitution` for a skipped constitution (contradicting its amendments-only rule and dead-ending at guard-bootstrap); `lpwr-amend`'s `Next:` skipped the `lpwr-specs` re-approval hop spec-link demands | guide:16 vs lpwr-constitution:10; spec-link status check | **Fixed (W3)** |
+
+**Round 5 close-out (2026-09-26):** all seven open items closed in Waves 1–2 —
+S5-04 (folderless refs refused, `gates.specDirNames`), S5-05 (memos join
+FOUNDATION; glossary/trunk-doc dirt handled by the merge gate message),
+S5-06 (`merge --squash` dirty gate in `lpwr-worktree-guard`), S5-07 (guide
+step 11 detects template placeholders), S5-08 (staged-squash scan follows the
+command's `-C` target via `gitCommandDir`), S5-09 (specify/specs share one
+resume rule), S5-10 (`.opencode/package.json` gains `"type": "module"`).
+The Round 5 table keeps its as-found statuses.
+
+## Round 6 wave status
+
+- [x] Wave 1 — S6-01 (shared relocation + shape fixture), S6-02 (worktree-aware
+  journal), S6-03 (event journal + spec-link self-diagnosis), conventions model line
+- [x] Wave 2 — S6-04 (in-flight = worktrees), S6-05 (redirect closure),
+  S6-07 (tail reconcile + merge gate), S5-04…S5-10
+- [x] Wave 3 — S6-06/S6-08/S6-09 prose alignments + this record
+- [x] Post-review pass — restored `lpwr-amend`'s backstop auto-journal (dropped
+  when `lpwr-commit` was exempted); TUI `lastHandoff` prefers explicit
+  handoffs over `origin: hook` tails; guide step 6 conditions on "no active
+  spec" instead of the (always-empty) state section; README's plugins line
+  drops the shared-helper claim; `gitCommandDir` honors `cd <dir> &&` so the
+  staged scan and merge gate find the right tree for that spelling too
+
+Each wave gated with `npm run lint` && `npm run typecheck` && `npm test`
+(20 tests after Wave 1) — all green.
+
+## Round 6 migration note
+
+Existing installs that still track `docs/memos/.gitkeep` keep the old
+unlinked memo behavior (the worktree dir materializes, so the foundation
+symlink is skipped) until the human runs `git rm --cached
+docs/memos/.gitkeep` and re-mints; `loopwright.sh update` merges the new
+gitignore lines automatically. The nested-install guard and its test now key
+on `lib/shared.ts` (old `plugins/shared.ts` path still accepted).

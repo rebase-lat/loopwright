@@ -1,9 +1,11 @@
 # Generated foundation — materialized by lpwr-install + lpwr-onboard;
-# regenerate rather than commit.
+# regenerate rather than commit. docs/memos is the shared memo dir: trunk-owned,
+# symlinked into spec worktrees like state.md (rule 49 pattern).
 docs/constitution.md
 docs/context.md
 docs/state.md
 docs/audit.md
+docs/memos
 
 # Secrets — never commit (constitution security floors)
 .env

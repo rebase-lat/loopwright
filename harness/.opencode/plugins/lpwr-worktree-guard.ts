@@ -21,10 +21,12 @@ import {
   commandName,
   escapeRegExp,
   firstArgument,
+  gitCommandDir,
   logWarn,
+  looksLikeGitMergeSquash,
   toastWarning,
   trunkBranch,
-} from "./shared.js";
+} from "../lib/shared.js";
 
 // Per-spec worktree lifecycle (implementation-rules 2/29/49/50). Minting an
 // ID in the trunk session creates branch + worktree at `dirname(mainRoot)/<id>`
@@ -57,6 +59,8 @@ const WORK_STAGE = new Set([
 ]);
 // Gitignored trunk files shared into every worktree — one physical copy each
 // so state.md's single-writer rule (lpwr-commit) survives parallel specs.
+// docs/memos (no extension) is linked the same way further down: trunk-owned,
+// one physical copy, never part of a branch diff (rule 49 pattern).
 const FOUNDATION = ["state", "context", "constitution", "audit"];
 
 interface WorktreeInfo {
@@ -230,6 +234,10 @@ const provision = async (
       path.join(mainRoot, "node_modules"),
       path.join(worktreeRoot, "node_modules"),
     ],
+    [
+      path.join(mainHarness, "docs/memos"),
+      path.join(worktreeHarness, "docs/memos"),
+    ],
     ...FOUNDATION.map(
       (name) =>
         [
@@ -238,6 +246,18 @@ const provision = async (
         ] as [string, string]
     ),
   ];
+  // docs/memos is gitignored (unlike the tracked dirs it used to ride on a
+  // .gitkeep) — materialize it on trunk when a pre-memos-foundation install
+  // never ran lpwr-install, so the link above always finds its target.
+  try {
+    await mkdir(path.join(mainHarness, "docs/memos"), { recursive: true });
+  } catch (error) {
+    logWarn(
+      plugin,
+      SERVICE,
+      `could not create ${path.join(mainHarness, "docs/memos")}: ${String(error)} — memos stay session-local until lpwr-install creates it`
+    );
+  }
   await Promise.all(
     links.map(([target, linkPath]) => linkIfMissing(target, linkPath))
   );
@@ -396,6 +416,46 @@ const declaredSurface = async (specPath: string): Promise<string[]> => {
   } catch {
     return [];
   }
+};
+
+// Files allowed to sit dirty on trunk at the squash-merge: journal tails
+// (docs/specs/<id>/log.ndjson) appended by lpwr-release / lpwr-teach after
+// their own commits — lpwr-commit step 6 stages them into this squash so
+// trunk goes clean (Round 6 S6-07). Everything else would either block the
+// merge forever (unstaged/untracked — git tolerates them, so nothing else
+// ever clears them) or silently ride an unrelated file into an ID-tagged
+// commit (staged — empirically confirmed) — both are process gaps (S5-06).
+const TAIL_LOG = /^docs\/specs\/[^/]+\/log\.ndjson$/u;
+
+// `status --porcelain` reports repo-root-relative paths; the harness may sit
+// in a subdirectory (nested dev layout), so strip the harness prefix before
+// matching tails — the same anchor lpwr-scope-guard matches from (Round 5
+// S5-01 class). Display keeps the raw paths.
+const mergeBlockingFiles = (status: string, harnessRel: string): string[] => {
+  const blocking: string[] = [];
+  for (const line of status.split("\n")) {
+    if (!line.trim()) {
+      continue;
+    }
+    const state = line.slice(0, 2);
+    const file = line.slice(3);
+    const relative =
+      harnessRel !== "" && file.startsWith(`${harnessRel}/`)
+        ? file.slice(harnessRel.length + 1)
+        : file;
+    if (state[1] !== " ") {
+      if (state === " M" && TAIL_LOG.test(relative)) {
+        continue;
+      }
+      blocking.push(`${state} ${file}`);
+      continue;
+    }
+    if (state !== "??" && TAIL_LOG.test(relative)) {
+      continue;
+    }
+    blocking.push(`${state} ${file}`);
+  }
+  return blocking;
 };
 
 const worktreeGuard = (plugin: PluginInput): Promise<Hooks> => {
@@ -612,6 +672,44 @@ const worktreeGuard = (plugin: PluginInput): Promise<Hooks> => {
       const note = `worktree-guard: branch+worktree ${specRef} created; restart opencode in ${created} to continue.`;
       output.output = `${output.output}\n${note}`;
       void toastWarning(plugin, note);
+    },
+    "tool.execute.before": async (input, output) => {
+      if (input.tool !== "bash") {
+        return;
+      }
+      const command: unknown = output.args.command;
+      if (typeof command !== "string" || !looksLikeGitMergeSquash(command)) {
+        return;
+      }
+      const target = gitCommandDir(command, root);
+      let status = "";
+      let harnessRel = "";
+      try {
+        status = await git(target, ["status", "--porcelain"]);
+        const sessionTop = await git(root, ["rev-parse", "--show-toplevel"]);
+        harnessRel = path.relative(sessionTop, root).replaceAll("\\", "/");
+      } catch {
+        // Not a git worktree (or git unavailable) — the merge will fail on
+        // its own with the underlying error.
+        return;
+      }
+      if (status === "") {
+        return;
+      }
+      const blocking = mergeBlockingFiles(status, harnessRel);
+      if (blocking.length === 0) {
+        return;
+      }
+      const shown = blocking.slice(0, 6).join("; ");
+      const more = blocking.length > 6 ? ` (+${blocking.length - 6} more)` : "";
+      block(
+        plugin,
+        `Blocked: pending changes on trunk before the squash-merge: ` +
+          `${shown}${more} — journal tails (docs/specs/*/log.ndjson) are ` +
+          `staged by lpwr-commit step 6; commit any other change first as ` +
+          `out-of-process work (no spec ID) or stash it; remove stale ` +
+          `untracked docs/specs/ files (phantom journal copies).`
+      );
     },
   });
 };

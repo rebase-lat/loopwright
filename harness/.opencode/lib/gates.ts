@@ -424,3 +424,25 @@ export const declaredSurfaceFrom = (specRaw: string): string[] => {
   }
   return [...new Set(surface.length > 0 ? surface : fallback)];
 };
+
+// Journal folder candidates for a spec ref (lpwr-log-handoffs), in preference
+// order: the ref itself when it is spec-shaped (`<domain>-<sequence>` with an
+// optional criterion sub-id), plus the parent spec id for criterion refs so
+// `auth-014-1` lands in `auth-014`'s folder when it has no folder of its own.
+// Empty means "not a spec-shaped ref" — callers must refuse instead of
+// creating a folder, so an id-shaped slug (`login-2`) can never mint a
+// phantom docs/specs/ entry (Round 6, S5-04/S6-02).
+const SPEC_DIR_REF = /^[a-z0-9]+(?:-[a-z0-9]+)*-\d+(?:-\d+)?$/u;
+
+export const specDirNames = (specRef: string): string[] => {
+  if (!SPEC_DIR_REF.test(specRef)) {
+    return [];
+  }
+  const parts = specRef.split("-");
+  const last = parts.at(-1) ?? "";
+  const prev = parts.at(-2) ?? "";
+  if (/^\d+$/u.test(last) && /^\d+$/u.test(prev)) {
+    return [specRef, parts.slice(0, -1).join("-")];
+  }
+  return [specRef];
+};

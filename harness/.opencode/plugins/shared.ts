@@ -28,6 +28,7 @@ export const EXPECTED: [string, string][] = [
   ["docs/state.md", "run lpwr-install"],
   ["docs/audit.md", "run lpwr-install"],
   ["docs/glossary.md", "run lpwr-domain"],
+  [".gitignore", "generated foundation and secrets stay untracked"],
   ["opencode.json", "permission matrix"],
   ["tui.json", "TUI sidebar config"],
   ["templates/spec.md", "record shapes"],

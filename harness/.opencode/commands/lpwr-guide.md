@@ -9,7 +9,7 @@ Suggest the next command — orientation only, never enforcement (enforcement st
 
 Walk this decision path over file existence and state, in order, stopping at the first unmet condition (optional `$ARGUMENTS` names the active spec; otherwise take it from `docs/state.md`'s "In flight" section):
 
-0. Worktree status, when `lpwr-worktree-guard` injects it: at/over the cap (rule 29), lead with closing a shipped worktree by running `lpwr-propose` — it prunes shipped + clean worktrees before its own cap check, so it is the actual next action, whatever the path below would suggest. An open in-flight worktree names the session to resume: steps 8-21 read that spec's folder, so run them inside that worktree's session, not here.
+0. Worktree status, when `lpwr-worktree-guard` injects it: at/over the cap (rule 29) with a worktree listed as shipped → lead with running `lpwr-propose` — it prunes shipped + clean worktrees before its own cap check, so it is the actual next action, whatever the path below would suggest. With none shipped → do not suggest `lpwr-propose` (its prune finds nothing and the cap blocks it) — lead with resuming an open worktree's session, or name manual closure (`git worktree remove <path>` then `git branch -D <id>`). An open in-flight worktree names the session to resume: steps 8-21 read that spec's folder, so run them inside that worktree's session, not here.
 
 1. Machine not prepared (no `node_modules/`, or runtime/plugin load unverified) → suggest `lpwr-setup`.
 2. Any foundation file missing (`docs/state.md`, `docs/context.md`, `docs/constitution.md`) → suggest `lpwr-install` (materializes only what's missing; do not read state until it exists).

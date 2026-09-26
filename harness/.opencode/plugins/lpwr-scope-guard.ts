@@ -178,21 +178,25 @@ const scopeGuard = (plugin: PluginInput): Promise<Hooks> =>
       if (!resolved) {
         return;
       }
-      const { gitDir, specId } = resolved;
-      // The spec is read beside this plugin's project directory (same anchor
-      // as lpwr-spec-link), not from the git root: `gitDir` is only the
-      // branch/containment anchor, so a harness added at the project root
-      // resolves its own specs regardless of where the repo boundary sits.
+      const { specId } = resolved;
+      // The spec and the allowed surface both resolve beside this plugin's
+      // project directory (same anchor as lpwr-spec-link); `resolved` exists
+      // only to prove an active spec branch via the file's git worktree.
       const declaredSurface = await readDeclaredSurface(
         path.join(plugin.directory, `docs/specs/${specId}/spec.md`),
         specId
       );
       // oxlint-disable-next-line no-await-in-loop -- first violation wins so the blocked path is deterministic
       for (const filePath of filePaths) {
-        // Match in repo-relative terms so absolute or `../` paths from other
-        // worktrees can't slip past (or falsely trip) the declared surface.
+        // Match in project-relative terms — the same base the surface
+        // patterns (`docs/specs/<id>/**`, RETAIN_PATHS, Tasks backticks) are
+        // written from — so a harness in a git subdirectory still matches its
+        // own paths, while absolute or `../` paths from other worktrees can't
+        // slip past (or falsely trip) the declared surface.
         const absolute = path.resolve(process.cwd(), filePath);
-        const relative = path.relative(gitDir, absolute).replaceAll("\\", "/");
+        const relative = path
+          .relative(plugin.directory, absolute)
+          .replaceAll("\\", "/");
         if (
           relative.startsWith("..") ||
           !matchesAny(relative, declaredSurface)

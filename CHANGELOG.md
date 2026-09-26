@@ -3,6 +3,28 @@
 All notable changes to this project, grouped by git tag. See the commit
 history for per-change detail.
 
+## [1.3.3] — 2026-09-25
+
+- Second workflow simulation (Round 5) fixes — the three proven findings:
+  - `lpwr-scope-guard` containment now matches from the project directory
+    (`plugin.directory`), the same anchor the surface patterns
+    (`docs/specs/<id>/**`, `RETAIN_PATHS`, Tasks backticks) are written
+    from — a harness in a git subdirectory no longer blocks every
+    harness-internal write on a spec branch. Root and nested layouts behave
+    alike; Round 4's "nested not supported" exclusion is retired.
+  - The worktree cap block (rule 29) and the guide's injected worktree
+    status now name every recovery: resume an open spec's session, mark a
+    shipped spec Done so `lpwr-propose` prunes it, or remove one by hand
+    (`git worktree remove <path>` + `git branch -D <id>`); guide step 0
+    branches on shipped vs none-Done instead of dead-looping on
+    `lpwr-propose` when its prune would be a no-op.
+  - The harness ships `harness/.gitignore` (generated foundation,
+    secrets, dependencies) and `lpwr-check-setup`'s `EXPECTED` list checks
+    it — a root install no longer carries untracked foundation files that
+    defeat the shipped-worktree prune or get staged by `git add -A`.
+  - `integration-analysis.md` gains the Round 5 findings table (3 fixed,
+    7 open).
+
 ## [1.3.2] — 2026-09-25
 
 - Runtime simulation fixes (end-to-end workflow dry-run):

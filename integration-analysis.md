@@ -700,5 +700,26 @@ Ran the workflow end-to-end from `harness/` (opencode 1.18.32): fresh-state boot
 
 **Verified working:** all 9 agents load and opencode regenerates `.opencode` deps on startup; standard-layout scope-guard (declared allowed, undeclared blocked, Retain sandbox allowed); trunk mint creates the worktree and reports the correct path.
 
-**Out of scope / left as-is:** writing through foundation symlinks (assumed to follow links; `fs.writeFile` does); nested-layout `RETAIN_PATHS` are root-relative so Retain writes remain root-layout-only — nested is not a supported deployment.
+**Out of scope / left as-is:** writing through foundation symlinks (assumed to follow links; `fs.writeFile` does).
+
+---
+
+# Round 5 — workflow simulation (second pass, post-1.3.2)
+
+A second end-to-end dry-run (same method as Round 4: real plugin hooks, throwaway clones, both the nested `harness/` layout and the consumer root layout) found 10 issues — 3 proven empirically, the rest code-traced. The nested-layout exclusion from Round 4 is retired: with S5-01 fixed, containment matches from the project directory (`plugin.directory`), the same anchor the surface patterns are written from, so root and nested layouts behave alike.
+
+| ID | Finding | Evidence | Status |
+|----|---------|----------|--------|
+| S5-01 | Scope-guard containment compared `path.relative(gitDir, …)` (git-root-relative) against harness-relative patterns (`docs/specs/<id>/**` + `RETAIN_PATHS`) — in a nested layout every harness-internal write was blocked once a spec branch was active (`Blocked: harness/docs/specs/… is outside the declared surface`); root layout passed. 1.3.2 fixed only the spec-*read* anchor, not the path-*match* anchor; CHANGELOG 1.3.2 implied subdirectory support while Round 4's out-of-scope note declared it unsupported | `lpwr-scope-guard.ts` (match loop), `shared.ts` `RETAIN_PATHS`; nested repro vs root control | **Fixed 1.3.3** — match from `plugin.directory`; Round 4 nested exclusion removed |
+| S5-02 | At the 2-worktree cap with no state-Done tree, guide step 0 said to run `lpwr-propose`; its prune is a no-op → the cap block fired with no named way out (manual `git worktree remove` never mentioned) — a dead loop | guide step 0; `capBlocked` sites in `lpwr-worktree-guard.ts` | **Fixed 1.3.3** — cap block and injected status name every recovery (resume / mark Done / manual remove); guide branches shipped vs none-Done |
+| S5-03 | Harness ships no `.gitignore` and `EXPECTED` didn't check one → a root install carries the 5 foundation files untracked, so `pruneShipped`'s clean check never passes (cap fills after 2 specs), and `git add -A` staged `.env` + absolute foundation symlinks into the branch | dry-run status + staged-diff inspection | **Fixed 1.3.3** — `harness/.gitignore` ships (foundation, secrets, deps) + `EXPECTED` row |
+| S5-04 | Log-handoffs creates phantom `docs/specs/<slug>/log.ndjson` folders for any ID-shaped first arg (`lpwr-diagnose null-pointer-500`, interview/research slugs ending in digits): `resolveSpecDir` accepts `-<digits>` with no existing folder and `writeHandoff` `mkdir -p`s it | `lpwr-log-handoffs.ts` `resolveSpecDir`, `writeHandoff` | Open |
+| S5-05 | `docs/memos/**` and `docs/glossary.md` are absent from the worktree `FOUNDATION` link set — invisible from spec worktrees; edits made on trunk dirty it right before the commit gate | `lpwr-worktree-guard.ts` `FOUNDATION` | Open |
+| S5-06 | Trunk-dirty refusal at the squash-merge is prose-only (`lpwr-commit` step 6) — no plugin enforces it | `lpwr-commit.md` step 6; no `dirty` check in verdict/worktree guards | Open |
+| S5-07 | Guide step 11 detects an *empty* Tasks section only — template placeholder Tasks pass as real | `lpwr-guide.md` step 11 | Open |
+| S5-08 | Raw `git commit` secret gate scans `git diff --cached` in the session's project dir, but the worktree squash-commit stages in the trunk worktree's index — the scan misses the staged squash | `lpwr-security-scan.ts` `scanStagedDiff` on the bash git-commit gate | Open |
+| S5-09 | `lpwr-specify`: existing `spec.md` → "stop and use `lpwr-amend`"; `lpwr-specs`: `status: draft` → "resume it". Contradictory resume paths for the same file | `lpwr-specify.md`, `lpwr-specs.md` | Open |
+| S5-10 | `.opencode/package.json` ships without `"type": "module"` | `harness/.opencode/package.json` | Open |
+
+Verified working in the same run: mint + move + restart note, no-op specify in the worktree, spec-link, verdict gates (including raw `git commit`), state-through-symlink, release from trunk, prune with a Done entry; `npm test` 10/10, typecheck + lint clean.
 

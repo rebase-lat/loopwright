@@ -1,0 +1,17 @@
+# Generated foundation — materialized by lpwr-install + lpwr-onboard;
+# regenerate rather than commit.
+docs/constitution.md
+docs/context.md
+docs/state.md
+docs/audit.md
+
+# Secrets — never commit (constitution security floors)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+
+# Installed dependencies
+node_modules/

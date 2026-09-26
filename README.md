@@ -58,13 +58,14 @@ loopwright/
 ├── PRINCIPLES.md               # design intent (resume of the former principles essays)
 ├── LICENSE                     # MIT
 ├── CHANGELOG.md
-├── package.json                # npm scripts: lint, fmt, fmt:check, typecheck, test; version 1.3.2
+├── package.json                # npm scripts: lint, fmt, fmt:check, typecheck, test; version 1.3.3
 ├── opencode.json               # developer MCP + LSP config — distinct from harness/opencode.json (shipped matrix)
 ├── constitution.md             # this repo's own rules — the committed record (harness ships without one; onboard creates it)
 ├── context.md                  # this repo's own context (same: generated per project by onboard)
 ├── integration-analysis.md     # workflow cross-phase audit + fix-wave plans (repo history, not shipped)
 ├── harness/                    # pure boilerplate — no prefilled project info (run opencode from here)
 │   ├── AGENTS.md               # protocol only — rules live in docs/constitution.md
+│   ├── .gitignore              # generated foundation + secrets stay untracked (root install)
 │   ├── opencode.json           # permission matrix (single source), instructions
 │   ├── tui.json                # TUI plugin wiring — loads .opencode/tui/ (relative path, no build)
 │   ├── .opencode/

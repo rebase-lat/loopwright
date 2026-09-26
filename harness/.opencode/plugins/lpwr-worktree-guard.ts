@@ -333,6 +333,13 @@ const pruneShipped = async (
   }
 };
 
+// Cap block (rule 29). pruneShipped clears only state-Done + clean trees, so
+// when nothing is prunable this message is the sole in-band recovery path —
+// it must name every way out, or the guide's "run lpwr-propose" advice
+// dead-ends at this same block.
+const capBlocked = (open: number): string =>
+  `Blocked: ${open} worktrees already open (rule 29). Resume an open spec's session, mark a shipped spec Done in docs/state.md so lpwr-propose prunes it, or close one by hand: git worktree remove <path> && git branch -D <id>.`;
+
 const ensureWorktree = async (
   plugin: PluginInput,
   root: string,
@@ -354,9 +361,7 @@ const ensureWorktree = async (
   }
   const open = await openCount(mainRoot);
   if (open >= CAP) {
-    throw new Error(
-      `Blocked: ${open} worktrees already open. Close one before starting a new spec, or raise the cap (rule 29) if this is a recurring bottleneck.`
-    );
+    throw new Error(capBlocked(open));
   }
   const branch = await trunkBranch(root);
   if (!branch) {
@@ -416,10 +421,7 @@ const worktreeGuard = (plugin: PluginInput): Promise<Hooks> => {
     await pruneShipped(plugin, mainRoot, mainHarness);
     const open = await openCount(mainRoot);
     if (open >= CAP) {
-      block(
-        plugin,
-        `Blocked: ${open} worktrees already open. Close one before starting a new spec, or raise the cap (rule 29) if this is a recurring bottleneck.`
-      );
+      block(plugin, capBlocked(open));
     }
   };
 
@@ -542,17 +544,25 @@ const worktreeGuard = (plugin: PluginInput): Promise<Hooks> => {
       return;
     }
     const mainHarness = path.join(mainRoot, path.relative(sessionRoot, root));
-    const lines = await Promise.all(
+    const entries = await Promise.all(
       open.map(async (wt) => {
         const id = specIdOfWorktree(wt) ?? path.basename(wt.path);
-        const shipped = await stateHasEntry(mainHarness, "done", id);
-        return `${id} — ${shipped ? "shipped" : "in flight"}`;
+        return { id, shipped: await stateHasEntry(mainHarness, "done", id) };
       })
     );
+    const lines = entries.map(
+      ({ id, shipped }) => `${id} — ${shipped ? "shipped" : "in flight"}`
+    );
     const atCap = open.length >= CAP;
-    const capNote = atCap
-      ? " Cap reached (rule 29): lead with closing a shipped worktree rather than the next state.md suggestion."
-      : "";
+    // At the cap the guide must not blindly suggest lpwr-propose: it prunes
+    // only state-Done + clean trees, so with none Done its prune is a no-op
+    // and the cap block fires — name the recovery that actually works.
+    let capNote = "";
+    if (atCap) {
+      capNote = entries.some((entry) => entry.shipped)
+        ? " Cap reached (rule 29): run lpwr-propose to prune the shipped + clean worktree(s) before starting anything new."
+        : " Cap reached (rule 29): none are Done — resume an open worktree's session, or close one by hand: git worktree remove <path> && git branch -D <id>.";
+    }
     output.parts.push({
       messageID: "",
       sessionID,

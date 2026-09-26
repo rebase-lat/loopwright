@@ -3,6 +3,30 @@
 All notable changes to this project, grouped by git tag. See the commit
 history for per-change detail.
 
+## [1.3.2] — 2026-09-25
+
+- Runtime simulation fixes (end-to-end workflow dry-run):
+  - `lpwr-worktree-guard` no longer throws on `frame`/`specify` handoffs made
+    inside a spec worktree — minting only happens in the trunk session and a
+    worktree journal is a no-op. Its mint note now reports the worktree's
+    project-root directory (where opencode must be restarted) rather than the
+    bare worktree path.
+  - `lpwr-scope-guard` reads the spec and declared surface from the project
+    directory (the same anchor as `lpwr-spec-link`), not the git root, so the
+    spec resolves whether the harness sits at the project root or in a
+    repository subdirectory. The declared-surface parser moves to
+    `lib/gates.ts` and is shared with `lpwr-worktree-guard`'s rule-50 overlap
+    check — one parser instead of two divergent ones.
+  - `lpwr-guard-bootstrap` logs an advisory when `docs/constitution.md` is
+    still `status: draft`, so install-then-skip-onboard is visible. It stays a
+    warning, not a gate, so a greenfield constitution keeping honest
+    "nothing found" placeholders is never trapped.
+  - `lpwr-propose` / `lpwr-explore` prose points at the guard-reported restart
+    path instead of the hardcoded `../<id>/harness`; `lpwr-explore` routes to
+    `lpwr-tasks` first (implement is blocked without a declared surface);
+    `lpwr-guide` step 0 notes that `lpwr-propose` prunes shipped worktrees.
+  - Tests: `declaredSurfaceFrom` fixture added (10 fixtures total).
+
 ## [1.3.1] — 2026-09-25
 
 - Consistency pass (Round 3 Wave C): `conventions.md` cites the right

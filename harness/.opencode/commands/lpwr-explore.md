@@ -15,8 +15,8 @@ Set `risk_tier` (human-confirmed, same heuristics as `lpwr-specs`) and leave the
 
 Approval answers "does this correctly describe what the code does" — not "is this what it should do." If the behavior itself is wrong, don't approve: run `lpwr-propose` with this draft as grounding, and let the new spec `supersede` it.
 
-When the handoff journals, the worktree guard creates branch + worktree `../<id>` and moves `docs/specs/<id>/` into it (rule 2) — end by telling the human to quit and restart opencode in `../<id>/harness`; work-stage commands run from that session.
+When the handoff journals, the worktree guard creates a branch + worktree beside the project (worktree dir `dirname(<project root>)/<id>`) and moves `docs/specs/<id>/` into it (rule 2) — end by telling the human to quit and restart opencode in the path the guard reported; work-stage commands run from that session.
 
-Output: writes `docs/specs/<id>/spec.md` via templates/spec.md; journal_handoff specify `docs/specs/<id>/spec.md`; guard-created branch + worktree `../<id>` (restart there).
+Output: writes `docs/specs/<id>/spec.md` via templates/spec.md; journal_handoff specify `docs/specs/<id>/spec.md`; guard-created branch + worktree beside the project (restart in the path the guard reported).
 
-Next: lpwr-tasks or lpwr-implement (after accuracy approval).
+Next: lpwr-tasks (then lpwr-implement; the Tasks section defines the declared surface `lpwr-scope-guard` enforces).

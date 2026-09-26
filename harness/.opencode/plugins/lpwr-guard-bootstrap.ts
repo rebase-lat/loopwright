@@ -1,9 +1,15 @@
 import { existsSync } from "node:fs";
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 
 import type { Hooks, PluginInput } from "@opencode-ai/plugin";
 
-import { commandName, toastBlocked } from "./shared.js";
+import {
+  commandName,
+  frontmatterValue,
+  logWarn,
+  toastBlocked,
+} from "./shared.js";
 
 // Foundation gate: no domain command runs without the Govern foundation it
 // reads — docs/context.md and docs/constitution.md must exist. Exempt are the
@@ -30,6 +36,25 @@ const guardBootstrap = (plugin: PluginInput): Promise<Hooks> =>
         (file) => !existsSync(path.join(plugin.directory, file))
       );
       if (missing.length === 0) {
+        // Advisory, not a gate: lpwr-install materializes the constitution as
+        // `draft`, and only lpwr-onboard's approval flips it. Blocking here
+        // would trap greenfield projects whose constitution keeps honest
+        // "nothing found" placeholders and can never be placeholder-free.
+        try {
+          const constitution = await readFile(
+            path.join(plugin.directory, "docs/constitution.md"),
+            "utf-8"
+          );
+          if (frontmatterValue(constitution, "status") === "draft") {
+            logWarn(
+              plugin,
+              "lpwr-guard-bootstrap",
+              "docs/constitution.md is still status: draft — run lpwr-onboard to record first approval before speccing."
+            );
+          }
+        } catch {
+          // Missing foundation already handled by the check above.
+        }
         return;
       }
       const message =

@@ -14,7 +14,7 @@ import { promisify } from "node:util";
 
 import type { Hooks, PluginInput } from "@opencode-ai/plugin";
 
-import { overlaps } from "../lib/gates.js";
+import { declaredSurfaceFrom, overlaps } from "../lib/gates.js";
 import {
   SPEC_ID,
   block,
@@ -27,11 +27,11 @@ import {
 } from "./shared.js";
 
 // Per-spec worktree lifecycle (implementation-rules 2/29/49/50). Minting an
-// ID in the trunk session creates branch + worktree `../<id>` (sibling of the
-// main worktree), provisions the shared foundation links, and moves
-// `docs/specs/<id>/` into it; work-stage commands are blocked while the
-// session sits outside that worktree; shipped + clean worktrees are pruned at
-// the next lpwr-propose, before the 2-worktree cap check. The spec ID itself
+// ID in the trunk session creates branch + worktree at `dirname(mainRoot)/<id>`
+// (a sibling of the main worktree), provisions the shared foundation links,
+// and moves `docs/specs/<id>/` into it; work-stage commands are blocked while
+// the session sits outside that worktree; shipped + clean worktrees are pruned
+// at the next lpwr-propose, before the 2-worktree cap check. The spec ID itself
 // comes from journal_handoff's spec_ref — there is no command.execute.after
 // hook to read a command result from.
 
@@ -341,13 +341,15 @@ const ensureWorktree = async (
   const sessionRoot = await gitRoot(root);
   const mainRoot = await mainRootOf(root);
   const rel = path.relative(sessionRoot, root);
-  if (sessionRoot !== mainRoot) {
-    throw new Error(
-      `Refused: worktree creation runs from the trunk session — restart opencode in ${path.join(mainRoot, rel)} and retry.`
-    );
-  }
   const existing = findWorktree(await listWorktrees(mainRoot), specId);
   if (existing) {
+    return "";
+  }
+  // Only the trunk session mints. A worktree session journaling frame/specify
+  // is a no-op, never an error — the spec already has its worktree (or the id
+  // is unminted and minting belongs to lpwr-propose/lpwr-explore, which
+  // `mintGate` already trunk-gates).
+  if (sessionRoot !== mainRoot) {
     return "";
   }
   const open = await openCount(mainRoot);
@@ -377,41 +379,18 @@ const ensureWorktree = async (
     path.join(root, "docs/specs", specId),
     path.join(worktreeHarness, "docs/specs", specId)
   );
-  return worktreeRoot;
+  // Report the harness directory, not the worktree root: that is where
+  // opencode must be restarted (harness/ contents sit one level in when the
+  // repo carries them in a subdirectory; at the root they coincide).
+  return worktreeHarness;
 };
 
 const declaredSurface = async (specPath: string): Promise<string[]> => {
-  let raw: string;
   try {
-    raw = await readFile(specPath, "utf-8");
+    return declaredSurfaceFrom(await readFile(specPath, "utf-8"));
   } catch {
     return [];
   }
-  const surfaces: string[] = [];
-  let collecting = false;
-  for (const line of raw.split("\n")) {
-    if (/^###\s+Declared surface\b/u.test(line)) {
-      collecting = true;
-      continue;
-    }
-    if (collecting && /^#{2,}\s/u.test(line)) {
-      break;
-    }
-    if (!collecting || !line.trim().startsWith("-")) {
-      continue;
-    }
-    const value = line
-      .trim()
-      .replace(/^-\s*/u, "")
-      .replace(/^`/u, "")
-      .replace(/`$/u, "")
-      .trim();
-    if (value === "" || value.includes("<")) {
-      continue;
-    }
-    surfaces.push(value);
-  }
-  return surfaces;
 };
 
 const worktreeGuard = (plugin: PluginInput): Promise<Hooks> => {
@@ -620,7 +599,7 @@ const worktreeGuard = (plugin: PluginInput): Promise<Hooks> => {
       if (created === "") {
         return;
       }
-      const note = `worktree-guard: branch+worktree ${specRef} created at ${created} — restart opencode there to continue.`;
+      const note = `worktree-guard: branch+worktree ${specRef} created; restart opencode in ${created} to continue.`;
       output.output = `${output.output}\n${note}`;
       void toastWarning(plugin, note);
     },

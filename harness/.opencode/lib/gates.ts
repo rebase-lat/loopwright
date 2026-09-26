@@ -368,3 +368,59 @@ export const overlaps = (left: string, right: string): boolean => {
   }
   return a === b || a.startsWith(`${b}/`) || b.startsWith(`${a}/`);
 };
+
+// The declared surface (implementation-rules 46): bullet entries under the
+// `### Declared surface` subsection, falling back to every backtick path in
+// `## Tasks` when that subsection is absent (older specs). One parser shared
+// by lpwr-scope-guard (enforcement) and lpwr-worktree-guard (rule 50 overlap)
+// so both read the same list from the same spec. Placeholder metavars (`<...>`)
+// are never real surface.
+const surfaceBullet = (line: string): string | null => {
+  const body = line.match(/^\s*-\s+(?<body>.+)$/u)?.groups?.body?.trim() ?? "";
+  const value = body.replace(/^`/u, "").replace(/`$/u, "").trim();
+  return value && !value.includes("<") ? value : null;
+};
+
+const taskBackticks = (line: string): string[] => {
+  const out: string[] = [];
+  for (const match of line.matchAll(/`(?<path>[^`]+)`/gu)) {
+    const value = match.groups?.path?.trim() ?? "";
+    if (value && !value.includes("<") && !value.includes(" ")) {
+      out.push(value);
+    }
+  }
+  return out;
+};
+
+export const declaredSurfaceFrom = (specRaw: string): string[] => {
+  const surface: string[] = [];
+  const fallback: string[] = [];
+  let inSurface = false;
+  let inTasks = false;
+  for (const line of normalizeEol(specRaw).split("\n")) {
+    if (/^###\s+declared surface\b/iu.test(line)) {
+      inSurface = true;
+      inTasks = false;
+      continue;
+    }
+    if (/^##\s+tasks\b/iu.test(line)) {
+      inTasks = true;
+      inSurface = false;
+      continue;
+    }
+    if (/^#{1,6}\s/u.test(line)) {
+      inSurface = false;
+      inTasks = false;
+      continue;
+    }
+    if (inSurface) {
+      const value = surfaceBullet(line);
+      if (value) {
+        surface.push(value);
+      }
+    } else if (inTasks) {
+      fallback.push(...taskBackticks(line));
+    }
+  }
+  return [...new Set(surface.length > 0 ? surface : fallback)];
+};

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  declaredSurfaceFrom,
   normalizeGlob,
   overlaps,
   parseDeferred,
@@ -149,4 +150,18 @@ test("overlaps: exact, prefix, glob, and disjoint paths", () => {
   assert.equal(overlaps("src", "src/a.ts"), true);
   assert.equal(overlaps("src/a.ts", "src/b.ts"), false);
   assert.equal(normalizeGlob("./src/lib/**"), "src/lib");
+});
+
+test("declaredSurfaceFrom: surface bullets, with Tasks-backtick fallback", () => {
+  const withSurface =
+    "## Tasks\n1. [ ] x — satisfies a-1\n### Declared surface\n" +
+    "- `src/a.ts`\n- `src/lib/**`\n- `<file-or-glob>`\n";
+  assert.deepEqual(declaredSurfaceFrom(withSurface), [
+    "src/a.ts",
+    "src/lib/**",
+  ]);
+  const fallback =
+    "## Tasks\n1. [ ] touch `src/b.ts` — satisfies a-1\n";
+  assert.deepEqual(declaredSurfaceFrom(fallback), ["src/b.ts"]);
+  assert.deepEqual(declaredSurfaceFrom("# Spec: nothing declared\n"), []);
 });

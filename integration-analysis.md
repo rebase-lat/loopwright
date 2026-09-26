@@ -681,3 +681,24 @@ After each wave: `npm run lint` && `npm run typecheck`. Commits only when asked.
 - [x] Finalize 1.3.0
 - [x] Wave C — consistency/docs/TUI (commit `6242e04`)
 - [x] Wave D — fixture harness (`npm test`)
+
+---
+
+# Round 4 — runtime simulation (workflow dry-run)
+
+Ran the workflow end-to-end from `harness/` (opencode 1.18.32): fresh-state bootstrap, a full spec lifecycle traced against the gate code, and empirical repros driving the compiled guards in throwaway git repos. Deployment model confirmed by the human: `harness/` contents are copied to the **project root**; the nested `loopwright/harness` layout is a repo-dev convenience only.
+
+| ID | Finding | Evidence | Fix |
+|----|---------|----------|-----|
+| S4-01 | `lpwr-worktree-guard` `tool.execute.after` threw on every `frame`/`specify` handoff in a worktree session (trunk check ran before the existing-worktree lookup) | repro: trunk → no throw; worktree → `Refused: worktree creation runs from the trunk session` | mint only in trunk; worktree journal is a no-op (`lpwr-worktree-guard.ts`) |
+| S4-02 | `lpwr-scope-guard` read the spec from the git root; with the harness in a subdirectory the spec was not found and **all** edits blocked | repro (nested): declared file → BLOCKED; root layout → ALLOWED | read from `plugin.directory` (same anchor as spec-link); parser shared in `lib/gates.ts` |
+| S4-03 | Restart instructions wrong: prose hardcoded `../<id>/harness`; mint note reported the worktree root, not the harness dir | worktree created at `dirname(mainRoot)/<id>` + `rel` | mint returns/reports the harness path; commands say "the path the guard reported" |
+| S4-04 | Bootstrap gate released domain commands on placeholder foundation after `lpwr-install` (existence-only check) | `lpwr-guard-bootstrap.ts` `existsSync` only | advisory `logWarn` when constitution is `status: draft` (not a hard gate — avoids the greenfield never-placeholder-free trap) |
+| S4-05 | `lpwr-explore` routed to implement, but an empty Tasks/declared-surface makes scope-guard block every edit | gate trace | `Next: lpwr-tasks` first |
+| S4-06 | Two declared-surface parsers (scope-guard backticks in `## Tasks`; worktree-guard bullets under `### Declared surface`) | code | unified `declaredSurfaceFrom` in `lib/gates.ts`, fixture added |
+| S4-07 | Convoluted: at-cap guidance told the human to "close a shipped worktree" but only `lpwr-propose` prunes | gate trace | guide step 0 names `lpwr-propose` as the prune action |
+
+**Verified working:** all 9 agents load and opencode regenerates `.opencode` deps on startup; standard-layout scope-guard (declared allowed, undeclared blocked, Retain sandbox allowed); trunk mint creates the worktree and reports the correct path.
+
+**Out of scope / left as-is:** writing through foundation symlinks (assumed to follow links; `fs.writeFile` does); nested-layout `RETAIN_PATHS` are root-relative so Retain writes remain root-layout-only — nested is not a supported deployment.
+

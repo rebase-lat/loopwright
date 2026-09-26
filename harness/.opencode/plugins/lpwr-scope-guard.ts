@@ -6,6 +6,7 @@ import { promisify } from "node:util";
 
 import type { Hooks, PluginInput } from "@opencode-ai/plugin";
 
+import { declaredSurfaceFrom } from "../lib/gates.js";
 import { SPEC_ID, RETAIN_PATHS, toastBlocked } from "./shared.js";
 
 // Blocks edits outside the active spec's declared surface.
@@ -27,28 +28,7 @@ const readDeclaredSurface = async (
   } catch {
     return surface;
   }
-  const lines = raw.split("\n");
-  let inside = false;
-  let section = "";
-  for (const line of lines) {
-    if (/^##\s+tasks/iu.test(line)) {
-      inside = true;
-      continue;
-    }
-    if (inside && /^##\s+/u.test(line)) {
-      break;
-    }
-    if (inside) {
-      section += `${line}\n`;
-    }
-  }
-  for (const match of section.matchAll(/`(?<path>[^`]+)`/gu)) {
-    const entry = match.groups?.path?.trim() ?? "";
-    if (entry && !entry.includes("<") && !entry.includes(" ")) {
-      surface.push(entry);
-    }
-  }
-  return [...new Set(surface)];
+  return [...surface, ...declaredSurfaceFrom(raw)];
 };
 
 const globToRegExp = (glob: string): RegExp => {
@@ -199,8 +179,12 @@ const scopeGuard = (plugin: PluginInput): Promise<Hooks> =>
         return;
       }
       const { gitDir, specId } = resolved;
+      // The spec is read beside this plugin's project directory (same anchor
+      // as lpwr-spec-link), not from the git root: `gitDir` is only the
+      // branch/containment anchor, so a harness added at the project root
+      // resolves its own specs regardless of where the repo boundary sits.
       const declaredSurface = await readDeclaredSurface(
-        path.join(gitDir, `docs/specs/${specId}/spec.md`),
+        path.join(plugin.directory, `docs/specs/${specId}/spec.md`),
         specId
       );
       // oxlint-disable-next-line no-await-in-loop -- first violation wins so the blocked path is deterministic

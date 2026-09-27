@@ -7,7 +7,9 @@ history for per-change detail.
 
 - Fixing-plan review of the 1.4.4 release — findings table in
   `integration-analysis.md` Round 7, the review itself committed at the repo
-  root as `loopwright-1.4.4-fixing-plan.md`. Three findings, all closed:
+  root as `loopwright-1.4.4-review.md` (renamed from
+  `loopwright-1.4.4-fixing-plan.md` in 1.4.6 to tell it apart from `fixes.md`).
+  Three findings, all closed:
   - **`FOUNDATION` vs the glossary, settled** (S7-01): `docs/glossary.md`
     stays out of the worktree link set — it is tracked ("kept in git"), so
     every worktree checks it out and a link would be a no-op for it, while

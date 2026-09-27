@@ -104,8 +104,10 @@ loopwright/
 ├── constitution.md             # this repo's own rules — the committed record (harness ships without one; onboard creates it)
 ├── context.md                  # this repo's own context (same: generated per project by onboard)
 ├── integration-analysis.md     # workflow cross-phase audit + fix-wave plans (repo history, not shipped)
-├── fixes.md                    # the closed 1.4.4 P0–P3 plan, cited from code comments (repo history, not shipped)
-├── loopwright-1.4.4-fixing-plan.md  # the review that drove 1.4.5 (repo history, not shipped)
+├── analysis.md                 # original 1.4.2 audit: W1–W9 / D1–D7 / T1–T7 + phased plan (repo history, not shipped)
+├── verification.md             # original 1.4.3 re-check: F1–F17 fake-fix checklist (repo history, not shipped)
+├── fixes.md                    # original 1.4.4 P0–P3 plan as written, cited from code comments; outcomes in CHANGELOG 1.4.4 (repo history, not shipped)
+├── loopwright-1.4.4-review.md  # the review of 1.4.4 that drove 1.4.5 (repo history, not shipped)
 ├── harness/                    # pure boilerplate — no prefilled project info (run opencode from here)
 │   ├── AGENTS.md               # protocol only — rules live in docs/constitution.md
 │   ├── .gitignore              # generated foundation + secrets stay untracked (root install)

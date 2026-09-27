@@ -810,7 +810,9 @@ on `lib/shared.ts` (old `plugins/shared.ts` path still accepted).
 A read-and-verify pass over the shipped 1.4.2–1.4.4 worktree lifecycle work
 — `npm run typecheck` clean, `npm run lint` 0 warnings/errors, `npm test`
 35/35 — plus a citation audit of this round's own review
-(`loopwright-1.4.4-fixing-plan.md`). Three findings; all closed here. Earlier
+(`loopwright-1.4.4-review.md`, renamed from
+`loopwright-1.4.4-fixing-plan.md` in Round 8). Three findings; all closed here.
+Earlier
 tables keep their as-found statuses.
 
 ## Round 7 findings
@@ -821,9 +823,11 @@ tables keep their as-found statuses.
 | S7-02 | `builder.md` still claimed Verify ("Write-isolated builder for Bootstrap, Execute, Verify, and Retain") — wrong tier for `review.md` writes, which belong to `scribe` (`edit: ask`) | `agents/builder.md:2` vs `agents/scribe.md:2`; `harness/opencode.json` delegation map (Verify→reviewer/scribe) | **Fixed** — the description drops Verify; Bootstrap, Execute, Retain stay. |
 | S7-03 | `fixes.md` cited by four files, never committed — the 1.4.4 audit's reasoning gone while its fixes shipped | citations in `lib/worktree.ts`, `plugins/lpwr-worktree-guard.ts`, `test/worktree.test.ts`, `test/worktree-integration.test.ts`; CHANGELOG 1.4.4 | **Fixed** — reconstructed at the repo root as `fixes.md`: Phase 0 premises, P0-1…P3-2 (problem / change / verification each), the three human-confirmed decisions, release gate — from CHANGELOG 1.4.2–1.4.4, the shipped code, the fixtures, and the application session's record, provenance noted in the file. |
 
-Companion note: `analysis.md` §5 (the W1–W9 / D1–D7 / T1–T7 17-item audit
-behind 1.4.2) and `verification.md` (the 1.4.3 re-check) were lost the same
-way — untracked working documents. Their outcomes stand in CHANGELOG 1.4.2
-and 1.4.3, and `fixes.md`'s scope section names both. Rounds 1–6 remain this
-file's record; the 1.4.2–1.4.4 plans live in `fixes.md` and the changelog
-from here on.
+Companion note (Round 8 correction): `analysis.md` §5 (the W1–W9 / D1–D7 /
+T1–T7 17-item audit behind 1.4.2) and `verification.md` (the 1.4.3 re-check)
+were reported lost here as "untracked working documents" — **both have since
+been restored and are committed**, alongside the original `fixes.md` (which
+Round 7 recorded as reconstructed; the reconstruction has been replaced by the
+authentic pre-implementation plan). `fixes.md` carries no scope section; the
+1.4.2–1.4.4 outcomes remain in CHANGELOG 1.4.2–1.4.4, and `fixes.md`'s new
+header points there. Rounds 1–6 remain this file's record.

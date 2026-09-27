@@ -1,4 +1,8 @@
-# Loopwright 1.4.4 — Fixing Plan
+# Loopwright 1.4.4 — Fixing-plan review (drove 1.4.5)
+
+Review of what the 1.4.4 fixing plan (`fixes.md`) actually shipped; renamed
+from `loopwright-1.4.4-fixing-plan.md` so it cannot be confused with that
+plan.
 
 Verified empirically, not just read: dependencies installed, `npm run typecheck` (clean),
 `npm run lint` (0 warnings/errors, 26 files), `npm test` (35/35 passing). The worktree lifecycle

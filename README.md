@@ -98,12 +98,14 @@ loopwright/
 ├── PRINCIPLES.md               # design intent (resume of the former principles essays)
 ├── LICENSE                     # MIT
 ├── CHANGELOG.md
-├── package.json                # npm scripts: lint, fmt, fmt:check, typecheck, test; version 1.4.4
+├── package.json                # npm scripts: lint, fmt, fmt:check, typecheck, test; version 1.4.5
 ├── loopwright.sh               # installer: install/update/doctor/fix/status/uninstall for harness/
 ├── opencode.json               # developer MCP + LSP config — distinct from harness/opencode.json (shipped matrix)
 ├── constitution.md             # this repo's own rules — the committed record (harness ships without one; onboard creates it)
 ├── context.md                  # this repo's own context (same: generated per project by onboard)
 ├── integration-analysis.md     # workflow cross-phase audit + fix-wave plans (repo history, not shipped)
+├── fixes.md                    # the closed 1.4.4 P0–P3 plan, cited from code comments (repo history, not shipped)
+├── loopwright-1.4.4-fixing-plan.md  # the review that drove 1.4.5 (repo history, not shipped)
 ├── harness/                    # pure boilerplate — no prefilled project info (run opencode from here)
 │   ├── AGENTS.md               # protocol only — rules live in docs/constitution.md
 │   ├── .gitignore              # generated foundation + secrets stay untracked (root install)

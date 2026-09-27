@@ -6,7 +6,7 @@ Repo-level history: this is development material for this repository, not harnes
 
 Status legend: **Wired** (command/template/plugin enforces it) · **Prose** (stated, not enforced) · **Gap** (claimed or needed, absent) · **Ephemeral** (output has no durable home).
 
-Last updated: 2026-09-26 — Round 6 (third runtime simulation, post-1.4.0) added and implemented in waves; Round 5 table below is the as-found record (statuses not rewritten retroactively).
+Last updated: 2026-09-26 — Round 7 (1.4.4 fixing-plan review) added below; Round 6 (third runtime simulation, post-1.4.0) added and implemented in waves; Round 5 table below is the as-found record (statuses not rewritten retroactively).
 
 ### Decisions (human-confirmed)
 
@@ -802,3 +802,28 @@ symlink is skipped) until the human runs `git rm --cached
 docs/memos/.gitkeep` and re-mints; `loopwright.sh update` merges the new
 gitignore lines automatically. The nested-install guard and its test now key
 on `lib/shared.ts` (old `plugins/shared.ts` path still accepted).
+
+---
+
+# Round 7 — 1.4.4 fixing-plan review (post-1.4.4)
+
+A read-and-verify pass over the shipped 1.4.2–1.4.4 worktree lifecycle work
+— `npm run typecheck` clean, `npm run lint` 0 warnings/errors, `npm test`
+35/35 — plus a citation audit of this round's own review
+(`loopwright-1.4.4-fixing-plan.md`). Three findings; all closed here. Earlier
+tables keep their as-found statuses.
+
+## Round 7 findings
+
+| ID | Finding | Evidence | Status |
+|----|---------|----------|--------|
+| S7-01 | `docs/glossary.md` absent from the worktree `FOUNDATION` link set — carried from S5-05 as "the worktree can't see glossary edits at all" | `lib/worktree.ts` FOUNDATION; `harness/.gitignore`; README ("glossary + conventions + implementation-rules, kept in git"); conventions' shared-foundation line names exactly `docs/{state,context,constitution,audit}.md` + `docs/memos/` | **Closed — exclusion confirmed.** FOUNDATION is exactly the gitignored set; the glossary is tracked, so every worktree checks it out and a link would be a no-op for it (for an untracked one it would hand the branch an absolute symlink to stage — the S5-03 hazard). The Round 6 close-out stands: trunk-side glossary dirt is named by the merge-gate message. The FOUNDATION comment and the glossary's Foundation row now state the boundary, so the flag does not recur. |
+| S7-02 | `builder.md` still claimed Verify ("Write-isolated builder for Bootstrap, Execute, Verify, and Retain") — wrong tier for `review.md` writes, which belong to `scribe` (`edit: ask`) | `agents/builder.md:2` vs `agents/scribe.md:2`; `harness/opencode.json` delegation map (Verify→reviewer/scribe) | **Fixed** — the description drops Verify; Bootstrap, Execute, Retain stay. |
+| S7-03 | `fixes.md` cited by four files, never committed — the 1.4.4 audit's reasoning gone while its fixes shipped | citations in `lib/worktree.ts`, `plugins/lpwr-worktree-guard.ts`, `test/worktree.test.ts`, `test/worktree-integration.test.ts`; CHANGELOG 1.4.4 | **Fixed** — reconstructed at the repo root as `fixes.md`: Phase 0 premises, P0-1…P3-2 (problem / change / verification each), the three human-confirmed decisions, release gate — from CHANGELOG 1.4.2–1.4.4, the shipped code, the fixtures, and the application session's record, provenance noted in the file. |
+
+Companion note: `analysis.md` §5 (the W1–W9 / D1–D7 / T1–T7 17-item audit
+behind 1.4.2) and `verification.md` (the 1.4.3 re-check) were lost the same
+way — untracked working documents. Their outcomes stand in CHANGELOG 1.4.2
+and 1.4.3, and `fixes.md`'s scope section names both. Rounds 1–6 remain this
+file's record; the 1.4.2–1.4.4 plans live in `fixes.md` and the changelog
+from here on.

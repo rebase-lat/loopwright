@@ -3,6 +3,38 @@
 All notable changes to this project, grouped by git tag. See the commit
 history for per-change detail.
 
+## [1.4.5] — 2026-09-26
+
+- Fixing-plan review of the 1.4.4 release — findings table in
+  `integration-analysis.md` Round 7, the review itself committed at the repo
+  root as `loopwright-1.4.4-fixing-plan.md`. Three findings, all closed:
+  - **`FOUNDATION` vs the glossary, settled** (S7-01): `docs/glossary.md`
+    stays out of the worktree link set — it is tracked ("kept in git"), so
+    every worktree checks it out and a link would be a no-op for it, while
+    for an untracked one it would hand the branch an absolute symlink to
+    stage (the S5-03 hazard). FOUNDATION is exactly `harness/.gitignore`'s
+    set; the Round 6 merge-gate close-out stands. The `FOUNDATION` comment
+    and the glossary's Foundation row now state the boundary, so the flag
+    cannot recur unnoticed.
+  - **`builder.md` stops claiming Verify** (S7-02): the description now
+    reads "Write-isolated builder for Bootstrap, Execute, and Retain" —
+    Verify's `review.md` writes belong to `scribe` (`edit: ask`), matching
+    the matrix (Verify→reviewer/scribe) and the review's tier argument.
+  - **`fixes.md` restored** (S7-03): the P0–P3 plan cited by four files
+    (`lib/worktree.ts`, the worktree guard, both worktree tests) was never
+    committed and is gone — reconstructed at the repo root from CHANGELOG
+    1.4.2–1.4.4, the shipped code, the fixtures, and the application
+    session's record (Phase 0 premises, P0-1…P3-2 problem/change/
+    verification, the three human decisions, release gate; provenance
+    noted in the file). All citations resolve verbatim. Round 7 also
+    records that `analysis.md` §5 and `verification.md` were lost the same
+    way — their outcomes live in CHANGELOG 1.4.2 and 1.4.3.
+  - **Permission tiers deliberately unchanged**: the `ask` tiers are the
+    confirmation invariant (scribe's write checkpoints, builder's shell
+    gate, orchestrator's structural deny), with `--auto` / `always` /
+    pattern rules as the seamlessness levers — the matrix stands.
+  - No code or gate changes: typecheck/lint clean, 35/35 tests unchanged.
+
 ## [1.4.4] — 2026-09-26
 
 - Verification-derived fixing plan (P0–P3), applied after a Phase 0

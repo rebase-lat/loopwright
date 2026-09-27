@@ -725,6 +725,13 @@ const copyDir = async (src: string, dst: string): Promise<void> => {
 // copy, never part of a branch diff (rule 49 pattern). lpwr-install creates
 // every target — a missing target is a foundation gap (EXPECTED, surfaced by
 // lpwr-check-setup and the TUI sidebar), warned here, never silently patched.
+// Membership is exactly harness/.gitignore's set. Tracked docs — glossary,
+// conventions, implementation-rules — reach every worktree through checkout
+// instead, so docs/glossary.md is deliberately absent here (S5-05's glossary
+// half closed that way in Round 6: trunk-side glossary dirt is named by the
+// merge-gate message). Linking it would never help the tracked case and
+// would hand the branch an untracked absolute symlink to stage otherwise —
+// the S5-03 hazard the gitignore lines exist to prevent.
 const FOUNDATION = ["state", "context", "constitution", "audit"];
 
 // ONE link inventory drives both provisioning and status gap detection

@@ -1,5 +1,5 @@
 ---
-description: Write-isolated builder for Bootstrap, Execute, Verify, and Retain.
+description: Write-isolated builder for Bootstrap, Execute, and Retain.
 mode: subagent
 ---
 

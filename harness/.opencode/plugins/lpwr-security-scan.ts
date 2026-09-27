@@ -20,7 +20,11 @@ import { promisify } from "node:util";
 
 import type { Hooks, PluginInput } from "@opencode-ai/plugin";
 
-import { constitutionCommands } from "../lib/gates.ts";
+import {
+  checkTierMismatch,
+  constitutionCommands,
+  frontmatterValue,
+} from "../lib/gates.ts";
 import {
   SPEC_ID,
   commandName,
@@ -258,11 +262,83 @@ const auditDependencies = async (
   return {};
 };
 
+// Round 7 C / Weakness 4: risk_tier is set once, by a human, at lpwr-specs
+// time, and the scan never fed anything back. At lpwr-review the working-tree
+// diff is the thing being judged, so project it to added lines — a `https://`
+// already in the tree is context, not a new network call — and name what the
+// change did against the declared tier. Null whenever there is nothing to say:
+// no spec file, no tier (or `high`, which cannot escalate), no git diff, no
+// signal. Never blocks and never rewrites the tier: AGENTS rule 11 keeps the
+// human authoritative, this only supplies a second, independent input to the
+// confirmation they were already asked to make.
+const tierEscalationNotice = async (
+  root: string,
+  specId: string
+): Promise<string | null> => {
+  let specRaw = "";
+  try {
+    specRaw = await readFile(
+      path.join(root, "docs/specs", specId, "spec.md"),
+      "utf-8"
+    );
+  } catch {
+    return null;
+  }
+  const tier = frontmatterValue(specRaw, "risk_tier");
+  if (tier !== "low" && tier !== "medium") {
+    return null;
+  }
+  let stdout = "";
+  try {
+    ({ stdout } = await execFileAsync(
+      "git",
+      ["-C", root, "diff", "HEAD", "--unified=0", "--no-color"],
+      { maxBuffer: 10_485_760, timeout: 15_000 }
+    ));
+  } catch {
+    return null;
+  }
+  const added = stdout
+    .split("\n")
+    .filter((line) => line.startsWith("+") && !line.startsWith("+++"))
+    .map((line) => line.slice(1))
+    .join("\n");
+  if (!added) {
+    return null;
+  }
+  const reason = checkTierMismatch(added, tier);
+  if (!reason) {
+    return null;
+  }
+  return (
+    `Tier re-check for ${specId}: the diff adds ${reason}, but spec.md ` +
+    `declares risk_tier "${tier}". Confirm the tier still fits — review.md ` +
+    `Security axis, "Risk tier still looks correct given the actual diff".`
+  );
+};
+
 const securityScan = (plugin: PluginInput): Promise<Hooks> => {
   const root = plugin.directory;
   return Promise.resolve({
     "command.execute.before": async (input) => {
-      if (commandName(input.command) !== "lpwr-implement") {
+      const name = commandName(input.command);
+      // Round 7 C: lpwr-review is the one moment the diff exists and the tier
+      // is about to be re-confirmed, so that is where the second signal lands.
+      // Advisory only — the human owns the tier, this just names what the diff
+      // did while the Security axis checkbox is still being filled.
+      if (name === "lpwr-review") {
+        const reviewSpecId = specIdArgument(input.arguments);
+        if (!reviewSpecId) {
+          return;
+        }
+        const notice = await tierEscalationNotice(root, reviewSpecId);
+        if (notice) {
+          logWarn(plugin, "lpwr-security-scan", notice);
+          await toastWarning(plugin, notice);
+        }
+        return;
+      }
+      if (name !== "lpwr-implement") {
         return;
       }
       // specIdArgument only ever returns a token that matches SPEC_ID, so a

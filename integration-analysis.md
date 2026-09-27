@@ -1539,3 +1539,61 @@ item F12 refers to F12 below.*
 4. **The new prune command's failure mode** — if it fails halfway through a multi‑worktree prune, is it idempotent? Can it resume?
 5. **Backwards compatibility** — existing users may have worktrees created by the old hook with no manifest entry. Does `lpwr-worktree-prune` still find them? If not, document a migration.
 6. **`.env` fallback** — W5 was a warning buried in `logWarn`. Confirm the new version surfaces it visibly (TUI notice, not just a log line) or removes the fallback entirely.
+
+---
+
+# Round 9 — audit-trail consolidation + consistency gates (post-1.4.6)
+
+Three buildable items from `loopwright-resolution-plan.md` (A, B, C), closed in
+one pass: the audit trail folded into a single file, the two prose documents
+that describe delegation bound to one structured source, and the security scan
+given a second input to the human's tier judgment. `npm run lint`,
+`npm run typecheck`, and `npm test` (57 → 68) all green. The plan's D, E, and F
+items each need a product decision first and were deliberately not started.
+
+## Round 9 findings
+
+| ID | Finding | Evidence | Status |
+|----|---------|----------|--------|
+| S9-01 | S7-03's own fix compounded: reconstructing `fixes.md` at the root left four standalone audit documents sitting beside the `integration-analysis.md` that README calls "the single audit trail" — `fixes.md`, `analysis.md`, `verification.md`, `loopwright-1.4.4-review.md` — each cited from code or from each other, so the audit had four parallel homes and no rule against a fifth | root listing; citations in `lib/worktree.ts` (×10), `plugins/lpwr-worktree-guard.ts`, `plugins/lpwr-spec-link.ts`, `lib/shared.ts`, `test/worktree.test.ts`, `test/worktree-integration.test.ts`; this file's Round 7 companion note | **Fixed** — `fixes.md` + `loopwright-1.4.4-review.md` folded as Round 7 sections, `analysis.md` + `verification.md` as Round 8 sections (provenance noted under each heading; the Round 7 intro, companion note, and Round 8 open item T6 rewritten to point at the folded sections). Every live citation rewritten to name a round; no `*.ts` / `*.mjs` / `*.sh` reference to the four names remains. The files are deleted (`git rm`), and `CONTRIBUTING.md` (new, named in README's layout and `context.md`'s repo-root list) carries the one rule: audit findings from any review or simulation pass go into `integration-analysis.md` as the next round, never a new file. `loopwright.sh`'s doctor guard keeps checking `integration-analysis.md`, which still exists. |
+| S9-02 | S7-02 fixed one symptom (`builder.md` claimed Verify) with no mechanism behind it: delegation is described in two prose places — each agent's `description:` line and `orchestrator.md`'s Responsibilities section — no command names an agent, and nothing checked either against the `Stage:` lines the command surface actually declares | `agents/*.md` description lines; `orchestrator.md:18-23`; 27 `Stage:` lines across `commands/*.md` | **Fixed** — new `lib/agent-stages.ts` holds `STAGES` (the 8 distinct `Stage:` values) and `AGENT_STAGES` (builder, planner, reviewer, scribe), and `test/agent-stages.test.ts` (7 fixtures) asserts that each mapped description's stage set equals its entry, that every unmapped agent names no stage, that orchestrator's Responsibilities names every mapped agent, and that `STAGES` equals the distinct `Stage:` lines. The map is deliberately partial — the triage seats and `scout` describe their role by function and `orchestrator` names no stage — so the "unmapped ⇒ names no stage" fixture is what keeps that partiality honest instead of aspirational. |
+| S9-03 | `risk_tier` is set once, by a human, at `lpwr-specs` time and re-confirmed at review, but `lpwr-security-scan` ran on every spec regardless of tier and never fed anything back — a spec mislabeled `low` that went on to add network, permission, or process code got exactly the same signal as any other `low` spec (plan Weakness 4 / Opportunity 5) | `templates/spec.md:4`; `lpwr-security-scan.ts` before this round (secret scan + dependency audit only); `templates/review.md:24` — the Security-axis box "Risk tier still looks correct given the actual diff" | **Fixed** — `ESCALATION_SIGNALS` + `checkTierMismatch` live in `gates.ts` (pure predicates, so `gates.test.ts` exercises them directly: each of the three signals fires for a non-high tier, `high` short-circuits, a signal-free diff says nothing, and repeated calls on one diff return the same answer — the last one guards against an accidental `g` flag). `lpwr-security-scan` calls it from `command.execute.before` on `lpwr-review`, where `git diff HEAD` is the change under review and the checkbox has not been ticked yet, and surfaces it as a toast + `logWarn` naming the reason and that checkbox. Advisory only: it never edits the tier, because AGENTS rule 11 keeps the human authoritative — this is a second, independent input to a confirmation they were already asked to make. |
+
+### Deliberate deviations from the plan's snippets
+
+- `checkTierMismatch` sits in `lib/gates.ts`, not in the plugin. `test/plugin-shape.test.ts`
+  (S6-01) requires every plugin module to default-export exactly one function, so a second
+  export from `lpwr-security-scan.ts` would throw "Plugin export is not a function" on startup —
+  the same failure that moved the shared helpers to `lib/` in Round 6.
+- The check runs at `lpwr-review`, not at implement time. The plan says the signal lands as a
+  `review.md` note, and at `lpwr-implement` the working-tree diff is empty; review is the moment
+  the diff exists and the tier is about to be re-confirmed. Only added lines are fed to the
+  patterns, so a URL already in the tree is context rather than a new network call.
+
+## Round 9 open items (carry forward)
+
+- **D (command surface complexity)** — no decision taken. The plan recommends documenting a
+  "core" ~12 vs "extended" ~15 split first, since it targets the felt size of the workflow
+  without touching tested code; the alternatives are leaving the 27/9/12/16 surface as is, or
+  merging near-duplicate commands (behaviour-change risk in a well-tested system).
+- **E (visual/UX proposal variant)** — blocked on what counts as the verdict for a visual
+  proposal: an informal human pick from an image, or the structured `question`-tool confirmation
+  Verify uses for code. That choice decides whether it is a small `lpwr-propose`/`lpwr-motion`
+  extension or a new artifact-type integration.
+- **F (metrics roll-up)** — blocked on a consumer. Rework rate, time-to-verdict, and
+  patches-per-file are derivable from the traceability ID plus existing `log.ndjson`/`state.md`
+  with no new instrumentation, but "derivable" is not "worth a command".
+- **Carried from Round 8** — T6 (`harness/.env` load path / dotenv scope, needs an opencode-side
+  answer), F12's stricter form, and the optional tracked-doc staleness advisory.
+
+## Round 9 status
+
+- [x] A — fold four documents into Rounds 7/8, rewrite citations, delete them, add the
+  recurrence rule to a new root `CONTRIBUTING.md`
+- [x] B — `lib/agent-stages.ts` + `test/agent-stages.test.ts`, 57 → 64 tests
+- [x] C — tier-escalation signal in `gates.ts` + `lpwr-security-scan`, 64 → 68 tests
+- [ ] D / E / F — waiting on a decision
+
+Lint, typecheck, and tests gated green after each of A, B, and C, committed directly on the
+default branch out of process per implementation-rules 4 (this repo has never run its own spec
+flow), as Round 8 recorded.

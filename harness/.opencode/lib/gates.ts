@@ -733,3 +733,43 @@ export const specDirNames = (specRef: string): string[] => {
   }
   return [specRef];
 };
+
+// Round 7 C: a human sets risk_tier once, at lpwr-specs time, and the security
+// scan has always run on every spec regardless of tier without feeding anything
+// back — so a spec mislabeled `low` got no second signal. These patterns are a
+// suggestion, never a gate: no `g` flag, so `.test` stays stateless, and the
+// caller is expected to feed them added lines only (a `https://` already in the
+// tree is context, not a new network call).
+export const ESCALATION_SIGNALS: readonly {
+  readonly pattern: RegExp;
+  readonly reason: string;
+}[] = [
+  {
+    pattern: /\bfetch\(|\baxios\.|\bhttps?:\/\//u,
+    reason: "a new external network call",
+  },
+  {
+    pattern: /\bpermissions?\s*[:=]/iu,
+    reason: "a permissions/ACL change",
+  },
+  {
+    pattern: /\bexec\(|\bspawn\(|child_process/u,
+    reason: "a new shell/process invocation",
+  },
+];
+
+// Advisory only — returns the reason to re-check the tier, or null. `high`
+// short-circuits (already at the top, nothing to flag); an unparseable tier
+// is left alone too, because there is no declared value to contradict. The
+// human owns the tier (AGENTS rule 11), so this never upgrades it — it names
+// what the diff did so lpwr-review's Security axis can re-confirm it.
+export const checkTierMismatch = (
+  diff: string,
+  declaredTier: string
+): string | null => {
+  if (declaredTier === "high") {
+    return null;
+  }
+  const hit = ESCALATION_SIGNALS.find((signal) => signal.pattern.test(diff));
+  return hit ? hit.reason : null;
+};

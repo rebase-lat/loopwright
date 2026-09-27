@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   acceptanceTablesDiverge,
   approvedSpecEdit,
+  checkTierMismatch,
   constitutionCommands,
   declaredSurfaceFrom,
   normalizeGlob,
@@ -310,4 +311,54 @@ test("acceptanceTablesDiverge: the review's only binding to the spec", () => {
     acceptanceTablesDiverge(spec("| auth-014-1 | test/a |"), "# Review\n") ?? "",
     /no Specs axis table/u
   );
+});
+
+// Round 7 C: the tier signal is advisory, so what matters is (a) it fires on
+// the three escalation shapes for a non-high tier, (b) it never fires for
+// `high`, and (c) it is stateless — the patterns are tested through `.test`,
+// so an accidental `g` flag would make the second call on the same diff miss.
+test("checkTierMismatch: fires on each escalation signal for a low tier", () => {
+  assert.equal(
+    checkTierMismatch('const res = await fetch("/api");', "low"),
+    "a new external network call"
+  );
+  assert.equal(
+    checkTierMismatch("client.get('https://api.example.com/v1')", "medium"),
+    "a new external network call"
+  );
+  assert.equal(
+    checkTierMismatch("permissions: read", "low"),
+    "a permissions/ACL change"
+  );
+  assert.equal(
+    checkTierMismatch('require("child_process").exec(cmd)', "low"),
+    "a new shell/process invocation"
+  );
+  assert.equal(checkTierMismatch("spawn(worker)", "medium"), "a new shell/process invocation");
+});
+
+test("checkTierMismatch: high is already at the top", () => {
+  assert.equal(
+    checkTierMismatch('await fetch("https://api.example.com")', "high"),
+    null
+  );
+});
+
+test("checkTierMismatch: a diff with no signal says nothing", () => {
+  assert.equal(
+    checkTierMismatch("export const add = (a: number, b: number) => a + b;", "low"),
+    null
+  );
+  // A `https` protocol word with no `://` is not a network call, and `fetch`
+  // not called is not one either.
+  assert.equal(checkTierMismatch("const httpsStatus = 200;", "medium"), null);
+  assert.equal(checkTierMismatch("const fetch = loadFromCache();", "low"), null);
+});
+
+test("checkTierMismatch: stateless across repeated calls", () => {
+  const diff = 'const x = await fetch("https://api.example.com");';
+  assert.equal(checkTierMismatch(diff, "low"), "a new external network call");
+  assert.equal(checkTierMismatch(diff, "low"), "a new external network call");
+  assert.equal(checkTierMismatch(diff, "high"), null);
+  assert.equal(checkTierMismatch(diff, "high"), null);
 });

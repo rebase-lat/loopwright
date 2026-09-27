@@ -3,6 +3,29 @@
 All notable changes to this project, grouped by git tag. See the commit
 history for per-change detail.
 
+## [1.4.3] — 2026-09-26
+
+- Verification follow-ups to the 1.4.2 worktree rework: a full re-check of
+  the shipped code (17 item checks + 6 cross-cutting regressions) found one
+  outright miss and three soft gaps — all closed:
+  - **`.env` failure is visible** (W5): a failed `.env` write now raises a
+    TUI toast alongside the structured log — the single check that failed
+    outright, previously a warning buried in `logWarn`.
+  - **Stale pending-cleanup marks can't strand**: `lpwr-worktree-prune`
+    sweeps marks whose worktree no longer exists (removed outside the
+    service) via a strict `git worktree list` — a git failure skips the
+    sweep instead of misreading every key — and only the mutating prune
+    path writes the manifest, so `lpwr-guide` stays read-only (rule 34).
+    `clearPending` runs immediately after `git worktree remove`, so a
+    branch-delete failure no longer leaves a key behind.
+  - **Cap resolution documented** (rule 29): `LPWR_MAX_WORKTREES` /
+    `opencode.json` `"lpwr": { "max_worktrees": N }` are resolved on every
+    check — edits take effect from the next command, no restart.
+  - **Fixtures**: invalid `LPWR_MAX_WORKTREES` values (`abc`, `0`) fall
+    through to the config value instead of disabling the cap through
+    NaN/0 comparisons; the integration cycle injects a phantom `auth-999`
+    mark and proves the sweep clears it — 32 tests total.
+
 ## [1.4.2] — 2026-09-26
 
 - Worktree lifecycle rework — the 17-fix audit plan (workarounds W1–W9,
@@ -57,13 +80,6 @@ history for per-change detail.
     prune, cap, prune conditions, manual last resort), and
     conventions/guide/lpwr-commit/README updated to match; new read-only
     `lpwr-worktree-status` command (27 commands total).
-  - **Verification pass** (F1–F17 re-checked): `.env` write failure now
-    raises a TUI toast alongside the structured log (W5's buried warning),
-    `lpwr-worktree-prune` sweeps stale pending-cleanup marks — strictly
-    enumerated, so a git failure skips the sweep instead of misreading every
-    key — the cap's per-check resolution is documented (rule 29: env/config
-    edits apply from the next command), and fixtures cover invalid
-    `LPWR_MAX_WORKTREES` values plus the stale-mark sweep.
   - Tests: `test/worktree.test.ts` (mocked porcelain output, prune
     decisions, cap resolution, tail contract, manifest, `specIdArgument`) +
     `test/worktree-integration.test.ts` (real temp repo: mint → work →

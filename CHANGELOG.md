@@ -3,6 +3,51 @@
 All notable changes to this project, grouped by git tag. See the commit
 history for per-change detail.
 
+## [1.4.4] — 2026-09-26
+
+- Verification-derived fixing plan (P0–P3), applied after a Phase 0
+  source-check — V1–V3 confirmed at the cited lines, the plan's
+  symlink-pre-check premise was already implemented, and the
+  `lpwr-worktree-status --audit` flag it referenced never existed:
+  - **Corrupt manifests surface, never swallow** (P0-1): `readManifest`
+    returns `{ marks, corrupt, error }` behind a shape guard; a malformed
+    `.loop-worktrees/manifest.json` is never overwritten — the commit-event
+    mark refuses loudly (toast + log), `lpwr-worktree-prune` appends
+    "manifest unreadable" to its result instead of implying nothing is
+    pending, and status/guide render `manifest: unreadable`.
+  - **Status carries an always-on audit** (P0-2): `lpwr-worktree-status`
+    and the guide injection show per-worktree foundation link gaps
+    (missing on trunk → `lpwr-install`/`lpwr-setup`), manifest health, and
+    stale marks; one link inventory drives provisioning and the report
+    alike, and a `find`-based fixture proves provisioning leaves no
+    dangling symlinks.
+  - **Mint refuses bad IDs** (P1-1): `lpwr-explore` validates before
+    assigning; `worktree_mint` rejects malformed IDs, shipped IDs (Done in
+    `state.md`, rule 1), and leftover branches before any git write — the
+    normal flow (proposal folder written on trunk first) still mints.
+  - **Resumable prune with dry run** (P1-2): `worktree_prune` gained
+    `dry_run`; a mid-list failure keeps that worktree's mark and re-running
+    converges (the fixture locks a worktree to fail it, then unlocks and
+    re-runs to zero residue).
+  - **Docs/discoverability** (P1-3, P2-1/2): `manifest.json` documented in
+    `lpwr-commit`, `lpwr-worktree-prune`, and AGENTS rule 13; prune ↔
+    status cross-references; README worktree-cap paragraph (env > config >
+    default, resolved on every check).
+  - **Terminology + voice pass** across commands/agents/skills/docs/
+    templates: the glossary gains Spec ID, Intent, Gate, State, Done,
+    Foundation, Work-stage, Pending cleanup, and Worktree cap rows and
+    sharpens Spec/Verdict/Trunk; nine of our own texts stopped using
+    banned substitutes ("spec branch(es)", "checkout root", "finished" in
+    a log line) and `lpwr-guide` / `lpwr-teach` gained the standard
+    `Delegation:` line; tone verified against `lpwr-voice` (zero
+    filler/exclamation/hedging hits). Three decisions confirmed while
+    applying the plan: keep the current SPEC_ID contract, justified
+    terminology hits stay, manifest audit always-on (no `--audit` flag).
+  - **Fixtures**: corrupt/shape-mismatched manifest (never clobbered),
+    28-case invalid-cap matrix, gap + no-dangling `find` check, bad/taken-ID
+    refusals, mutation-free dry-run plan, lock-based resumability — 35
+    tests total.
+
 ## [1.4.3] — 2026-09-26
 
 - Verification follow-ups to the 1.4.2 worktree rework: a full re-check of

@@ -84,10 +84,20 @@ export interface CapStatus {
   cap: number;
   atCap: boolean;
   entries: OpenWorktree[];
+  // Always-on audit surface (fixes.md P0-1/P0-2, decided 1.4.4): foundation
+  // link gaps per open worktree, manifest corruption, and marks whose
+  // worktree no longer exists — rendered by statusReport for both
+  // lpwr-worktree-status and the guide injection.
+  gaps: string[];
+  manifestCorrupt: boolean;
+  manifestStale: string[];
 }
 
 export interface PruneOptions {
   force?: boolean;
+  // Report the plan without mutating anything — no removals, no manifest
+  // sweep, no confirmation prompts (fixes.md P1-2).
+  dryRun?: boolean;
   // Called before every force removal — the adapter raises the human
   // permission confirmation here (implementation-rules 52).
   confirm?: (entry: OpenWorktree) => Promise<boolean>;
@@ -309,40 +319,91 @@ export const resolveCap = async (root: string): Promise<number> => {
 
 // --- Pending-cleanup manifest ----------------------------------------------
 
+// One read result carries the marks AND an explicit corruption signal: a
+// truncated or malformed manifest must never look like "nothing is pending"
+// without a side channel (fixes.md P0-1 — the silent-swallow W2 pattern in
+// the one file where losing state strands worktrees).
+export interface ManifestState {
+  corrupt: boolean;
+  error?: string;
+  marks: Record<string, string>;
+}
+
+const isManifestShape = (
+  value: unknown
+): value is { pending: Record<string, string> } => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return false;
+  }
+  const { pending } = value as { pending?: unknown };
+  if (!pending || typeof pending !== "object" || Array.isArray(pending)) {
+    return false;
+  }
+  return Object.values(pending).every((entry) => typeof entry === "string");
+};
+
 export const readManifest = async (
   mainHarness: string
-): Promise<Record<string, string>> => {
+): Promise<ManifestState> => {
+  const file = manifestPath(mainHarness);
+  let raw: string;
   try {
-    const raw = await readFile(manifestPath(mainHarness), "utf-8");
-    const parsed = JSON.parse(raw) as { pending?: unknown };
-    if (!parsed.pending || typeof parsed.pending !== "object") {
-      return {};
+    raw = await readFile(file, "utf-8");
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      return { corrupt: false, marks: {} };
     }
-    return { ...(parsed.pending as Record<string, string>) };
-  } catch {
-    return {};
+    return { corrupt: true, error: String(error), marks: {} };
+  }
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (!isManifestShape(parsed)) {
+      return {
+        corrupt: true,
+        error:
+          "shape mismatch — expected { pending: { <spec-id>: <timestamp> } }",
+        marks: {},
+      };
+    }
+    return { corrupt: false, marks: { ...parsed.pending } };
+  } catch (error) {
+    return { corrupt: true, error: String(error), marks: {} };
   }
 };
+
+// Outcome of one mark attempt — the commit-event handler surfaces
+// `manifest-corrupt` loudly and leaves the file untouched for repair.
+export type MarkResult =
+  | "marked"
+  | "already"
+  | "invalid"
+  | "manifest-corrupt"
+  | "not-shipped";
 
 // Called from the adapter's `command.executed` event for lpwr-commit. Marked
 // only when state.md already records Done — that is the commit's own
 // single-writer step (implementation-rules 19), so a commit that failed
-// before reconciliation never marks its worktree closable.
+// before reconciliation never marks its worktree closable. A corrupt
+// manifest is never overwritten: destroying unreadable marks to write one
+// new one would trade a repairable file for silent loss.
 export const markPendingCleanup = async (
   mainHarness: string,
   specId: string
-): Promise<boolean> => {
+): Promise<MarkResult> => {
   if (!SPEC_ID.test(specId)) {
-    return false;
+    return "invalid";
   }
   if (!(await stateHasEntry(mainHarness, "done", specId))) {
-    return false;
+    return "not-shipped";
   }
-  const pending = await readManifest(mainHarness);
-  if (pending[specId]) {
-    return false;
+  const state = await readManifest(mainHarness);
+  if (state.corrupt) {
+    return "manifest-corrupt";
   }
-  pending[specId] = new Date().toISOString();
+  if (state.marks[specId]) {
+    return "already";
+  }
+  const pending = { ...state.marks, [specId]: new Date().toISOString() };
   const target = manifestPath(mainHarness);
   await mkdir(path.dirname(target), { recursive: true });
   await writeFile(
@@ -350,19 +411,21 @@ export const markPendingCleanup = async (
     `${JSON.stringify({ pending, version: 1 }, null, 2)}\n`,
     "utf-8"
   );
-  return true;
+  return "marked";
 };
 
 const clearPending = async (
   mainHarness: string,
   specId: string
 ): Promise<void> => {
-  const pending = await readManifest(mainHarness);
-  if (!pending[specId]) {
+  const state = await readManifest(mainHarness);
+  // Corrupt is left on disk untouched — repair first, never clobber marks
+  // that a human may still be able to salvage.
+  if (state.corrupt || !state.marks[specId]) {
     return;
   }
   const next = Object.fromEntries(
-    Object.entries(pending).filter(([key]) => key !== specId)
+    Object.entries(state.marks).filter(([key]) => key !== specId)
   );
   const target = manifestPath(mainHarness);
   await mkdir(path.dirname(target), { recursive: true });
@@ -384,9 +447,10 @@ const sweepStaleMarks = async (
   mainHarness: string,
   mainRoot: string
 ): Promise<void> => {
-  const pending = await readManifest(mainHarness);
-  const keys = Object.keys(pending);
-  if (keys.length === 0) {
+  const state = await readManifest(mainHarness);
+  const keys = Object.keys(state.marks);
+  // Corrupt is surfaced by prune itself — never sweep from an unreadable file.
+  if (state.corrupt || keys.length === 0) {
     return;
   }
   let live: Set<string>;
@@ -405,7 +469,7 @@ const sweepStaleMarks = async (
     return;
   }
   const next = Object.fromEntries(
-    Object.entries(pending).filter(([id]) => live.has(id))
+    Object.entries(state.marks).filter(([id]) => live.has(id))
   );
   try {
     const target = manifestPath(mainHarness);
@@ -491,6 +555,26 @@ export const statusReport = (status: CapStatus): string => {
       `${prunable(entry) ? ", prunable" : ""}` +
       `${entry.own ? ", this session" : ""}`
   );
+  const health: string[] = [];
+  if (status.gaps.length > 0) {
+    health.push(`foundation gaps: ${status.gaps.join("; ")}`);
+  }
+  const manifestParts: string[] = [];
+  if (status.manifestCorrupt) {
+    manifestParts.push(
+      "unreadable — repair or delete .loop-worktrees/manifest.json (prune leaves it untouched)"
+    );
+  }
+  if (status.manifestStale.length > 0) {
+    manifestParts.push(
+      `stale mark(s) ${status.manifestStale.join(", ")} — no registered ` +
+        `worktree (lpwr-worktree-prune sweeps them)`
+    );
+  }
+  if (manifestParts.length > 0) {
+    health.push(`manifest: ${manifestParts.join("; ")}`);
+  }
+  const healthText = health.length > 0 ? ` ${health.join("; ")}.` : "";
   let capNote = "";
   if (status.atCap) {
     const anyPrunable = status.entries.some(prunable);
@@ -503,7 +587,7 @@ export const statusReport = (status: CapStatus): string => {
         `confirmation, or mark a shipped spec Done in docs/state.md.`;
   }
   const listing = lines.length > 0 ? ` — ${lines.join("; ")}` : "";
-  return `Worktree status: ${status.open}/${status.cap} open${listing}.${capNote}`;
+  return `Worktree status: ${status.open}/${status.cap} open${listing}.${healthText}${capNote}`;
 };
 
 // --- Merge preflight (rule 51) ---------------------------------------------
@@ -643,6 +727,18 @@ const copyDir = async (src: string, dst: string): Promise<void> => {
 // lpwr-check-setup and the TUI sidebar), warned here, never silently patched.
 const FOUNDATION = ["state", "context", "constitution", "audit"];
 
+// ONE link inventory drives both provisioning and status gap detection
+// (fixes.md P0-2) — harness-relative rels plus the project-root dependency
+// dir, so the two views can never drift apart.
+const HARNESS_LINK_RELS: string[] = [
+  ".opencode/node_modules",
+  ".opencode/package.json",
+  ".opencode/package-lock.json",
+  "docs/memos",
+  ...FOUNDATION.map((name) => `docs/${name}.md`),
+];
+const ROOT_LINK_RELS: string[] = ["node_modules"];
+
 const provision = async (
   plugin: PluginInput,
   options: {
@@ -679,32 +775,19 @@ const provision = async (
     }
   }
   const links: [string, string][] = [
-    [
-      path.join(mainHarness, ".opencode/node_modules"),
-      path.join(worktreeHarness, ".opencode/node_modules"),
-    ],
-    [
-      path.join(mainHarness, ".opencode/package.json"),
-      path.join(worktreeHarness, ".opencode/package.json"),
-    ],
-    [
-      path.join(mainHarness, ".opencode/package-lock.json"),
-      path.join(worktreeHarness, ".opencode/package-lock.json"),
-    ],
-    [
-      path.join(mainHarness, "docs/memos"),
-      path.join(worktreeHarness, "docs/memos"),
-    ],
-    [
-      path.join(mainRoot, "node_modules"),
-      path.join(worktreeRoot, "node_modules"),
-    ],
-    ...FOUNDATION.map(
-      (name) =>
-        [
-          path.join(mainHarness, `docs/${name}.md`),
-          path.join(worktreeHarness, `docs/${name}.md`),
-        ] as [string, string]
+    ...HARNESS_LINK_RELS.map(
+      (rel) =>
+        [path.join(mainHarness, rel), path.join(worktreeHarness, rel)] as [
+          string,
+          string,
+        ]
+    ),
+    ...ROOT_LINK_RELS.map(
+      (rel) =>
+        [path.join(mainRoot, rel), path.join(worktreeRoot, rel)] as [
+          string,
+          string,
+        ]
     ),
   ];
   const results = await Promise.all(
@@ -750,6 +833,54 @@ const moveSpecFolder = async (
   await rm(from, { force: true, recursive: true });
 };
 
+// One link's health: absent link whose target is gone = dangling/never
+// created (missing on trunk, with the fixing command); absent link with a
+// present target = provisioning failed or someone unlinked it. Both are
+// gaps, never a broken symlink left in place (fixes.md P0-2).
+const linkGap = async (
+  label: string,
+  linkPath: string,
+  target: string
+): Promise<string | null> => {
+  if (await exists(linkPath)) {
+    return null;
+  }
+  const targetExists = await exists(target);
+  return `${label}: ${
+    targetExists ? "not linked" : `missing on trunk (${gapHint(target)})`
+  }`;
+};
+
+// Foundation-link gaps for every open worktree — the same inventory
+// `provision` uses, recomputed on demand so lpwr-worktree-status shows
+// them long after the mint-time toast scrolled away (fixes.md P0-2).
+const foundationGaps = async (
+  o: Orientation,
+  entries: OpenWorktree[]
+): Promise<string[]> => {
+  const checks = entries.flatMap((entry) => {
+    const worktreeHarness = path.join(entry.path, o.harnessRel);
+    return [
+      ...HARNESS_LINK_RELS.map((rel) =>
+        linkGap(
+          `${entry.id} ${rel}`,
+          path.join(worktreeHarness, rel),
+          path.join(o.mainHarness, rel)
+        )
+      ),
+      ...ROOT_LINK_RELS.map((rel) =>
+        linkGap(
+          `${entry.id} ${rel}`,
+          path.join(entry.path, rel),
+          path.join(o.mainRoot, rel)
+        )
+      ),
+    ];
+  });
+  const results = await Promise.all(checks);
+  return results.filter((gap): gap is string => gap !== null);
+};
+
 // --- Service ----------------------------------------------------------------
 
 export interface WorktreeService {
@@ -779,12 +910,17 @@ export const createWorktreeService = (
     }
   };
 
-  const listOpen = async (): Promise<OpenWorktree[]> => {
-    const o = await orientation(root);
+  const readOpen = async (
+    o: Orientation
+  ): Promise<{
+    entries: OpenWorktree[];
+    manifestCorrupt: boolean;
+    marks: Record<string, string>;
+  }> => {
+    const state = await readManifest(o.mainHarness);
     const all = await worktreeList(o.mainRoot);
-    const pending = await readManifest(o.mainHarness);
     const open = all.filter((wt) => path.resolve(wt.path) !== o.mainRoot);
-    return Promise.all(
+    const entries = await Promise.all(
       open.map(async (wt) => {
         const id = specIdOfWorktree(wt) ?? path.basename(wt.path);
         return {
@@ -793,20 +929,33 @@ export const createWorktreeService = (
           id,
           own: path.resolve(wt.path) === o.sessionRoot,
           path: wt.path,
-          pending: Boolean(pending[id]),
+          pending: Boolean(state.marks[id]),
           shipped: await stateHasEntry(o.mainHarness, "done", id),
         };
       })
     );
+    return { entries, manifestCorrupt: state.corrupt, marks: state.marks };
+  };
+
+  const listOpen = async (): Promise<OpenWorktree[]> => {
+    const o = await orientation(root);
+    const open = await readOpen(o);
+    return open.entries;
   };
 
   const capStatus = async (): Promise<CapStatus> => {
-    const [entries, cap] = await Promise.all([listOpen(), resolveCap(root)]);
+    const o = await orientation(root);
+    const [open, cap] = await Promise.all([readOpen(o), resolveCap(root)]);
+    const gaps = await foundationGaps(o, open.entries);
+    const live = new Set(open.entries.map((entry) => entry.id));
     return {
-      atCap: entries.length >= cap,
+      atCap: open.entries.length >= cap,
       cap,
-      entries,
-      open: entries.length,
+      entries: open.entries,
+      gaps,
+      manifestCorrupt: open.manifestCorrupt,
+      manifestStale: Object.keys(open.marks).filter((id) => !live.has(id)),
+      open: open.entries.length,
     };
   };
 
@@ -818,9 +967,32 @@ export const createWorktreeService = (
       );
     }
     const o = await orientation(root);
-    const existing = findWorktree(await worktreeList(o.mainRoot), specId);
+    const all = await worktreeList(o.mainRoot);
+    const existing = findWorktree(all, specId);
     if (existing) {
       return "";
+    }
+    // A shipped spec consumes its ID (rule 1): Done in state.md means this
+    // ID has already shipped — minting again would branch from trunk over a
+    // merged history and clobber it (fixes.md P1-1). The normal propose /
+    // explore flow writes the folder on trunk BEFORE minting and is never
+    // Done yet, so a fresh proposal still adopts its folder as before.
+    if (await stateHasEntry(o.mainHarness, "done", specId)) {
+      throw new Error(
+        `Refused: spec ID ${specId} already exists — it is shipped ` +
+          `(Done in docs/state.md, rule 1); assign a fresh ` +
+          `<domain>-<sequence>.`
+      );
+    }
+    // A branch left behind by an interrupted manual cleanup would make
+    // `worktree add -b` fail with git's raw error — name the recovery.
+    const leftover = await git(o.mainRoot, ["branch", "--list", specId]);
+    if (leftover) {
+      throw new Error(
+        `Refused: branch ${specId} exists without a worktree — remove it ` +
+          `(git branch -D ${specId}, or lpwr-worktree-prune with force) ` +
+          `before minting again.`
+      );
     }
     if (!o.isTrunk) {
       throw new Error(
@@ -907,73 +1079,111 @@ export const createWorktreeService = (
     return entry.id;
   };
 
+  // One worktree's pass through the prune plan — kept out of `prune` so the
+  // driver stays a readable sequence of gates and the per-entry rules stay
+  // individually auditable (fixes.md P1-2: a failure at entry N leaves its
+  // manifest mark in place and the loop continues to N+1).
+  const pruneEntry = async (
+    o: Orientation,
+    entry: OpenWorktree,
+    options: PruneOptions,
+    lines: string[]
+  ): Promise<void> => {
+    const decision = pruneDecision(entry, options);
+    if (options.dryRun) {
+      lines.push(
+        decision.action === "remove"
+          ? `would prune ${entry.id} (${decision.reason})`
+          : `would skip ${entry.id}: ${decision.reason}`
+      );
+      return;
+    }
+    if (decision.action === "skip") {
+      lines.push(`skipped ${entry.id}: ${decision.reason}`);
+      if (entry.shipped && entry.dirty && !options.force) {
+        void toastWarning(
+          plugin,
+          `${entry.id} is shipped but its worktree has local changes (${entry.path}) — review, then prune it with lpwr-worktree-prune (force).`
+        );
+      }
+      return;
+    }
+    if (options.force) {
+      let confirmed = false;
+      if (options.confirm) {
+        try {
+          confirmed = await options.confirm(entry);
+        } catch {
+          confirmed = false;
+        }
+      }
+      if (!confirmed) {
+        lines.push(`skipped ${entry.id}: force-removal not confirmed`);
+        return;
+      }
+    }
+    const removed = await removeWorktree(
+      o,
+      entry,
+      Boolean(options.force) && entry.dirty
+    );
+    if (removed === entry.id) {
+      logInfo(
+        plugin,
+        SERVICE,
+        `pruned ${entry.id} (${decision.reason}) — ${entry.path}`
+      );
+      lines.push(`pruned ${entry.id} (${decision.reason})`);
+      return;
+    }
+    lines.push(removed);
+  };
+
   const prune = async (
     specId?: string,
     options: PruneOptions = {}
   ): Promise<string> => {
     const o = await orientation(root);
-    const entries = await listOpen();
-    // Housekeeping first, on every path (including the early returns below):
-    // marks for worktrees that no longer exist are dropped here, since only
-    // this mutating command may write the manifest.
-    await sweepStaleMarks(plugin, o.mainHarness, o.mainRoot);
+    const { entries, manifestCorrupt } = await readOpen(o);
+    const notices: string[] = [];
+    if (manifestCorrupt) {
+      // Never let an unreadable manifest masquerade as "nothing pending"
+      // (fixes.md P0-1): the result stays explicit even when marks are lost.
+      const notice =
+        "pending-cleanup manifest unreadable — marks unknown; shipped " +
+        "worktrees still close via docs/state.md. Repair or delete " +
+        ".loop-worktrees/manifest.json (lpwr-worktree-status reports " +
+        "manifest health).";
+      notices.push(notice);
+      logWarn(plugin, SERVICE, notice);
+      void toastWarning(plugin, `lpwr-worktree-prune: ${notice}`);
+    }
+    if (!options.dryRun) {
+      // Housekeeping first, on every path (including the early returns below):
+      // marks for worktrees that no longer exist are dropped here, since only
+      // this mutating command may write the manifest. Dry runs never write;
+      // sweepStaleMarks itself refuses to touch an unreadable file.
+      await sweepStaleMarks(plugin, o.mainHarness, o.mainRoot);
+    }
     const targets =
       specId === undefined
         ? entries
         : entries.filter((entry) => entry.id === specId);
-    if (specId !== undefined && targets.length === 0) {
-      return `No open worktree for ${specId}.`;
-    }
-    if (targets.length === 0) {
-      return "No open worktrees.";
-    }
     const lines: string[] = [];
-    // oxlint-disable-next-line no-await-in-loop -- prunes one worktree at a time so a failure never races the next removal
-    for (const entry of targets) {
-      const decision = pruneDecision(entry, options);
-      if (decision.action === "skip") {
-        lines.push(`skipped ${entry.id}: ${decision.reason}`);
-        if (entry.shipped && entry.dirty && !options.force) {
-          void toastWarning(
-            plugin,
-            `${entry.id} is shipped but its worktree has local changes (${entry.path}) — review, then prune it with lpwr-worktree-prune (force).`
-          );
-        }
-        continue;
-      }
-      if (options.force) {
-        let confirmed = false;
-        if (options.confirm) {
-          try {
-            // oxlint-disable-next-line no-await-in-loop -- the confirmation gates this removal before the next entry is considered
-            confirmed = await options.confirm(entry);
-          } catch {
-            confirmed = false;
-          }
-        }
-        if (!confirmed) {
-          lines.push(`skipped ${entry.id}: force-removal not confirmed`);
-          continue;
-        }
-      }
-      // oxlint-disable-next-line no-await-in-loop -- removal completes before the next entry is considered
-      const removed = await removeWorktree(
-        o,
-        entry,
-        Boolean(options.force) && entry.dirty
-      );
-      if (removed === entry.id) {
-        logInfo(
-          plugin,
-          SERVICE,
-          `pruned ${entry.id} (${decision.reason}) — ${entry.path}`
-        );
-        lines.push(`pruned ${entry.id} (${decision.reason})`);
-      } else {
-        lines.push(removed);
+    if (specId !== undefined && targets.length === 0) {
+      lines.push(`No open worktree for ${specId}.`);
+    } else if (targets.length === 0) {
+      lines.push("No open worktrees.");
+    } else {
+      // oxlint-disable-next-line no-await-in-loop -- prunes one worktree at a time so a failure never races the next removal
+      for (const entry of targets) {
+        // oxlint-disable-next-line no-await-in-loop -- removal completes before the next entry is considered
+        await pruneEntry(o, entry, options, lines);
       }
     }
-    return lines.join("\n");
+    // Notices ride after the results so a corrupt manifest can never scroll
+    // past as an unqualified success (fixes.md P0-1 acceptance).
+    return [...lines, ...notices].join("\n");
   };
 
   return { capStatus, listOpen, mint, prune };

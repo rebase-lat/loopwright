@@ -276,7 +276,7 @@ const readWorktrees = (
     .filter((id) => SPEC_ID.test(id))
     .map((id) => {
       // `.git/worktrees/<id>/gitdir` points at the worktree's own .git file;
-      // its dirname is the checkout root the pulse reads spec folders from.
+      // its dirname is the worktree root the pulse reads spec folders from.
       let worktreeRoot = path.join(repo, ".git", "worktrees", id);
       try {
         const gitdir = readFileSync(

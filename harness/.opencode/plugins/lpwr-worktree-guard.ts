@@ -263,12 +263,25 @@ const worktreeGuard = (plugin: PluginInput): Promise<Hooks> => {
       }
       try {
         const o = await orientation(root);
-        if (await markPendingCleanup(o.mainHarness, specId)) {
+        const result = await markPendingCleanup(o.mainHarness, specId);
+        if (result === "marked") {
           logInfo(
             plugin,
             SERVICE,
-            `lpwr-commit finished ${specId} — marked pending cleanup in ${path.join(".loop-worktrees", "manifest.json")}; prune with lpwr-worktree-prune (or the next lpwr-propose)`
+            `lpwr-commit completed ${specId} — marked pending cleanup in ${path.join(".loop-worktrees", "manifest.json")}; prune with lpwr-worktree-prune (or the next lpwr-propose)`
           );
+        } else if (result === "manifest-corrupt") {
+          // The manifest is never overwritten while unreadable — surface it
+          // here so the commit flow cannot end silently unmarked (fixes.md
+          // P0-1). Shipped status still lets lpwr-worktree-prune close it.
+          const message =
+            `worktree ${specId}: pending-cleanup manifest is unreadable — ` +
+            `mark not written; repair or delete ` +
+            `.loop-worktrees/manifest.json (lpwr-worktree-status reports ` +
+            `manifest health). The shipped path still lets ` +
+            `lpwr-worktree-prune close this worktree.`;
+          logWarn(plugin, SERVICE, message);
+          void toastWarning(plugin, message);
         }
       } catch (error) {
         logWarn(
@@ -285,7 +298,7 @@ const worktreeGuard = (plugin: PluginInput): Promise<Hooks> => {
       worktree_mint: tool({
         args: { spec_id: tool.schema.string().regex(SPEC_ID) },
         description:
-          "Mint the spec's worktree from the trunk session: create branch + worktree beside the project (dir = spec ID), provision the shared foundation links, and move docs/specs/<id>/ into it. Call once from lpwr-propose / lpwr-explore after journaling the frame/specify handoff; never from inside a worktree session.",
+          "Mint the spec's worktree from the trunk session: create branch + worktree beside the project (dir = spec ID), provision the shared foundation links, and move docs/specs/<id>/ into it. Call once from lpwr-propose / lpwr-explore after journaling the frame/specify handoff; never from inside a worktree session. Refuses malformed IDs, shipped IDs (Done in docs/state.md), and leftover branches before touching git.",
         execute: async (args) => {
           try {
             const created = await service.mint(args.spec_id);
@@ -308,6 +321,12 @@ const worktreeGuard = (plugin: PluginInput): Promise<Hooks> => {
       // and every force removal raises the permission confirmation below.
       worktree_prune: tool({
         args: {
+          dry_run: tool.schema
+            .boolean()
+            .optional()
+            .describe(
+              "Report what would be pruned or skipped without removing anything or writing the manifest."
+            ),
           force: tool.schema
             .boolean()
             .optional()
@@ -323,7 +342,7 @@ const worktreeGuard = (plugin: PluginInput): Promise<Hooks> => {
             ),
         },
         description:
-          "Prune spec worktrees: shipped (Done in docs/state.md) or pending-cleanup ones that are clean close directly; dirty or ineligible ones only with force, behind a human confirmation. Never prunes the worktree this session runs from.",
+          "Prune spec worktrees: shipped (Done in docs/state.md) or pending-cleanup ones that are clean close directly; dirty or in-flight ones only with force, behind a human confirmation. Never prunes the worktree this session runs from. Use dry_run to preview the plan first.",
         execute: (args, context) =>
           service.prune(args.spec_id, {
             confirm: async (entry) => {
@@ -344,6 +363,7 @@ const worktreeGuard = (plugin: PluginInput): Promise<Hooks> => {
                 return false;
               }
             },
+            dryRun: args.dry_run ?? false,
             force: args.force ?? false,
           }),
       }),

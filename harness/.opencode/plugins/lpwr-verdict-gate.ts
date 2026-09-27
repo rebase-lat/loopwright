@@ -442,8 +442,8 @@ const verdictGate = (plugin: PluginInput): Promise<Hooks> => {
     },
     "tool.execute.before": async (input, output) => {
       // Raw `git commit` through bash is the same Retain action as /lpwr-commit
-      // — gated when (and only when) the branch names a spec. Off-spec branches
-      // (bootstrap, harness development) stay ungated, mirroring lpwr-scope-guard's
+      // — gated when (and only when) the branch names a spec. Branches with no
+      // spec ID (bootstrap, harness development) stay ungated, mirroring lpwr-scope-guard's
       // active-spec model; the human's bash-ask checkpoint remains everywhere.
       if (input.tool !== "bash") {
         return;

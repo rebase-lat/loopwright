@@ -7,7 +7,7 @@ Stage: Specify.
 
 Delegation: all steps below run on workers you spawn — you hold no shell or write.
 
-Read the module at $ARGUMENTS directly — no upstream proposal — and write `docs/specs/<id>/spec.md` describing current behavior. Assign the traceability ID (`<domain>-<sequence>`) now; set `basis: observed` and `proposal_ref: null` (no proposal exists).
+Read the module at $ARGUMENTS directly — no upstream proposal — and write `docs/specs/<id>/spec.md` describing current behavior. Assign the traceability ID (`<domain>-<sequence>`) now; before settling on it, confirm it is unused: no `docs/specs/<id>/` folder on trunk or in any worktree, no `Done` entry for it in `docs/state.md`, and no worktree or branch of that name — `worktree_mint` refuses shipped IDs and leftover branches with the recovery, so a collision caught here costs a re-derive, not a broken worktree. If anything matches, take the next sequence number for the module's domain instead. Set `basis: observed` and `proposal_ref: null` (no proposal exists).
 
 Use skills `lpwr-boundary-audit`, `lpwr-primary-sources`, and `lpwr-writing-ears`: map data flows, edges, and dependencies first; ground every behavioral claim in the code actually read, never assumed; write observed behavior in EARS syntax. Add the `Current behavior narrative` and `Open questions` sections from `templates/spec.md` — ambiguities found (a null check that might be intentional or latent, a path with no caller, a comment contradicting the code) go there, not into invented criteria. Do not seek approval while any Open questions entry remains unresolved — each must become a criterion sub-ID, a non-goal, or a struck line with one-line resolution first (unresolved questions have no ID and cannot defer later).
 

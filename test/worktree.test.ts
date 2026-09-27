@@ -1,5 +1,11 @@
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import {
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -147,7 +153,7 @@ test("capBlocked names the prune command, not manual git surgery", () => {
   assert.doesNotMatch(message, /git worktree remove/u);
 });
 
-test("statusReport: listing, cap wording, and prunable vs stuck", () => {
+test("statusReport: listing, cap wording, health audit, prunable vs stuck", () => {
   const base: CapStatus = {
     atCap: true,
     cap: DEFAULT_CAP,
@@ -155,6 +161,9 @@ test("statusReport: listing, cap wording, and prunable vs stuck", () => {
       entry({ dirty: false, shipped: true }),
       entry({ branch: "auth-015", id: "auth-015", path: "/repo/auth-015" }),
     ],
+    gaps: [],
+    manifestCorrupt: false,
+    manifestStale: [],
     open: 2,
   };
   const open = statusReport(base);
@@ -174,33 +183,34 @@ test("statusReport: listing, cap wording, and prunable vs stuck", () => {
   assert.match(stuck, /1\/2 open/u);
   assert.match(stuck, /none are prunable/u);
 
+  // Always-on audit surface (fixes.md P0-1/P0-2): foundation gaps, a
+  // corrupt manifest, and stale marks all render in the report.
+  const unhealthy = statusReport({
+    ...base,
+    gaps: ["auth-014 .opencode/node_modules: missing on trunk (run lpwr-setup)"],
+    manifestCorrupt: true,
+    manifestStale: ["auth-999"],
+    open: 1,
+  });
+  assert.match(unhealthy, /foundation gaps: auth-014 \.opencode\/node_modules/u);
+  assert.match(unhealthy, /manifest: unreadable — repair or delete/u);
+  assert.match(unhealthy, /stale mark\(s\) auth-999/u);
+
   const idle = statusReport({
     atCap: false,
     cap: DEFAULT_CAP,
     entries: [],
+    gaps: [],
+    manifestCorrupt: false,
+    manifestStale: [],
     open: 0,
   });
   assert.equal(idle, "Worktree status: 0/2 open.");
 });
 
-test("resolveCap: default, opencode.json lpwr.max_worktrees, env override", async () => {
-  const dir = tempDir("cap");
-  assert.equal(await resolveCap(dir), DEFAULT_CAP);
-
-  // JSONC: comments, trailing commas, and a `//` inside a URL string must
-  // all survive parsing (harness opencode.json carries comments).
-  writeFileSync(
-    path.join(dir, "opencode.json"),
-    [
-      "{",
-      '  // raise the cap for this project',
-      '  "$schema": "https://opencode.ai/config.json",',
-      '  "lpwr": { "max_worktrees": 5, },',
-      "}",
-    ].join("\n")
-  );
-  assert.equal(await resolveCap(dir), 5);
-
+test("resolveCap: invalid-cap matrix — env × config (fixes.md P3-1)", async () => {
+  const dir = tempDir("cap-matrix");
+  const configPath = path.join(dir, "opencode.json");
   const previous = process.env.LPWR_MAX_WORKTREES;
   const restoreEnv = () => {
     if (previous === undefined) {
@@ -209,26 +219,75 @@ test("resolveCap: default, opencode.json lpwr.max_worktrees, env override", asyn
       process.env.LPWR_MAX_WORKTREES = previous;
     }
   };
-  process.env.LPWR_MAX_WORKTREES = "3";
-  try {
-    assert.equal(await resolveCap(dir), 3, "env wins over config");
-    // Malformed or non-positive values must fall through to the config value,
-    // never become NaN/0 and silently disable the cap in either direction.
-    process.env.LPWR_MAX_WORKTREES = "abc";
-    assert.equal(
-      await resolveCap(dir),
+
+  // env ∈ {unset, "", "abc", "0", "-1", "1", "10"} — only positive integers win.
+  const envCases: [string | undefined, number | undefined][] = [
+    [undefined, undefined],
+    ["", undefined],
+    ["abc", undefined],
+    ["0", undefined],
+    ["-1", undefined],
+    ["1", 1],
+    ["10", 10],
+  ];
+  // config ∈ {unset, 0, 5, unparsable} — only positive integers win; the
+  // config-5 file is JSONC (comments, trailing comma, `//` inside a URL) so
+  // the string-aware parser stays covered by the matrix itself.
+  const configCases: [string, () => void, number][] = [
+    [
+      "config unset",
+      () => rmSync(configPath, { force: true }),
+      DEFAULT_CAP,
+    ],
+    [
+      "config 0",
+      () =>
+        writeFileSync(configPath, '{"lpwr": {"max_worktrees": 0}}\n'),
+      DEFAULT_CAP,
+    ],
+    [
+      "config 5 (JSONC)",
+      () =>
+        writeFileSync(
+          configPath,
+          [
+            "{",
+            '  // raise the cap for this project',
+            '  "$schema": "https://opencode.ai/config.json",',
+            '  "lpwr": { "max_worktrees": 5, },',
+            "}",
+          ].join("\n")
+        ),
       5,
-      "invalid env falls through to config"
-    );
-    process.env.LPWR_MAX_WORKTREES = "0";
-    assert.equal(await resolveCap(dir), 5, "zero env falls through to config");
+    ],
+    [
+      "config unparsable",
+      () => writeFileSync(configPath, "{ not json"),
+      DEFAULT_CAP,
+    ],
+  ];
+
+  try {
+    for (const [envValue, envResult] of envCases) {
+      if (envValue === undefined) {
+        Reflect.deleteProperty(process.env, "LPWR_MAX_WORKTREES");
+      } else {
+        process.env.LPWR_MAX_WORKTREES = envValue;
+      }
+      for (const [label, setup, configExpected] of configCases) {
+        setup();
+        const expected = envResult ?? configExpected;
+        assert.equal(
+          // oxlint-disable-next-line no-await-in-loop -- the matrix mutates global env between cases, so each resolveCap must run in order
+          await resolveCap(dir),
+          expected,
+          `env=${JSON.stringify(envValue)} × ${label} → ${expected}`
+        );
+      }
+    }
   } finally {
     restoreEnv();
   }
-
-  // Unreadable config falls back to the default, never throws.
-  writeFileSync(path.join(dir, "opencode.json"), "{ not json");
-  assert.equal(await resolveCap(dir), DEFAULT_CAP);
 });
 
 test("stateHasEntry: Done section membership, case-insensitive", async () => {
@@ -253,24 +312,60 @@ test("markPendingCleanup: only after Done, idempotent, manifest round-trips", as
   mkdirSync(path.join(harness, "docs"), { recursive: true });
 
   // Not Done yet — a failed commit must not mark its worktree closable.
-  assert.equal(await markPendingCleanup(harness, "auth-014"), false);
-  assert.deepEqual(await readManifest(harness), {});
+  assert.equal(await markPendingCleanup(harness, "auth-014"), "not-shipped");
+  assert.deepEqual(await readManifest(harness), { corrupt: false, marks: {} });
 
   writeFileSync(
     path.join(harness, "docs/state.md"),
     "## Done\n- auth-014: shipped\n"
   );
-  assert.equal(await markPendingCleanup(harness, "auth-014"), true);
-  const pending = await readManifest(harness);
-  assert.ok(pending["auth-014"], "manifest records the mark");
+  assert.equal(await markPendingCleanup(harness, "auth-014"), "marked");
+  const state = await readManifest(harness);
+  assert.ok(state.marks["auth-014"], "manifest records the mark");
+  assert.equal(state.corrupt, false);
   // Second mark is a no-op, not a duplicate write.
-  assert.equal(await markPendingCleanup(harness, "auth-014"), false);
+  assert.equal(await markPendingCleanup(harness, "auth-014"), "already");
   // Invalid IDs never mark.
-  assert.equal(await markPendingCleanup(harness, "../etc"), false);
+  assert.equal(await markPendingCleanup(harness, "../etc"), "invalid");
+});
 
-  // Corrupt manifest degrades to empty, never throws.
-  writeFileSync(path.join(harness, ".loop-worktrees/manifest.json"), "{ nope");
-  assert.deepEqual(await readManifest(harness), {});
+test("readManifest: corruption is surfaced, never silently empty (P0-1)", async () => {
+  const harness = tempDir("manifest-corrupt");
+  const file = path.join(harness, ".loop-worktrees", "manifest.json");
+  mkdirSync(path.dirname(file), { recursive: true });
+
+  // Truncated JSON — the W2 silent-swallow case in the one file where
+  // losing marks strands worktrees until the cap blocks minting.
+  const truncated = '{"pending": {"auth-014": "2026-09';
+  writeFileSync(file, truncated);
+  const corrupt = await readManifest(harness);
+  assert.equal(corrupt.corrupt, true, "truncation flagged");
+  assert.deepEqual(corrupt.marks, {});
+  assert.ok(corrupt.error, "error detail carried for the warning");
+
+  // Valid JSON with the wrong schema is corruption too.
+  writeFileSync(file, '{"pendingCleanup": {}}');
+  const wrongShape = await readManifest(harness);
+  assert.equal(wrongShape.corrupt, true, "shape mismatch");
+
+  // The commit-event mark refuses AND preserves the file for repair —
+  // never overwrite unreadable marks to write one new one.
+  mkdirSync(path.join(harness, "docs"), { recursive: true });
+  writeFileSync(path.join(harness, "docs/state.md"), "## Done\n- auth-014: shipped\n");
+  assert.equal(
+    await markPendingCleanup(harness, "auth-014"),
+    "manifest-corrupt",
+    "mark refused loudly instead of silently lost"
+  );
+  assert.equal(
+    readFileSync(file, "utf-8"),
+    '{"pendingCleanup": {}}',
+    "corrupt file never overwritten"
+  );
+
+  // A missing file is the normal empty state, not corruption.
+  const absent = await readManifest(tempDir("manifest-absent"));
+  assert.deepEqual(absent, { corrupt: false, marks: {} });
 });
 
 test("mergeBlockingFiles: rule-51 tails ride, everything else blocks", () => {

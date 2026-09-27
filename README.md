@@ -52,6 +52,17 @@ Run from `harness/` (the live workspace). After any config change, quit + restar
 5. `lpwr-propose` → `lpwr-specs` → `lpwr-tasks` → `lpwr-implement` → `lpwr-review` →
    `lpwr-commit` → `lpwr-teach` — the idea-to-lesson spine.
 
+**Worktree cap.** The open-worktree cap defaults to 2. Raise it for the
+session with `LPWR_MAX_WORKTREES=4`, or persistently in `opencode.json`:
+
+```json
+{ "lpwr": { "max_worktrees": 4 } }
+```
+
+The env var wins; invalid values fall through to config; if both are absent,
+the default applies. The cap is read on every check, so either edit takes
+effect from the next command — no restart (rule 29).
+
 ## Install into a project
 
 One script installs, updates, and health-checks the harness in any project:
@@ -87,7 +98,7 @@ loopwright/
 ├── PRINCIPLES.md               # design intent (resume of the former principles essays)
 ├── LICENSE                     # MIT
 ├── CHANGELOG.md
-├── package.json                # npm scripts: lint, fmt, fmt:check, typecheck, test; version 1.4.3
+├── package.json                # npm scripts: lint, fmt, fmt:check, typecheck, test; version 1.4.4
 ├── loopwright.sh               # installer: install/update/doctor/fix/status/uninstall for harness/
 ├── opencode.json               # developer MCP + LSP config — distinct from harness/opencode.json (shipped matrix)
 ├── constitution.md             # this repo's own rules — the committed record (harness ships without one; onboard creates it)

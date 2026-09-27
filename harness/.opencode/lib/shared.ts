@@ -35,7 +35,7 @@ export const EXPECTED: [string, string][] = [
   ["templates/spec.md", "record shapes"],
 ];
 
-// Harness bookkeeping every spec branch owns regardless of its declared
+// Harness bookkeeping every spec's branch owns regardless of its declared
 // surface: the audit trail and the lesson/state/memo reconcile targets written
 // during Retain (lpwr-commit) and occasionally Execute (lpwr-diagnose). Kept
 // out of the Tasks section so the declared surface stays product-only

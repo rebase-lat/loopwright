@@ -5,6 +5,8 @@ agent: orchestrator
 
 Stage: Cross-cutting.
 
+Delegation: none — read-only orientation; you hold no shell or write.
+
 Suggest the next command — orientation only, never enforcement (enforcement stays with `lpwr-spec-link` and `lpwr-scope-guard`). Read-only by construction: read files, suggest one command, write nothing (not to `state.md`, not to the log).
 
 Walk this decision path over file existence and state, in order, stopping at the first unmet condition (optional `$ARGUMENTS` names the active spec; otherwise take it from the worktree status injected above — open spec worktrees are the live in-flight record — falling back to `docs/state.md`'s optional "In flight" section when no worktree is open):

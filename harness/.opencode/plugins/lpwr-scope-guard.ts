@@ -181,7 +181,7 @@ const scopeGuard = (plugin: PluginInput): Promise<Hooks> =>
       const { specId } = resolved;
       // The spec and the allowed surface both resolve beside this plugin's
       // project directory (same anchor as lpwr-spec-link); `resolved` exists
-      // only to prove an active spec branch via the file's git worktree.
+      // only to prove the branch hosts the active spec (the file's git worktree).
       const declaredSurface = await readDeclaredSurface(
         path.join(plugin.directory, `docs/specs/${specId}/spec.md`),
         specId

@@ -14,16 +14,19 @@ usage() {
   cat <<'EOF'
 loopwright.sh — install, update, and check the Loopwright harness
 
-usage: loopwright.sh <command> [options]
+usage: loopwright.sh <command> [DIR] [options]
 
 commands:
-  install     install the harness into --project (default: .)
+  install     install the harness into DIR (default: .)
   update      update an installed harness to the latest (or --version) release
   doctor      detect errors; exit 0 clean, 1 findings, 2 not installed
   fix         repair mechanical problems (restores, deps, config keys)
   status      show installed version, drift, and update availability
   uninstall   remove harness-owned files (keeps project + foundation files)
   version     print this script's version
+
+arguments:
+  DIR                 target project directory (same as --project DIR)
 
 options:
   --project DIR       target project directory (default: .)
@@ -38,9 +41,9 @@ options:
   --json              (doctor) findings as JSON
 
 bootstrap:
-  gh api repos/rebase-lat/loopwright/contents/loopwright.sh \
-    -H "Accept: application/vnd.github.raw" > loopwright.sh && chmod +x loopwright.sh
-  ./loopwright.sh install
+  curl -fsSL https://raw.githubusercontent.com/rebase-lat/loopwright/main/loopwright.sh \
+    -o loopwright.sh && chmod +x loopwright.sh
+  ./loopwright.sh install [DIR]
 EOF
 }
 
@@ -66,6 +69,7 @@ sha256() {
 }
 
 PROJECT="."
+PROJECT_SET=0
 VERSION=""
 SOURCE_MODE=""
 SOURCE_DIR=""
@@ -82,7 +86,11 @@ if [ $# -gt 0 ]; then shift; fi
 while [ $# -gt 0 ]; do
   case "$1" in
     --project)
+      if [ "$PROJECT_SET" = 1 ]; then
+        die "project directory given twice (use either DIR or --project DIR)"
+      fi
       PROJECT="${2:?--project needs a directory}"
+      PROJECT_SET=1
       shift 2
       ;;
     --version)
@@ -127,8 +135,14 @@ while [ $# -gt 0 ]; do
       usage
       exit 0
       ;;
+    -*) die "unknown option: $1 (see --help)" ;;
     *)
-      die "unknown option: $1 (see --help)"
+      if [ "$PROJECT_SET" = 1 ]; then
+        die "project directory given twice (use either DIR or --project DIR)"
+      fi
+      PROJECT="$1"
+      PROJECT_SET=1
+      shift
       ;;
   esac
 done
@@ -288,8 +302,8 @@ fetch_remote() {
   url="https://codeload.github.com/$OWNER/$REPO/tar.gz/$ref"
   if ! curl -fsSL -K "$TMPROOT/curlrc" "$url" -o "$TMPROOT/payload.tgz"; then
     if [ -z "$tk" ]; then
-      die "cannot fetch $ref: $OWNER/$REPO is private or unreachable.
-  run 'gh auth login' or set GITHUB_TOKEN, then retry."
+      die "cannot fetch $ref from $url (network problem, or unknown tag?)
+  the repository is public — no auth needed; set GITHUB_TOKEN if you are rate-limited."
     fi
     die "cannot fetch $ref from $url (network problem, or unknown tag?)"
   fi
@@ -1174,7 +1188,7 @@ case "$SUBCMD" in
   version)
     printf 'loopwright.sh %s\n' "$SCRIPT_VERSION"
     ;;
-  help) usage ;;
+  help | -h | --help) usage ;;
   *)
     usage >&2
     die "unknown command: $SUBCMD"

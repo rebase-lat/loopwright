@@ -225,6 +225,24 @@ test("install: fresh project, guards, dry-run, then green doctor", () => {
   expectStatus(status, 2, "status exit 2 when not installed");
 });
 
+test("install: destination directory as a positional argument", () => {
+  const payload = makePayload(tempDir("payload-pos"));
+  const project = makeProject("positional");
+  const r = sh(["install", project, "--source", "local", payload,
+    "--version", "1.0.0", "--offline", "--no-deps", "--no-opencode"]);
+  expectStatus(r, 1, "install with positional DIR exits 1 (deps not installed)");
+  assert.ok(existsSync(path.join(project, ".loopwright", "manifest.json")),
+    "manifest written into the positional destination");
+
+  const dup = sh(["install", project, "--project", project, "--source", "local", payload,
+    "--version", "1.0.0", "--no-deps"]);
+  assert.notEqual(dup.status, 0, "DIR + --project together is refused");
+  assert.match(output(dup), /given twice/u);
+
+  const missing = sh(["status", tempDir("pos-none"), "--offline"]);
+  expectStatus(missing, 2, "positional DIR reaches the not-installed path");
+});
+
 test("install: pre-existing AGENTS.md keeps original, variant carries protocol", () => {
   const payload = makePayload(tempDir("payload-a"));
   const project = makeProject("agents");

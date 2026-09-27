@@ -72,9 +72,10 @@ effect from the next command — no restart (rule 29).
 One script installs, updates, and health-checks the harness in any project:
 
 ```sh
-gh api repos/rebase-lat/loopwright/contents/loopwright.sh \
-  -H "Accept: application/vnd.github.raw" > loopwright.sh && chmod +x loopwright.sh
+curl -fsSL https://raw.githubusercontent.com/rebase-lat/loopwright/main/loopwright.sh \
+  -o loopwright.sh && chmod +x loopwright.sh
 ./loopwright.sh install    # fetch a release, merge the harness into this project
+./loopwright.sh install ../other-project   # or name the destination directory
 ./loopwright.sh doctor     # detect errors — exit 0 clean, 1 findings, 2 not installed
 ./loopwright.sh update     # 3-way merge a newer release over local edits
 ./loopwright.sh fix        # restore drifted files, install deps, heal config keys
@@ -89,10 +90,12 @@ checksummed `.loopwright/manifest.json`, and caches the payload for later
 (`git merge-file` for files, JSONC-aware merge for configs); real conflicts
 keep markers, are flagged by `doctor`, and are recorded by `fix` once the
 human resolves them. Colliding files need `--yes`; every overwrite is backed
-up under `.loopwright/backups/`. Auth is `gh auth login` or `GITHUB_TOKEN`
-(the repository is private); `--source local <dir>` installs from a checkout
-and `--version <tag>` pins a release. `status`, `uninstall`, and `--dry-run`
-cover the rest of the lifecycle — see `./loopwright.sh --help`.
+up under `.loopwright/backups/`. The repository is public, so install needs
+no auth (`GITHUB_TOKEN` only raises the rate limit); `--source local <dir>`
+installs from a checkout and `--version <tag>` pins a release. The target
+directory is a positional argument (or `--project DIR`); `status`,
+`uninstall`, and `--dry-run` cover the rest of the lifecycle — see
+`./loopwright.sh --help`.
 
 ## Repo layout
 

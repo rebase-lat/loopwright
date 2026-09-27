@@ -979,7 +979,10 @@ export const createWorktreeService = (
     if (existing) {
       return "";
     }
-    // A shipped spec consumes its ID (rule 1): Done in state.md means this
+    // A shipped spec consumes its ID — no numbered rule states single-use
+    // directly; it falls out of AGENTS rule 1 (one ID joins branch, folder,
+    // commits) plus implementation-rules 2 (branch = folder = ID): Done in
+    // state.md means this
     // ID has already shipped — minting again would branch from trunk over a
     // merged history and clobber it (fixes.md P1-1). The normal propose /
     // explore flow writes the folder on trunk BEFORE minting and is never
@@ -987,7 +990,7 @@ export const createWorktreeService = (
     if (await stateHasEntry(o.mainHarness, "done", specId)) {
       throw new Error(
         `Refused: spec ID ${specId} already exists — it is shipped ` +
-          `(Done in docs/state.md, rule 1); assign a fresh ` +
+          `(Done in docs/state.md); assign a fresh ` +
           `<domain>-<sequence>.`
       );
     }

@@ -140,7 +140,7 @@ const hasNonRetainHandoff = async (
 // re-confirms the spec's tier, so both files must name the same tier — a
 // mismatch (or a missing/unknown value on either side) means the review was
 // rendered against the wrong spec version or the tier was edited in prose.
-// Changing the tier travels through lpwr-amend (rule 9), never the review
+// Changing the tier travels through lpwr-amend (AGENTS rule 9), never the review
 // frontmatter; strict equality keeps spec.md the single source of truth.
 const TIER_VALUES = new Set(["low", "medium", "high"]);
 
@@ -346,7 +346,7 @@ const enforceVerdictGate = async (
     block(
       plugin,
       `Blocked: risk_tier mismatch for ${specId} — ${tier} — carry the tier ` +
-        `over, or change it via lpwr-amend (rule 9), then re-review.`
+        `over, or change it via lpwr-amend (AGENTS rule 9), then re-review.`
     );
   }
   const diffProblem = await diffRefProblem(root, review, options.release);

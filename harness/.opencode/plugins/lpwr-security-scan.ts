@@ -221,7 +221,10 @@ const auditDependencies = async (
   if (commands.length === 0) {
     return {
       warned:
-        "No audit command declared in docs/constitution.md — dependency findings are unverified; declare one per stack or run them manually before release.",
+        "No audit command declared in docs/constitution.md — dependency findings " +
+        "are unverified. Either the file is not materialized yet (run lpwr-install, " +
+        "then lpwr-onboard) or it holds no `Audit command:` line of its own; " +
+        "declare one per stack, or run the audit manually before release.",
     };
   }
   for (const command of commands) {

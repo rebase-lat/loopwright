@@ -1,8 +1,12 @@
 # AGENTS.md — Loopwright Harness (protocol only)
 
-This file is protocol, not rules. The rules live in `docs/constitution.md`.
+This file is protocol: rules 1–13 below. `docs/constitution.md` holds the
+ubiquitous floors (EARS), verdict floor, and verdict authority — generated per
+workspace by `lpwr-install` + `lpwr-onboard`, not the numbered rules.
+`docs/implementation-rules.md` is the extended checklist with its own 1–52
+numbering. The two sets overlap (`rule 9` means different things in each), so
+cite every rule by source: `AGENTS rule N` or `implementation-rules N`.
 Team conventions (permissions, spawn, toasts, worktrees): `docs/conventions.md`.
-Extended rule checklist: `docs/implementation-rules.md`.
 
 1. Every unit of work keys off one spec ID (`<domain>-<sequence>`, e.g. `auth-014`). Worktree name, branch name, `docs/specs/<id>/` folder, commit messages, and `log.ndjson` lines all carry it.
 2. Never start Execute (`lpwr-implement`) without an approved `docs/specs/<id>/spec.md` (`status: approved`).

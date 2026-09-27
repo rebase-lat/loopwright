@@ -198,10 +198,16 @@ names the failure it prevents.
     missing `docs/` files without overwriting; `lpwr-setup` makes the machine ready; only
     `lpwr-onboard` writes project truth. No domain command runs without `docs/context.md` and
     `docs/constitution.md` — enforced by `lpwr-guard-bootstrap.ts`, with `lpwr-setup`,
-    `lpwr-onboard`, `lpwr-guide`, and `lpwr-install` itself exempt.
+    `lpwr-onboard`, `lpwr-guide`, `lpwr-install`, `lpwr-worktree-prune`, and
+    `lpwr-worktree-status` itself exempt (the two read-only worktree commands must stay
+    runnable to point at the repair — same reason as guide).
 
 48. **Built-in and MCP tools are granted per phase via the agent matrix; omitted tools default
-    allow, so the matrix names every known builtin.** `mcp_*` defaults `deny` until
+    allow, so the matrix names every known builtin.** The known set is `read`, `edit`,
+    `glob`, `grep`, `bash`, `task`, `skill`, `lsp`, `question`, `webfetch`, `websearch`,
+    `external_directory`, `doom_loop`, and `todowrite` — the checklist `lpwr-setup` step 4
+    greps for must name the same set, or the audit cannot see its own holes. `mcp_*` defaults
+    `deny` until
     `lpwr-setup` evaluates the enabled servers and the human applies a phase-slot allow —
     setup reports suggested keys only, never patches `opencode.json`. Structured human picks
     (risk tier, design review, verdict, option selection, interview rounds) go through the

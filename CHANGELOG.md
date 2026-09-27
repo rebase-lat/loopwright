@@ -57,6 +57,13 @@ history for per-change detail.
     prune, cap, prune conditions, manual last resort), and
     conventions/guide/lpwr-commit/README updated to match; new read-only
     `lpwr-worktree-status` command (27 commands total).
+  - **Verification pass** (F1–F17 re-checked): `.env` write failure now
+    raises a TUI toast alongside the structured log (W5's buried warning),
+    `lpwr-worktree-prune` sweeps stale pending-cleanup marks — strictly
+    enumerated, so a git failure skips the sweep instead of misreading every
+    key — the cap's per-check resolution is documented (rule 29: env/config
+    edits apply from the next command), and fixtures cover invalid
+    `LPWR_MAX_WORKTREES` values plus the stale-mark sweep.
   - Tests: `test/worktree.test.ts` (mocked porcelain output, prune
     decisions, cap resolution, tail contract, manifest, `specIdArgument`) +
     `test/worktree-integration.test.ts` (real temp repo: mint → work →

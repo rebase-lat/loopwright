@@ -202,15 +202,28 @@ test("resolveCap: default, opencode.json lpwr.max_worktrees, env override", asyn
   assert.equal(await resolveCap(dir), 5);
 
   const previous = process.env.LPWR_MAX_WORKTREES;
-  process.env.LPWR_MAX_WORKTREES = "3";
-  try {
-    assert.equal(await resolveCap(dir), 3, "env wins over config");
-  } finally {
+  const restoreEnv = () => {
     if (previous === undefined) {
       Reflect.deleteProperty(process.env, "LPWR_MAX_WORKTREES");
     } else {
       process.env.LPWR_MAX_WORKTREES = previous;
     }
+  };
+  process.env.LPWR_MAX_WORKTREES = "3";
+  try {
+    assert.equal(await resolveCap(dir), 3, "env wins over config");
+    // Malformed or non-positive values must fall through to the config value,
+    // never become NaN/0 and silently disable the cap in either direction.
+    process.env.LPWR_MAX_WORKTREES = "abc";
+    assert.equal(
+      await resolveCap(dir),
+      5,
+      "invalid env falls through to config"
+    );
+    process.env.LPWR_MAX_WORKTREES = "0";
+    assert.equal(await resolveCap(dir), 5, "zero env falls through to config");
+  } finally {
+    restoreEnv();
   }
 
   // Unreadable config falls back to the default, never throws.

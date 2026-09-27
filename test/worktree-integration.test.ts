@@ -169,13 +169,22 @@ test("mint → work → commit → prune cycle leaves no orphans", async () => {
     assert.ok(marked["auth-001"], "manifest marked");
     assert.equal(git(root, "status", "--porcelain"), "", "manifest gitignored");
 
+    // A mark whose worktree no longer exists (removed outside the service)
+    // must be swept by the next prune instead of lingering as an orphan.
+    const manifestFile = path.join(root, ".loop-worktrees", "manifest.json");
+    const manifest = JSON.parse(readFileSync(manifestFile, "utf-8")) as {
+      pending: Record<string, string>;
+    };
+    manifest.pending["auth-999"] = "2026-01-01T00:00:00.000Z";
+    writeFileSync(manifestFile, `${JSON.stringify(manifest, null, 2)}\n`);
+
     // Prune closes worktree + branch and clears the mark.
     const report = await service.prune("auth-001");
     assert.match(report, /pruned auth-001 \(shipped \+ pending cleanup\)/u);
     assert.ok(!existsSync(wt), "worktree dir removed");
     assert.ok(!gitOk(root, "show-ref", "--verify", "--quiet", "refs/heads/auth-001"), "branch removed");
     assert.deepEqual(await service.listOpen(), []);
-    assert.deepEqual(await readManifest(root), {}, "mark cleared");
+    assert.deepEqual(await readManifest(root), {}, "mark cleared, stale mark swept");
     assert.equal(worktreeCount(root), 1, "only the main worktree remains");
   } finally {
     rmSync(base, { force: true, recursive: true });

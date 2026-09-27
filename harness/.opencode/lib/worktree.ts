@@ -34,6 +34,7 @@ import {
   logError,
   logInfo,
   logWarn,
+  parseWorktreeList,
   toastWarning,
   trunkBranch,
   worktreeList,
@@ -190,7 +191,9 @@ export const stateHasEntry = async (
 
 // Cap (rule 29): env wins (fast override, headless-safe), then the harness's
 // opencode.json, then the default. Unreadable config falls back silently —
-// the cap must never be the reason a session fails to start.
+// the cap must never be the reason a session fails to start. Resolved on
+// every cap check, so editing either source mid-session takes effect from the
+// next command, no restart.
 // Minimal JSONC tolerance: comments and trailing commas, both string-aware so
 // `"https://…"` and `"a,b"` pass through untouched.
 const stripJsoncComments = (raw: string): string => {
@@ -368,6 +371,62 @@ const clearPending = async (
     `${JSON.stringify({ pending: next, version: 1 }, null, 2)}\n`,
     "utf-8"
   );
+};
+
+// Hygiene for `lpwr-worktree-prune`: drop pending marks whose worktree no
+// longer exists (removed outside the service, or an interrupted earlier run).
+// The enumeration is strict on purpose — when git cannot list worktrees the
+// sweep skips entirely instead of misreading every key as stale. Only the
+// mutating prune path sweeps: lpwr-guide stays read-only by construction
+// (rule 34). Designed never to throw.
+const sweepStaleMarks = async (
+  plugin: PluginInput,
+  mainHarness: string,
+  mainRoot: string
+): Promise<void> => {
+  const pending = await readManifest(mainHarness);
+  const keys = Object.keys(pending);
+  if (keys.length === 0) {
+    return;
+  }
+  let live: Set<string>;
+  try {
+    const parsed = parseWorktreeList(
+      await git(mainRoot, ["worktree", "list", "--porcelain"])
+    );
+    live = new Set(
+      parsed.map(specIdOfWorktree).filter((id): id is string => id !== null)
+    );
+  } catch {
+    return;
+  }
+  const stale = keys.filter((id) => !live.has(id));
+  if (stale.length === 0) {
+    return;
+  }
+  const next = Object.fromEntries(
+    Object.entries(pending).filter(([id]) => live.has(id))
+  );
+  try {
+    const target = manifestPath(mainHarness);
+    await mkdir(path.dirname(target), { recursive: true });
+    await writeFile(
+      target,
+      `${JSON.stringify({ pending: next, version: 1 }, null, 2)}\n`,
+      "utf-8"
+    );
+    logInfo(
+      plugin,
+      SERVICE,
+      `cleared stale pending-cleanup mark(s): ${stale.join(", ")} (worktree no longer registered)`
+    );
+  } catch (error) {
+    logWarn(
+      plugin,
+      SERVICE,
+      `could not sweep stale pending-cleanup marks: ${String(error)}`
+    );
+  }
 };
 
 // --- Prune contract ---------------------------------------------------------
@@ -663,11 +722,11 @@ const provision = async (
     try {
       await writeFile(envPath, `OPENCODE_SPEC_ID=${specId}\n`);
     } catch (error) {
-      logWarn(
-        plugin,
-        SERVICE,
-        `could not write ${envPath}: ${String(error)} — branch-derived spec ID still applies`
-      );
+      // W5: the fallback is real (branch-derived ID), but the failure must be
+      // visible — toast for the session, structured log for the record.
+      const message = `could not write ${envPath}: ${String(error)} — branch-derived spec ID still applies`;
+      logWarn(plugin, SERVICE, message);
+      void toastWarning(plugin, `Worktree ${specId}: ${message}`);
     }
   }
 };
@@ -830,6 +889,9 @@ export const createWorktreeService = (
       logWarn(plugin, SERVICE, message);
       return `failed ${entry.id}: ${message}`;
     }
+    // The worktree is gone — the mark is fulfilled regardless of what the
+    // branch does next, so the manifest never keeps a key for a removed tree.
+    await clearPending(o.mainHarness, entry.id);
     if (entry.branch && SPEC_ID.test(entry.branch)) {
       try {
         await git(o.mainRoot, ["branch", "-D", entry.branch]);
@@ -842,7 +904,6 @@ export const createWorktreeService = (
         return `${entry.id} worktree removed; branch deletion failed: ${String(error)}`;
       }
     }
-    await clearPending(o.mainHarness, entry.id);
     return entry.id;
   };
 
@@ -852,6 +913,10 @@ export const createWorktreeService = (
   ): Promise<string> => {
     const o = await orientation(root);
     const entries = await listOpen();
+    // Housekeeping first, on every path (including the early returns below):
+    // marks for worktrees that no longer exist are dropped here, since only
+    // this mutating command may write the manifest.
+    await sweepStaleMarks(plugin, o.mainHarness, o.mainRoot);
     const targets =
       specId === undefined
         ? entries

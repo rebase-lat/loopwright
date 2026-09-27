@@ -110,11 +110,13 @@ names the failure it prevents.
     sessions ended in a commit.
 29. **Concurrent worktrees per person start capped at 2** — configurable per project
     (`LPWR_MAX_WORKTREES` env var, or `"lpwr": { "max_worktrees": N }` in `opencode.json`;
-    never by editing the harness). Raise it only after the team reports the cap is the actual
-    bottleneck — don't raise it preemptively because the tooling allows more. When the cap
-    blocks, the in-band recovery is: resume an open spec's session, run
-    `lpwr-worktree-prune` (closes shipped or pending-cleanup worktrees), or mark a shipped
-    spec `Done` in `docs/state.md` so the next `lpwr-propose` prunes it. Last resort by hand:
+    never by editing the harness). The cap is resolved on every check, so changing either
+    source takes effect from the next command — no restart. Raise it only after the team
+    reports the cap is the actual bottleneck — don't raise it preemptively because the
+    tooling allows more. When the cap blocks, the in-band recovery is: resume an open
+    spec's session, run `lpwr-worktree-prune` (closes shipped or pending-cleanup worktrees),
+    or mark a shipped spec `Done` in `docs/state.md` so the next `lpwr-propose` prunes it.
+    Last resort by hand:
     `git worktree remove <path> && git branch -D <id>`.
 
 ## Sequencing

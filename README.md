@@ -125,6 +125,7 @@ loopwright/
 │   │   │                       #   auto-discovered; typechecked via root tsconfig.json)
 │   │   ├── lib/                # worktree.ts (worktree lifecycle service, npm test) + shared.ts (plugin helpers,
 │   │   │                       #   worktree/journal resolution) + gates.ts (pure gate predicates, npm test)
+│   │   │                       #   + agent-stages.ts (stage vocabulary + per-agent stage map, npm test)
 │   │   │                       #   + installer-lib.mjs (JSONC merge / manifest / verify for loopwright.sh)
 │   │   └── tui/                # lpwr-tui.tsx — read-only workflow-pulse sidebar (session view)
 │   ├── docs/                   # glossary + conventions + implementation-rules, kept in git;

@@ -14,3 +14,8 @@ implementation.
 - Seat 3 (applied judge): testability, what would convince me.
 - Present patterns with cost, risk and reversibility. The human picks one —
   triage never self-selects.
+- Options may be visual artifacts (a mockup path) instead of prose when the
+  choice is a look and feel. Evaluate what is presented: a visual option's
+  trade-offs are the design decision it embodies — cost, risk, reversibility
+  of shipping that look — never the craft of the pixels, which the human
+  judges for themselves when picking.

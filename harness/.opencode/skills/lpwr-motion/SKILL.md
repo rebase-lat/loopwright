@@ -10,7 +10,11 @@ best. Never re-run triage's evaluation under motion's name.
 
 - Pin the final statement: the human's actual selection, including any tweak
   or merge of triaged options, as exact literal text. This becomes the
-  proposal's content, not a summary of triage's notes.
+  proposal's content, not a summary of triage's notes. When the options were
+  visual artifacts, the chosen artifact's path is pinned literally alongside
+  any tweak (`left mockup, modal from the right`) — the path is the selection,
+  not a reference to it, and the proposal must still be readable with the
+  picture unavailable.
 - Check against memory: the final text against `docs/constitution.md`'s
   floors, `docs/lessons/*`, and any relevant `docs/memos/*.md` for anything
   relevant. Record a `Memos:` line in the proposal's Checked against memory

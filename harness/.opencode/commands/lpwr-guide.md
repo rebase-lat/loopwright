@@ -35,6 +35,6 @@ Walk this decision path over file existence and state, in order, stopping at the
 20. Committed but no lesson filed at `docs/lessons/<date>-<id>.md` → suggest `lpwr-teach` (it drafts; a human or scribe files the lesson).
 21. Everything closed → check `docs/audit.md` for open `improve-candidate` entries with no matching proposal and suggest `lpwr-propose` citing them; otherwise point at `docs/state.md`'s "Next" section or suggest `lpwr-propose`.
 
-Side doors (any time, when the path above doesn't fit): hard bug with no fix path → `lpwr-diagnose`; fixed-point pass/fail without a verdict → `lpwr-goal`; stale glossary or stack → `lpwr-domain` / `lpwr-stack`.
+Side doors (any time, when the path above doesn't fit): hard bug with no fix path → `lpwr-diagnose`; fixed-point pass/fail without a verdict → `lpwr-goal`; where the time or the churn is actually going → `lpwr-metrics`; stale glossary or stack → `lpwr-domain` / `lpwr-stack`.
 
 Output: inline one command suggestion; writes nothing.

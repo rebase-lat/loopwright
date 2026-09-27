@@ -27,7 +27,7 @@ Structured human picks run through the
 `question` tool; advisories land in
 `client.app.log` (`logWarn`) and one-shot warning toasts — never raw `console.*`.
 
-One `orchestrator` agent is the only interactive primary: all 27 commands pin
+One `orchestrator` agent is the only interactive primary: all 28 commands pin
 to it, it fans doer steps out to subagents (`builder` implements, `scribe`
 authors, `reviewer` verifies), and every other agent carries `task: deny` —
 workers return a complete report and get resumed, never spawn. The TUI adds a
@@ -119,13 +119,14 @@ loopwright/
 │   ├── tui.json                # TUI plugin wiring — loads .opencode/tui/ (relative path, no build)
 │   ├── .opencode/
 │   │   ├── agents/             # 9 role files (orchestrator, builder, planner, scribe, reviewer, triage seats, scout)
-│   │   ├── commands/           # 27 flat lpwr-* commands, each declaring its Stage:
+│   │   ├── commands/           # 28 flat lpwr-* commands, each declaring its Stage:
 │   │   ├── skills/             # 17 lpwr-* procedures (SKILL.md + trigger descriptions)
-│   │   ├── plugins/            # 12 lpwr-* plugins (gates, journaling, advisories, worktree lifecycle —
+│   │   ├── plugins/            # 13 lpwr-* plugins (gates, journaling, advisories, worktree lifecycle —
 │   │   │                       #   auto-discovered; typechecked via root tsconfig.json)
 │   │   ├── lib/                # worktree.ts (worktree lifecycle service, npm test) + shared.ts (plugin helpers,
 │   │   │                       #   worktree/journal resolution) + gates.ts (pure gate predicates, npm test)
 │   │   │                       #   + agent-stages.ts (stage vocabulary + per-agent stage map, npm test)
+│   │   │                       #   + metrics.ts (lpwr-metrics aggregation, npm test)
 │   │   │                       #   + installer-lib.mjs (JSONC merge / manifest / verify for loopwright.sh)
 │   │   └── tui/                # lpwr-tui.tsx — read-only workflow-pulse sidebar (session view)
 │   ├── docs/                   # glossary + conventions + implementation-rules, kept in git;
@@ -147,7 +148,7 @@ loopwright/
 | Execute | `lpwr-implement`, `lpwr-diagnose` |
 | Verify | `lpwr-review`, `lpwr-goal`, `lpwr-release`, `lpwr-threat-review` (high tier only) |
 | Retain | `lpwr-commit`, `lpwr-teach` |
-| Cross-cutting | `lpwr-guide`, `lpwr-worktree-status`, `lpwr-worktree-prune` |
+| Cross-cutting | `lpwr-guide`, `lpwr-worktree-status`, `lpwr-worktree-prune`, `lpwr-metrics` |
 
 Cross-cutting rules: amendments (including harness changes) go through
 `lpwr-propose` → `lpwr-review`; approved specs change only via `lpwr-amend`

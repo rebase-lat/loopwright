@@ -16,8 +16,8 @@ Two roots, deliberately distinct — this file describes both:
   originals are folded into its Rounds 7 and 8).
 - **`harness/`** — the pure-boilerplate payload that ships into a project:
   `AGENTS.md` (protocol), `opencode.json` (permission matrix + instructions),
-  `tui.json`, `.opencode/` holding 9 agent role files, 27 flat `lpwr-*`
-  commands (each declaring its Stage), 17 `lpwr-*` skills, 12 auto-discovered
+  `tui.json`, `.opencode/` holding 9 agent role files, 28 flat `lpwr-*`
+  commands (each declaring its Stage), 17 `lpwr-*` skills, 13 auto-discovered
   `lpwr-*` plugins, `lib/`, and `tui/`; `docs/` holding the tracked glossary,
   conventions, and implementation-rules (the generated foundation —
   constitution, context, state, audit, memos — is gitignored and created by

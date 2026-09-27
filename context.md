@@ -11,9 +11,9 @@ Two roots, deliberately distinct — this file describes both:
 - **Repo root** — this file, `constitution.md` (this repo's committed rule
   record), `package.json`, `oxlint.config.ts`, `oxfmt.config.ts`,
   `tsconfig.json`, `loopwright.sh`, and the repo-history documents
-  (`README.md`, `PRINCIPLES.md`, `CHANGELOG.md`, `integration-analysis.md`,
-  `analysis.md`, `verification.md`, `fixes.md`,
-  `loopwright-1.4.4-review.md`).
+  (`README.md`, `PRINCIPLES.md`, `CHANGELOG.md`, `CONTRIBUTING.md`,
+  `integration-analysis.md` — the single audit trail; the 1.4.2–1.4.4 audit
+  originals are folded into its Rounds 7 and 8).
 - **`harness/`** — the pure-boilerplate payload that ships into a project:
   `AGENTS.md` (protocol), `opencode.json` (permission matrix + instructions),
   `tui.json`, `.opencode/` holding 9 agent role files, 27 flat `lpwr-*`

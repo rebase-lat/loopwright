@@ -110,11 +110,8 @@ loopwright/
 ├── opencode.json               # developer MCP + LSP config — distinct from harness/opencode.json (shipped matrix)
 ├── constitution.md             # this repo's own rules — the committed record for humans (harness ships without one; onboard creates harness/docs/constitution.md, which is what the gates read)
 ├── context.md                  # this repo's own context — documents both roots and that split (same: generated per project by onboard)
-├── integration-analysis.md     # workflow cross-phase audit + fix-wave plans (repo history, not shipped)
-├── analysis.md                 # original 1.4.2 audit: W1–W9 / D1–D7 / T1–T7 + phased plan (repo history, not shipped)
-├── verification.md             # original 1.4.3 re-check: F1–F17 fake-fix checklist (repo history, not shipped)
-├── fixes.md                    # original 1.4.4 P0–P3 plan as written, cited from code comments; outcomes in CHANGELOG 1.4.4 (repo history, not shipped)
-├── loopwright-1.4.4-review.md  # the review of 1.4.4 that drove 1.4.5 (repo history, not shipped)
+├── integration-analysis.md     # the single audit trail — one `# Round N` per review/simulation pass; Rounds 7–8 carry the folded 1.4.2–1.4.4 originals (repo history, not shipped)
+├── CONTRIBUTING.md             # repo-development rules: audit findings go into integration-analysis.md as the next round, never a new root file
 ├── harness/                    # pure boilerplate — no prefilled project info (run opencode from here)
 │   ├── AGENTS.md               # protocol only — rules 1–13 here; floors in docs/constitution.md, checklist in docs/implementation-rules.md
 │   ├── .gitignore              # generated foundation + secrets stay untracked (root install)

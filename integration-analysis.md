@@ -723,7 +723,6 @@ A second end-to-end dry-run (same method as Round 4: real plugin hooks, throwawa
 
 Verified working in the same run: mint + move + restart note, no-op specify in the worktree, spec-link, verdict gates (including raw `git commit`), state-through-symlink, release from trunk, prune with a Done entry; `npm test` 10/10, typecheck + lint clean.
 
-
 ---
 
 # Round 6 — workflow simulation (third pass, post-1.4.0)
@@ -809,11 +808,15 @@ on `lib/shared.ts` (old `plugins/shared.ts` path still accepted).
 
 A read-and-verify pass over the shipped 1.4.2–1.4.4 worktree lifecycle work
 — `npm run typecheck` clean, `npm run lint` 0 warnings/errors, `npm test`
-35/35 — plus a citation audit of this round's own review
-(`loopwright-1.4.4-review.md`, renamed from
+35/35 — plus a citation audit of this round's own review (renamed from
 `loopwright-1.4.4-fixing-plan.md` in Round 8). Three findings; all closed here.
-Earlier
-tables keep their as-found statuses.
+Earlier tables keep their as-found statuses.
+
+Round 9 folded both documents this round produced — the fixing plan as written
+and the review of it — into the two `##` sections at the end of this round, so
+every `integration-analysis.md Round 7 P0-1` style citation in
+`lib/worktree.ts`, `plugins/lpwr-worktree-guard.ts`, and both worktree tests
+resolves to text a reader can open. Neither exists as a root file any more.
 
 ## Round 7 findings
 
@@ -830,7 +833,375 @@ been restored and are committed**, alongside the original `fixes.md` (which
 Round 7 recorded as reconstructed; the reconstruction has been replaced by the
 authentic pre-implementation plan). `fixes.md` carries no scope section; the
 1.4.2–1.4.4 outcomes remain in CHANGELOG 1.4.2–1.4.4, and `fixes.md`'s new
-header points there. Rounds 1–6 remain this file's record.
+header points there.
+
+Round 9 completed the consolidation this note was working toward: all four
+standalone root documents (`fixes.md`, `loopwright-1.4.4-review.md`,
+`analysis.md`, `verification.md`) are folded into this file — the plan and
+its review under Round 7, the restored 1.4.2/1.4.3 originals under Round 8 —
+and deleted from the repo root. Citations that named them now name a round
+(see Round 9).
+
+## Loopwright 1.4.4 Fixing Plan (as written, pre-implementation)
+
+*Provenance: folded here verbatim in Round 9 from the former root file
+`fixes.md` (headings demoted one level; the title above is that file's own).
+The `P0-1…P3-2` IDs below are what `lib/worktree.ts`,
+`plugins/lpwr-worktree-guard.ts`, `test/worktree.test.ts`, and
+`test/worktree-integration.test.ts` cite as `integration-analysis.md Round 7
+P0-1`. This is the plan as written, not a record of what shipped — as-built
+outcomes and the three human decisions taken while applying it live in
+`CHANGELOG.md` 1.4.4. The companion review of its output is folded in
+immediately below.*
+
+> **Read this before citing an item.** This is the plan as it was written, not
+> a record of what shipped. The `P0-1…P3-2` IDs are what the code comments in
+> `lib/worktree.ts`, `plugins/lpwr-worktree-guard.ts`, and both worktree tests
+> resolve to; the as-built outcomes and the three human decisions taken while
+> applying it live in `CHANGELOG.md` 1.4.4. Two details below never shipped as
+> written: `lpwr-worktree-status --audit` (see Phase 0 and P0-1/P1-3) never
+> existed — the audit shipped always-on in `lpwr-worktree-status`; and P1-1's
+> `\d{3}` / `auth-14 is a bad shape` example was decided against — `SPEC_ID`
+> stayed `/^[a-z0-9]+(?:-[a-z0-9]+)*-\d+$/`. The companion review of this
+> plan's output is the section immediately below.
+
+Derived from the v1.4.3 verification pass. Items are ordered by risk: P0 = data-loss/stranding risk, P1 = workflow correctness, P2 = discoverability/docs, P3 = hygiene. Each item includes the exact target, the change, the test, and the acceptance criterion so it can be ticked off without re-litigating scope.
+
+A short **Phase 0** precedes the fixes: three of the P0/P1 items were identified from the changelog and markdown, not from direct code inspection (tool access was limited during the review). Those must be confirmed against the actual source before patching, otherwise the plan is chasing ghosts.
+
+---
+
+### Phase 0 — Verify Before Patching
+
+| # | Claim to confirm | Where to look | If false |
+|---|---|---|---|
+| V1 | `.env` write failure raises a TUI toast, not just `logWarn` | `lib/worktree.ts` → `provision` / `writeEnv` path | Downgrade to P1 and add the toast as part of item P0-2's pattern |
+| V2 | `lpwr-commit` writes the manifest via `command.executed` → `markPendingCleanup` | `lpwr-worktree-guard.ts` event handler + `lib/worktree.ts` | Item P1-3 becomes a real code change, not just docs |
+| V3 | `resolveCap` handles `abc`, `0`, `-1`, and unset correctly | `lib/worktree.ts` → `resolveCap` + tests | Item P0-1 expands to cover cap resolution too |
+
+**Deliverable:** a one-line note in the PR description confirming each, with a file:line reference. No code changes in this phase.
+
+---
+
+### P0 — Correctness / Data-Loss Risk
+
+#### P0-1. `readManifest` must not silently swallow a malformed manifest
+
+**Problem.** A corrupted or truncated `.loop-worktrees/manifest.json` returns `{}`. Every pending-cleanup mark is lost, so `lpwr-worktree-prune` reports "nothing to prune" and the worktrees leak until the cap is hit. This is the same silent-catch pattern (W2) that 1.4.3 removed elsewhere, reappearing in the one place where losing state is worst.
+
+**Target.** `lib/worktree.ts` → `readManifest`.
+
+**Fix.**
+```ts
+export function readManifest(root: string): Manifest {
+  const file = manifestPath(root);
+  if (!existsSync(file)) return { pendingCleanup: {} };
+  const raw = readFileSync(file, "utf8");
+  try {
+    const parsed = JSON.parse(raw);
+    if (!isManifestShape(parsed)) {
+      throw new Error("manifest shape mismatch");
+    }
+    return parsed;
+  } catch (err) {
+    // Do not lose marks. Surface and continue with an empty manifest
+    // so the caller can still enumerate worktrees by git, but tell the human.
+    toast({
+      level: "warn",
+      message:
+        "Pending-cleanup manifest could not be read; some shipped worktrees may not be prunable. " +
+        "Run `lpwr-worktree-status --audit` to reconcile.",
+    });
+    logWarn("worktree.manifest.read_failed", { file, error: String(err) });
+    return { pendingCleanup: {}, _corrupt: true };
+  }
+}
+```
+
+Add `isManifestShape` as a small type guard. Add a `_corrupt` flag (or a separate return channel) so `worktreePrune` can refuse to claim "clean" when the manifest is unreadable.
+
+**Test.** Fixture: manifest containing `{"pendingCleanup": {` (truncated). Assert: (a) a warning is emitted, (b) `worktreePrune` does not report "nothing pending" silently, (c) the process exits non-zero if invoked with `--strict`.
+
+**Acceptance.** A corrupted manifest produces a visible warning and a non-ambiguous prune result. No path returns an empty manifest without a side-channel signal.
+
+---
+
+#### P0-2. `provision` must not leave broken symlinks
+
+**Problem.** From the 1.4.2 audit (T7 / W2). If `provision` creates a symlink to a non-existent target (e.g. `mainHarness/.opencode/node_modules` missing), some filesystems still create the link, and the worktree is broken until a command fails mysteriously. The 1.4.3 changelog claims this was addressed, but the pattern of "try symlink, catch, warn" does not guarantee a pre-check.
+
+**Target.** `lib/worktree.ts` → `provision`.
+
+**Fix.** Pre-check every link target with `fs.existsSync(target)` **before** `symlink`. On miss, append to the same foundation-gap list the sidebar already renders.
+
+```ts
+for (const link of FOUNDATION_LINKS) {
+  const target = join(mainHarness, link.rel);
+  const dst = join(worktree, link.rel);
+  if (!existsSync(target)) {
+    gaps.push({ rel: link.rel, reason: "missing on trunk" });
+    continue; // do not create a dangling symlink
+  }
+  try { symlinkSync(target, dst); }
+  catch (err) { gaps.push({ rel: link.rel, reason: String(err) }); }
+}
+if (gaps.length) emitFoundationGaps(gaps); // same channel as existing gap UI
+```
+
+**Test.** Fixture repo where `mainHarness/.opencode/node_modules` does not exist. Assert: (a) `node_modules` symlink is **not** created in the worktree, (b) a gap entry is emitted, (c) the gap is visible in `lpwr-worktree-status`.
+
+**Acceptance.** `find <worktree> -type l ! -exec test -e {} \; -print` returns empty after provisioning any worktree.
+
+---
+
+### P1 — Workflow Correctness
+
+#### P1-1. Validate spec ID in `lpwr-explore` before `worktree_mint`
+
+**Problem.** `lpwr-explore.md` instructs the agent to "assign the traceability ID now" then mint, without a validation gate. If the agent assigns a malformed ID (or an ID that collides with an existing spec), the worktree is created against a bad key, and the wrong-tree checks downstream compare against a value that no longer matches the branch.
+
+**Target.** `lpwr-explore.md` + `lib/worktree.ts` → `worktreeMint` (or the guard's mint handler).
+
+**Fix.** Two layers:
+
+1. **Command layer.** Add an explicit step in `lpwr-explore.md`:
+   > Before calling `worktree_mint`, confirm the assigned ID matches `^[a-z][a-z0-9-]*-\d{3}$` and does not already exist in `docs/specs/` or the worktree list. If it does, re-derive from the module name and a fresh counter.
+
+2. **Service layer.** `worktreeMint` validates `SPEC_ID` and rejects collisions with an actionable error:
+   ```ts
+   if (!SPEC_ID.test(specId)) throw new Error(`invalid spec id: ${specId}`);
+   if (await specExists(specId)) throw new Error(`spec id already exists: ${specId}`);
+   ```
+
+**Test.** Call `worktreeMint("auth-14")` (bad shape) and `worktreeMint("auth-001")` when that spec exists. Both must throw before any git worktree command runs. Assert no `.git/worktrees/` entry is created.
+
+**Acceptance.** `lpwr-explore` on a module whose derived ID is malformed fails at the command layer with a human-readable message; `worktreeMint` refuses bad IDs at the service layer even when called directly.
+
+---
+
+#### P1-2. Make `worktreePrune` idempotent and resumable
+
+**Problem.** From the 1.4.3 audit (item: "New prune command failure mode"). If `worktreePrune` is invoked on N worktrees and fails at the 3rd, the manifest still lists all N. Re-running must not double-remove or skip the un-pruned tail.
+
+**Target.** `lib/worktree.ts` → `worktreePrune` and the manifest writer.
+
+**Fix.**
+- Remove the manifest entry **per worktree**, immediately after a successful `git worktree remove`. Do not batch the manifest write at the end.
+- If `git worktree remove` fails, keep the entry and continue to the next; collect failures and exit non-zero if any.
+- Add `--dry-run` that prints the plan without mutating.
+
+```ts
+for (const id of candidates) {
+  const res = await removeWorktree(id);
+  if (res.ok) deleteManifestEntry(root, id);   // durable per-item
+  else failures.push({ id, reason: res.reason });
+}
+return { failures, removed: candidates.length - failures.length };
+```
+
+**Test.** Fixture with 3 pending worktrees; stub `removeWorktree` to fail on the 2nd. Assert: after the call, manifest contains only the 2nd; re-running prunes the 2nd and reports success; no worktree removed twice.
+
+**Acceptance.** A prune interrupted at any index can be re-run and converges to zero pending entries.
+
+---
+
+#### P1-3. Document the manifest write in `lpwr-commit.md`
+
+**Problem.** The manifest write is a side-effect of the commit flow. An agent or human reading `lpwr-commit.md` has no reason to know it exists, so debugging "why didn't my worktree prune" starts from a wrong assumption.
+
+**Target.** `lpwr-commit.md`.
+
+**Fix.** Add a short subsection after the Done-landing step:
+
+> **Pending cleanup.** On successful commit, this command records the worktree in `.loop-worktrees/manifest.json` (gitignored) as *pending cleanup*. The next `lpwr-worktree-prune` will offer to remove it. If the file is corrupted or missing, `lpwr-worktree-status --audit` reconciles against git's worktree list.
+
+**Test.** Doc-only; add a link from `lpwr-worktree-prune.md` back to this section.
+
+**Acceptance.** Grep for `manifest.json` in `docs/` returns `lpwr-commit.md`, `lpwr-worktree-prune.md`, and the worktree section of `AGENTS.md`.
+
+---
+
+### P2 — Discoverability
+
+#### P2-1. Cross-reference `lpwr-worktree-status` from prune
+
+**Target.** `lpwr-worktree-prune.md` → `Next:` footer and step 1.
+
+**Fix.** In the `Next:` footer, add: "To inspect without pruning, run `lpwr-worktree-status`." In step 1, name the status command explicitly rather than only the underlying `worktree_status` tool call.
+
+**Acceptance.** A reader who lands on the prune command knows the read-only sibling exists within one screen.
+
+---
+
+#### P2-2. Surface `LPWR_MAX_WORKTREES` and `lpwr.max_worktrees` in the quickstart
+
+**Target.** `README.md` quickstart section, or a dedicated "Worktree cap" note linked from it.
+
+**Fix.** One paragraph:
+
+> The open-worktree cap defaults to 2. Raise it for the session with `LPWR_MAX_WORKTREES=4`, or persistently in `opencode.json`:
+> ```json
+> { "lpwr": { "max_worktrees": 4 } }
+> ```
+> The env var wins; invalid values fall through to config; if both are absent, the default applies.
+
+**Acceptance.** A user hitting the cap message can find the override without opening `PRINCIPLES.md`.
+
+---
+
+#### P2-3. Normalise remaining terminology drift
+
+**Target.** Grep across `docs/` and command markdown for the banned variants from the 1.4.2 glossary plan:
+
+- `main branch`, `main worktree` → `trunk`
+- `Cap reached` → `Worktree cap reached (max: N)`
+- `close one by hand` → `prune with lpwr-worktree-prune`
+- `mint the ID` / `create the ID` → pick **mint** for ID, **create** for worktree
+
+**Acceptance.** Grep returns zero hits for the banned strings. Add a `docs/glossary.md` if not present, defining trunk / worktree / mint / prune / shipped / open.
+
+---
+
+### P3 — Hygiene
+
+#### P3-1. Confirm test coverage for the invalid-cap matrix
+
+**Target.** `lib/worktree.test.ts` (or equivalent).
+
+**Fix.** Ensure the fixture set covers `LPWR_MAX_WORKTREES` ∈ {unset, `""`, `"abc"`, `"0"`, `"-1"`, `"1"`, `"10"`} × {config unset, config `0`, config `5`}. Expected: only positive integers win; everything else falls through per `resolveCap`'s documented precedence.
+
+**Acceptance.** The matrix is a single `describe.each` with explicit expected outputs; no case relies on `NaN` coercion.
+
+---
+
+#### P3-2. Add a mint→commit→prune integration test
+
+**Target.** `test/integration/worktree-lifecycle.test.ts`.
+
+**Fix.** Against a temp git repo:
+1. `worktreeMint("auth-001")` → assert worktree exists, `.env` written, foundation links present (or gaps recorded).
+2. `markPendingCleanup("auth-001")` → assert manifest entry.
+3. `worktreePrune()` → assert worktree removed, manifest entry gone, no orphan in `git worktree list`.
+
+**Acceptance.** The test runs in CI and fails if any of the three stages leaves residue.
+
+---
+
+### Sequencing and Estimated Effort
+
+| Order | Item | Effort | Blocking |
+|---|---|---|---|
+| 1 | Phase 0 verification (V1–V3) | S | all P0 |
+| 2 | P0-1 malformed manifest | S | — |
+| 3 | P0-2 broken symlinks | S | — |
+| 4 | P1-1 explore ID validation | S | — |
+| 5 | P1-2 prune idempotency | M | — |
+| 6 | P1-3 commit docs | XS | — |
+| 7 | P2-1…P2-3 discoverability + terms | S | — |
+| 8 | P3-1 cap matrix | S | — |
+| 9 | P3-2 integration test | M | after P1-2 |
+
+**Release gate for 1.4.4:** all P0 and P1 merged; P2 merged; P3-1 and P3-2 green in CI. Nothing in this plan changes a public command name, so 1.4.4 is a drop-in patch.
+
+---
+
+### Summary
+
+The plan closes the one genuine data-loss risk introduced in 1.4.3 (`readManifest` swallowing corruption), hardens provisioning against dangling symlinks, adds the missing validation gate to `lpwr-explore`, makes prune resumable, and finishes the terminology and discoverability work that 1.4.3 started. Phase 0 exists because three of the findings were inferred from the changelog rather than the source — confirm those first, and the rest of the plan can proceed without rework.
+
+## Loopwright 1.4.4 — Fixing-plan review (drove 1.4.5)
+
+*Provenance: folded here verbatim in Round 9 from the former root file
+`loopwright-1.4.4-review.md` (headings demoted one level; the title above is
+that file's own). Item 3 of this review demanded exactly this fold — it has
+been done: the plan is above, the four dangling `fixes.md` citations now read
+`integration-analysis.md Round 7 P0-1`, and neither file exists at the repo
+root. Findings 1 and 2 closed in the Round 7 table above.*
+
+Review of what the 1.4.4 fixing plan (folded in the section above) actually shipped; renamed
+from `loopwright-1.4.4-fixing-plan.md` so it cannot be confused with that
+plan.
+
+Verified empirically, not just read: dependencies installed, `npm run typecheck` (clean),
+`npm run lint` (0 warnings/errors, 26 files), `npm test` (35/35 passing). The worktree lifecycle
+rework in 1.4.2–1.4.4 is solid on its own technical merits. What follows are the gaps that survive
+that — two carried over untouched from the last review, and one new to this pass.
+
+---
+
+### 1. Carried over, still open: `docs/glossary.md` excluded from `FOUNDATION`
+
+**Where:** `harness/.opencode/lib/worktree.ts:728` — `FOUNDATION = ["state", "context",
+"constitution", "audit"]`
+
+This array physically moved during the 1.4.2 rework (`lpwr-worktree-guard.ts` → the new
+`worktree.ts` service) but its membership didn't change. Flagged last time as a mitigation
+(a clearer error message when it goes wrong) standing in for a fix (the worktree still can't see
+glossary edits at all). The rework touched this exact array and every other foundation-visibility
+concern around it (P0-2's "always-on audit," the dangling-symlink fixture) without anyone
+revisiting whether glossary belongs in it — worth a five-minute look now that the surrounding
+code is fresh in mind, one way or the other.
+
+### 2. Carried over, still open: `builder.md` still claims Verify
+
+**Where:** `harness/.opencode/agents/builder.md:2` — unchanged: "Write-isolated builder for
+Bootstrap, Execute, Verify, and Retain."
+
+`scribe.md` independently and correctly claims Verify's writes, and the permission matrix backs
+that up (`scribe`: `edit: ask`, matching "every write needs human confirmation" — the right tier
+for `review.md`; `builder`: `edit: allow`, the wrong tier for the same job). Untouched by the
+1.4.2–1.4.4 work, which was scoped to worktree lifecycle rather than agent personas — reasonable
+that it wasn't in scope, but it's a trivial fix whenever someone's next in that file.
+
+### 3. New this pass: `fixes.md` is cited four times, exists nowhere
+
+**Where:** `harness/.opencode/lib/worktree.ts`, `harness/.opencode/plugins/lpwr-worktree-guard.ts`,
+`test/worktree.test.ts`, `test/worktree-integration.test.ts` — all reference specific items by
+name: `fixes.md P0-1`, `P0-2`, `P1-1`, `P1-2`, `P3-1`, etc. The changelog for 1.4.2–1.4.4
+describes this as a genuine, substantial audit (W1–W9 workarounds, D1–D7 drift, T1–T7 traps,
+17 items total) that drove real, verified fixes — the same kind of exercise as the plan I wrote
+last round. But the document itself was never committed to the repository.
+
+This matters because `integration-analysis.md` — the project's own established audit trail,
+carefully maintained through six rounds — stops at Round 6 (post-1.4.0). *[Round 9 note: it no longer does — Rounds 7, 8, and 9 of this file now carry everything after Round 6, including this review.]* The actual work that
+produced 1.4.2 through 1.4.4 happened entirely outside that record, in a document that's now
+gone. Anyone reading `worktree.ts` six months from now and hitting a comment like `// fixes.md
+P0-2 acceptance: every symlink in the worktree resolves` has no way to find out what P0-2 was, why
+it mattered, or what else was in the same plan. The fix landed; the reasoning behind it didn't.
+
+**Fix:** either commit `fixes.md` to the repo (even as a closed/historical record, the way
+`integration-analysis.md` keeps its Round 5 table "as-found" rather than deleting it), or fold its
+content into `integration-analysis.md` as the Round 7 entry that's currently missing. Either way,
+the four dangling citations should point at something a reader can actually open.
+
+---
+
+### What I checked and didn't flag
+
+- **The symlink write-through concern from last round** is not directly round-trip tested by
+  name, but the new integration test does verify something adjacent and real — no dangling
+  symlinks survive provisioning, checked via a `find`-based fixture against a live temp repo. The
+  changelog states this premise was reviewed and judged already sound (Node's `fs.writeFile`
+  following symlinks is standard platform behavior, not project-specific risk). That's a
+  defensible call, not a dodge — I'm downgrading this from "open" to "reasonably settled."
+- **The custom tools (`worktree_mint`, `worktree_prune`, `worktree_status`)** aren't named
+  anywhere in `opencode.json`'s permission matrix, which looked suspicious at first — but the
+  orchestrator's `edit`/`bash`/`webfetch` are all `deny` while these clearly work (35 passing
+  tests exercise them), so they're evidently registered as first-class tool calls outside the
+  file-edit/shell permission surface, the same way `journal_handoff` and `question` already work.
+  Not a bug.
+- **PRINCIPLES.md's new "Worktree lifecycle" section** — read it against the actual command
+  names and behavior in `worktree.ts`. Consistent throughout: mint/work/commit/prune, the cap
+  resolution order, the "session never prunes its own worktree" rule. No drift found.
+
+---
+
+### Priority
+
+Items 1 and 2 are each a few minutes of work whenever someone's next in those files — neither is
+urgent, both have been sitting for one review cycle already. Item 3 is worth doing before the next
+round of fixes happens the same way — otherwise this pattern repeats: real work, real verification,
+and a growing pile of comments citing a document nobody committed.
 
 ---
 
@@ -862,7 +1233,7 @@ Round 7's own close-out wording.
 
 ## Round 8 open items (carry forward)
 
-- **T6 (from `analysis.md`)** — nothing verifies that `harness/.env`'s
+- **T6 (from the folded 1.4.2 audit below, §4 T6)** — nothing verifies that `harness/.env`'s
   `OPENCODE_SPEC_ID` is actually *loaded*; `lpwr-scope-guard` reads
   `process.env`, `lpwr-install`/provision writes the file, the TUI parses it
   directly, and the only test asserts the file's contents
@@ -896,3 +1267,275 @@ all green. Committed directly on the default branch, out of process per
 implementation-rules 4 (this repo has never run its own spec flow —
 `docs/specs/` and `docs/lessons/` remain empty), which Rule 21's
 propose→review path still contradicts; noted, not resolved here.
+
+## The 1.4.2 audit (`analysis.md`)
+
+*Provenance: folded here verbatim in Round 9 from the former root file
+`analysis.md` (headings demoted one level; that file carried no title of its
+own, so the heading above is added). This is the W1–W9 / D1–D7 / T1–T7
+seventeen-item audit behind 1.4.2, restored in Round 8 Wave 1 (S8-01); §5 item
+17, T6, D4, and W9 are the identifiers the Round 8 open items above refer to.*
+
+Based on my analysis of the `loopwright` repository, particularly the worktree implementation in `lpwr-worktree-guard.ts` and its surrounding commands, I've identified several classes of issues: workarounds disguised as fixes, inconsistent terminology, workflow drift, and traps. Below are my findings and a phased fixing plan.
+
+---
+
+### 1. Workarounds Dressed as Fixes
+
+| # | Location | Workaround | Why it's a problem |
+|---|----------|-----------|-------------------|
+| W1 | `lpwr-worktree-guard.ts` lines 16–17 | `// there is no command.execute.after hook to read a command result from` — the guard hooks `tool.execute.after` on `journal_handoff` to infer when a worktree should be created. | The worktree lifecycle is coupled to a tool's side‑effect rather than an explicit lifecycle event. If the journal tool changes its args or ordering, worktree creation silently breaks. This is a workaround for a missing command‑completion hook. |
+| W2 | Lines 63–64 | `catch { // Raced or unsupported FS — lpwr-install/lpwr-setup remain the fallback. }` | Symlink failures are swallowed. The "fallback" (install/setup) is not invoked here; the user is left with a broken worktree until they happen to run another command. |
+| W3 | Lines 82 | Empty catch after trying to copy `.opencode/.gitignore`. | The comment says "Trunk has no local .gitignore to copy", but if the file exists and the copy fails for another reason, the error is lost. This masks real filesystem issues. |
+| W4 | Lines 92–95 | Manually materializing `docs/memos` on trunk because a "pre‑memos‑foundation install never ran lpwr-install". | This is a patch for missing installation steps. It creates a directory that should have been created by a proper setup command, introducing hidden state. |
+| W5 | Lines 101–102 | If `.env` cannot be written, it logs a warning and falls back to branch‑derived spec ID. | The `.env` file is a convenience, not a requirement. The fallback is acceptable, but the warning is buried in `logWarn` and may be missed in headless runs. |
+| W6 | Lines 108–109 | If the copied spec folder is empty, it logs a warning and leaves the source in place. | This creates a partial state: the worktree exists but the spec folder is still on trunk. The user must manually reconcile. |
+| W7 | Lines 113–114 | `lpwr-commit` cannot remove the worktree its own session is running from; cleanup is deferred to the next `lpwr-propose`. | This is a fundamental limitation being treated as a design choice. It means worktrees accumulate until the next propose, and if that command is never run, they leak. |
+| W8 | Lines 135–136 | The cap‑blocked error message is the "sole in‑band recovery path" for a full worktree cap. | Error messages should not be the primary recovery mechanism. The system should provide a command or self‑service path to prune. |
+| W9 | Lines 164–170 | Special handling for `log.ndjson` tails: "empirically confirmed" that staged files ride the squash, so they are filtered out. | This is a fragile heuristic based on observed git behavior, not a documented contract. A git update could break it. |
+
+---
+
+### 2. Inconsistent Re‑wording and Terminology
+
+| Term | Inconsistent variants | Impact |
+|------|----------------------|--------|
+| **Primary branch** | "trunk", "main branch", "main worktree", "trunk session" | Users may not realise "trunk" is just the branch checked out in the main worktree. The code resolves it dynamically but docs sometimes imply a fixed name. |
+| **Worktree creation** | "mint", "create", "add", "mint the ID" | "Mint" is used for creating the spec ID and the worktree, but "create" and "add" are also used. The command names (`lpwr-propose`/`lpwr-explore`) "mint" the ID, while the guard "creates" the branch+worktree. |
+| **Worktree cleanup** | "prune", "remove", "delete", "close" | `pruneShipped` removes clean worktrees; the cap message says "close one by hand"; the guide says "prune". This variation obscures the fact that they are the same operation. |
+| **Worktree state** | "shipped", "Done", "closed", "clean", "dirty" | "Shipped" and "Done" are used interchangeably, but "Done" refers to a `state.md` section while "shipped" is a derived condition. "Clean" and "dirty" are git terms but are not consistently paired with the state check. |
+| **Work‑stage commands** | "work‑stage", "work stage", "WORK_STAGE", "workstage" | Minor, but the hyphenation varies across comments and identifiers. |
+| **Cap** | "cap", "CAP", "2‑worktree cap" | The constant is `CAP = 2`, but the error says "2‑worktree cap" and the guide says "Cap reached". Consistent casing would help. |
+| **Spec ID** | "spec ID", "traceability ID", "spec ID (`-`)" | The placeholder `-` is sometimes shown as `auth-014` and sometimes as `<spec-id>`. |
+| **Worktree session** | "worktree session", "worktree's session", "session in the worktree" | The phrase "restart opencode in the worktree session" appears in multiple forms. |
+
+---
+
+### 3. Workflow Drift
+
+| # | Drift | Evidence |
+|---|-------|----------|
+| D1 | **Worktree lifecycle is scattered across three commands.** | `lpwr-propose`/`lpwr-explore` mint the ID; the guard creates the worktree on `journal_handoff`; `lpwr-commit` defers cleanup; the next `lpwr-propose` prunes. There is no single "worktree lifecycle" module or state machine. |
+| D2 | **Cleanup depends on a future command.** | `lpwr-commit` cannot delete its own worktree. The user must remember to run `lpwr-propose` later, or the worktree leaks. The guide warns about this, but it is a workflow trap. |
+| D3 | **The cap is a hard block with no self‑service escape.** | When `open >= CAP`, the only ways out are: resume an open session, mark a spec Done in `state.md`, or manually run `git worktree remove`. There is no `lpwr-worktree-prune` command. |
+| D4 | **`surfaceOverlap` scans all worktrees but is only triggered by `lpwr-tasks`.** | The overlap check reads every worktree's spec folder, which is O(n) in the number of worktrees and may be slow. It is also advisory‑only (pushes a text part), not a gate. |
+| D5 | **`guideStatus` duplicates logic from `pruneShipped` and `capBlocked`.** | The guide independently computes open worktrees, shipped status, and cap notes. If the pruning logic changes, the guide can fall out of sync. |
+| D6 | **`mergeBlockingFiles` has a special case for `log.ndjson` that is not documented in the command's contract.** | `lpwr-commit.md` step 6 mentions staging journal tails, but the guard's filter logic (lines 170–182) is the actual enforcement. This is a hidden coupling. |
+| D7 | **`provision` creates symlinks for foundation files, but the worktree is expected to have its own copy of `.opencode/.gitignore`.** | The copy of `.gitignore` is a special case that is not covered by the symlink logic. It is easy to miss when adding new foundation files. |
+
+---
+
+### 4. Traps
+
+| # | Trap | Why it bites |
+|---|------|-------------|
+| T1 | **`mintGate` blocks minting from a worktree session and tells the user to "restart opencode in ${mainHarness}".** | If the user is already in a worktree session, the message says to restart in the main harness, but the actual path is the trunk worktree, not the harness directory inside it. The phrasing is misleading. |
+| T2 | **`wrongTree` uses `firstArgument(args)` to extract the spec ID.** | If the command is invoked with flags before the spec ID (e.g. `lpwr-commit --amend auth-014`), `firstArgument` returns `--amend`, which fails the `SPEC_ID` test, and the wrong‑tree check is skipped. |
+| T3 | **`mergeBlockingFiles` treats untracked `docs/specs/*/log.ndjson` as non‑blocking only if the state is `??` or ` M` with the tail pattern.** | Any other untracked file in `docs/specs/` will block the merge. This can trap users who have stale phantom journal copies. |
+| T4 | **The `CAP` is hardcoded to 2.** | There is no configuration option. In a large project with many parallel specs, 2 may be too low, but the user has no way to raise it without editing the source. |
+| T5 | **`pruneShipped` only prunes worktrees whose spec is in the `Done` section of `state.md`.** | If the state file is out of sync (e.g. the human forgot to mark Done), the worktree will never be pruned, and the cap will be hit. |
+| T6 | **The `.env` file is written with `OPENCODE_SPEC_ID`, but the guard does not verify that the environment variable is actually loaded.** | The fallback is branch‑derived, so it may work, but the intent is unclear. |
+| T7 | **`provision` creates symlinks to `mainHarness/.opencode/node_modules` etc., but if the main harness has no `node_modules`, the link target does not exist and the symlink is skipped.** | This silently leaves the worktree without dependencies, and the user may only discover it when a command fails. |
+
+---
+
+### 5. Fixing Plan
+
+#### Phase 1 — Stabilise the Worktree Lifecycle (High Priority)
+
+1. **Introduce a `worktree` service module.**
+   - Move all worktree‑related logic (`listWorktrees`, `findWorktree`, `pruneShipped`, `capBlocked`, `ensureWorktree`, `provision`) into a dedicated `lib/worktree.ts`.
+   - Expose a small API: `mint(specId)`, `prune(specId)`, `listOpen()`, `capStatus()`.
+   - The guard plugin becomes a thin adapter that calls this service from hooks.
+
+2. **Replace the `journal_handoff` hook with an explicit minting command.**
+   - Add a dedicated `lpwr-worktree-mint` command (or make `lpwr-propose` call the service explicitly after it has the spec ID).
+   - Remove the `tool.execute.after` hook for `journal_handoff`. This eliminates the W1 workaround and makes the flow deterministic.
+
+3. **Add a self‑service prune command.**
+   - Introduce `lpwr-worktree-prune` that lists open worktrees and lets the human prune shipped+clean ones, or force‑remove dirty ones after confirmation.
+   - Update the cap error message to point to this command instead of manual `git worktree remove`.
+
+4. **Make `CAP` configurable.**
+   - Read the cap from `opencode.json` or an environment variable (e.g. `LPWR_MAX_WORKTREES`), defaulting to 2.
+
+#### Phase 2 — Eliminate Workarounds
+
+5. **Replace silent catches with structured warnings.**
+   - In `provision`, if a symlink fails, log a warning with the target and link path, and record it in the audit log. Do not silently skip.
+   - In the `.gitignore` copy, if the file is missing on trunk, log an informational message; if the copy fails, log an error.
+
+6. **Remove the manual `docs/memos` creation.**
+   - Move the `docs/memos` creation into `lpwr-install` (or a dedicated `lpwr-setup` step) so that the guard does not have to patch missing state.
+
+7. **Decouple cleanup from the next `lpwr-propose`.**
+   - Allow `lpwr-commit` to mark the worktree as "pending cleanup" in a manifest (e.g. `.loop-worktrees/manifest.json`).
+   - A separate `lpwr-worktree-gc` command (or the prune command from step 3) can read the manifest and prune without requiring a propose.
+
+8. **Document the `log.ndjson` tail contract.**
+   - Add a section to `PRINCIPLES.md` or `implementation-rules.md` that explicitly states which trunk‑dirty files are allowed to ride the squash merge, and why. The guard's filter should reference this rule by number.
+
+#### Phase 3 — Unify Terminology
+
+9. **Create a glossary.**
+   - Add a `docs/glossary.md` (or extend the existing one) with canonical terms:
+     - **Trunk** — the branch checked out in the main worktree; resolved dynamically, never hardcoded.
+     - **Worktree** — a linked working tree created for a spec.
+     - **Mint** — the act of creating a spec ID and its worktree.
+     - **Prune** — the act of removing a shipped and clean worktree.
+     - **Shipped** — a spec that has a `Done` entry in `state.md`.
+     - **Open** — a worktree that is not the main worktree.
+   - Use these terms consistently in all commands, comments, and error messages.
+
+10. **Normalise error and advisory strings.**
+    - Replace "close one by hand" with "prune it with `lpwr-worktree-prune`".
+    - Replace "restart opencode in ${mainHarness}" with "restart opencode in the trunk worktree (${mainHarness})".
+    - Replace "Cap reached" with "Worktree cap reached (max: N)".
+
+#### Phase 4 — Fix Traps
+
+11. **Fix `wrongTree` argument parsing.**
+    - Use a proper argument parser that skips flags. For example, find the first argument that matches `SPEC_ID`, not just the first token.
+
+12. **Make `mergeBlockingFiles` configurable.**
+    - Instead of a hardcoded `TAIL_LOG` regex, allow the command contract to declare which files are tail‑allowed. This can be derived from the spec's `log.ndjson` path.
+
+13. **Ensure `provision` verifies link targets.**
+    - Before creating a symlink, check that the target exists. If not, log a warning and record the gap in the TUI sidebar (the same mechanism used for foundation gaps).
+
+14. **Add a `lpwr-worktree-status` command.**
+    - Expose the same status that the guide prints, but as a standalone command. This makes the worktree state inspectable without running a full guide.
+
+#### Phase 5 — Documentation and Tests
+
+15. **Update `AGENTS.md` and `PRINCIPLES.md`.**
+    - Add a "Worktree Lifecycle" section that describes the full flow: mint → work → commit → prune.
+    - Document the cap, the prune conditions, and the manual recovery path.
+
+16. **Add unit tests for the worktree service.**
+    - Test `listWorktrees`, `findWorktree`, `pruneShipped`, and `capBlocked` with mocked git output.
+    - Test the argument parser for `wrongTree`.
+
+17. **Add an integration test for the mint–commit–prune cycle.**
+    - Use a temporary git repository to verify that a worktree is created, committed, and pruned without leaving orphans.
+
+---
+
+### Summary
+
+The worktree implementation is functional but carries significant technical debt: it relies on a fragile tool‑hook for creation (W1), silently swallows filesystem failures (W2–W4), and scatters lifecycle logic across commands (D1). The terminology is inconsistent, which makes the workflow harder to reason about, and several traps (T2, T5) can leave users stuck. The fixing plan above addresses these in phases, starting with a stable lifecycle service and moving through workaround removal, terminology unification, trap fixes, and finally documentation and tests.
+
+## Verification (`verification.md`)
+
+*Provenance: folded here verbatim in Round 9 from the former root file
+`verification.md` (headings demoted one level; the title above is that file's
+own). This is the F1–F17 fake-fix checklist that drove 1.4.3; Round 8's open
+item F12 refers to F12 below.*
+
+---
+
+### How to verify each fix (and the "fake fix" patterns to watch for)
+
+#### Phase 1 — Lifecycle
+
+**F1. `lib/worktree.ts` service module exists and owns all lifecycle logic**
+- ✅ Pass: `listWorktrees`, `findWorktree`, `pruneShipped`, `capBlocked`, `ensureWorktree`, `provision` are all in the new module; the guard plugin imports from it and contains no duplicated git parsing.
+- ⚠️ Fake fix: a `lib/worktree.ts` is created but the guard still contains a second copy of `listWorktrees` "for convenience". Grep for `git worktree list` in the guard — it should appear **zero** times after the refactor.
+- ⚠️ Fake fix: the service exists but `guideStatus` still recomputes cap/overlap locally (D5 not resolved).
+
+**F2. Explicit minting, no `tool.execute.after` hook on `journal_handoff`**
+- ✅ Pass: grep for `journal_handoff` in the guard — the worktree creation path should not reference it. A new `lpwr-worktree-mint` command or an explicit call inside `lpwr-propose`/`lpwr-explore` should be the trigger.
+- ⚠️ Fake fix: the hook is renamed but still fires on a tool side‑effect. Check what event triggers minting.
+- ⚠️ Regression risk: minting now happens *before* the spec folder is written, causing an empty worktree. Verify ordering.
+
+**F3. `lpwr-worktree-prune` command exists and cap error points to it**
+- ✅ Pass: the cap error message text contains `lpwr-worktree-prune` (or the equivalent command name), and the command is registered in `opencode.json` / the command directory.
+- ⚠️ Fake fix: the command is registered but delegates to `git worktree remove` without the shipped+clean gate — that reintroduces the "leak" trap in reverse (data loss).
+- ⚠️ Fake fix: the message says "use the prune command" but the command is not discoverable via `--help`.
+
+**F4. `CAP` is configurable**
+- ✅ Pass: `CAP` reads from a config source with a default of 2. Check the schema — is it typed? Is there a validation range?
+- ⚠️ Fake fix: env var is read but not documented, or read as a string without `parseInt`/`Number()` guard (so `LPWR_MAX_WORKTREES=abc` silently becomes `NaN` and every comparison is false → cap never blocks, or always blocks).
+
+---
+
+#### Phase 2 — Workarounds
+
+**F5. Silent catches replaced with structured warnings**
+- ✅ Pass: every `catch {}` in `provision` / `ensureWorktree` logs a warning with the operation, target, and error. Bonus if it's also recorded in the audit log.
+- ⚠️ Fake fix: the catch is now `catch (e) { logWarn(String(e)) }` — technically not silent, but loses the target/link path. Look for the actual context in the message.
+- ⚠️ Fake fix: warnings are emitted but the function still returns success, so callers can't branch on partial failure.
+
+**F6. `docs/memos` creation moved to install/setup**
+- ✅ Pass: grep for `memos` in the guard — if it still appears in `provision`, the workaround is still there. It should only appear in install/setup.
+- ⚠️ Fake fix: the directory is created in both places "just in case" — that's still hidden state.
+
+**F7. Cleanup decoupled from next `lpwr-propose`**
+- ✅ Pass: a manifest (e.g. `.loop-worktrees/manifest.json`) or equivalent marker records "pending cleanup", and `lpwr-worktree-prune` / `lpwr-worktree-gc` reads it.
+- ⚠️ Fake fix: `lpwr-commit` now calls `prune` directly on itself — this reintroduces W7 (you can't remove the worktree your session is in). Verify the commit command does **not** attempt to remove its own worktree.
+- ⚠️ Fake fix: manifest is written but nothing reads it → orphans still leak.
+
+**F8. `log.ndjson` tail contract documented**
+- ✅ Pass: a numbered rule in `PRINCIPLES.md` or `implementation-rules.md` and a comment in the guard referencing that rule number.
+- ⚠️ Fake fix: the regex is now a named constant but the doc doesn't exist — the hidden coupling (D6) remains.
+
+---
+
+#### Phase 3 — Terminology
+
+**F9. Glossary exists and is referenced**
+- ✅ Pass: `docs/glossary.md` (or equivalent) defines trunk, worktree, mint, prune, shipped, open. Commands link to it.
+- ⚠️ Fake fix: glossary exists but error strings still say "close one by hand" / "Cap reached" / "main branch". Grep for those exact strings.
+
+**F10. Normalised strings**
+- Run these greps and confirm zero hits (or justified hits):
+  - `close one by hand`
+  - `Cap reached`
+  - `restart opencode in` (followed by a harness path without "trunk worktree")
+  - `main branch`, `main worktree` (should be `trunk worktree` or `trunk`)
+  - `mint the ID` vs `create the ID` — pick one verb per concept.
+
+---
+
+#### Phase 4 — Traps
+
+**F11. `wrongTree` argument parsing**
+- ✅ Pass: uses a parser that skips flags; a spec‑id‑shaped token is found even with `--amend` / `-m msg` before it.
+- ⚠️ Fake fix: `firstArgument` renamed to `firstSpecLikeArgument` but still returns token[0] if no match — verify the fallback.
+- Test case to run manually: `lpwr-commit --amend auth-014` → should still detect the correct worktree.
+
+**F12. `mergeBlockingFiles` configurable**
+- ✅ Pass: tail‑allowed files come from the spec's declared journal path, not a hardcoded regex.
+- ⚠️ Fake fix: regex moved to a constant at top of file — still hardcoded, still a hidden coupling.
+
+**F13. `provision` verifies link targets**
+- ✅ Pass: `fs.existsSync(target)` (or `fs.access`) is checked before `symlink`. Missing targets produce a warning and appear in the sidebar gap list.
+- ⚠️ Fake fix: check is done with `try { symlink } catch { warn }` — that still leaves a broken symlink on some filesystems (the symlink may be created pointing to a nonexistent target). You need an explicit pre‑check.
+
+**F14. `lpwr-worktree-status` command exists**
+- ✅ Pass: registered, and its output matches the guide's worktree section (ideally by calling the same service function — otherwise D5 reappears).
+- ⚠️ Fake fix: the command shells out to `git worktree list` and re‑implements status.
+
+---
+
+#### Phase 5 — Docs & Tests
+
+**F15. `AGENTS.md` / `PRINCIPLES.md` updated**
+- Look for a "Worktree Lifecycle" section describing: mint → work → commit → prune, the cap, and the manual recovery path.
+
+**F16. Unit tests for the service**
+- `listWorktrees`, `findWorktree`, `pruneShipped`, `capBlocked`, and the argument parser. Confirm they mock git output rather than hitting a real repo.
+
+**F17. Integration test for mint–commit–prune**
+- Runs against a temp git repo; asserts no orphan worktrees after prune. This is the single best regression guard against W7/D2.
+
+---
+
+### Common cross‑cutting regressions to check when you paste the code
+
+1. **Circular imports** — if `lib/worktree.ts` imports from the guard and the guard imports from the service, you'll get load‑order bugs. Check the dependency direction: service → guard, never the reverse.
+2. **Two sources of truth for "shipped"** — `pruneShipped` and `guideStatus` must call the same `isShipped(state)` helper. If either parses `state.md` independently, D5 is back.
+3. **Cap read timing** — if `CAP` is read at module load, changing it in `opencode.json` mid‑session won't take effect. Decide and document.
+4. **The new prune command's failure mode** — if it fails halfway through a multi‑worktree prune, is it idempotent? Can it resume?
+5. **Backwards compatibility** — existing users may have worktrees created by the old hook with no manifest entry. Does `lpwr-worktree-prune` still find them? If not, document a migration.
+6. **`.env` fallback** — W5 was a warning buried in `logWarn`. Confirm the new version surfaces it visibly (TUI notice, not just a log line) or removes the fallback entirely.

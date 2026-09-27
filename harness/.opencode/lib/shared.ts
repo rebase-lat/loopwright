@@ -86,7 +86,8 @@ export const trunkBranch = async (root: string): Promise<string | null> => {
 // First argument that IS a traceability ID: skips flags (`lpwr-commit --amend
 // auth-014` must key on `auth-014`, not `--amend` — a plain first-token read
 // would hand the flag to gates that test the ID; security-scan used to bail
-// out silently for exactly that reason, analysis T2 / verification F11).
+// out silently for exactly that reason — analysis T2 / verification F11, now
+// folded into integration-analysis.md Round 8).
 // Tokens starting with `-` are never spec IDs; the first token that matches
 // SPEC_ID wins. Every keyed command gate uses this, never token[0].
 export const specIdArgument = (args: string): string | undefined =>

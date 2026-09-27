@@ -34,7 +34,7 @@ import {
   statusReport,
 } from "../harness/.opencode/lib/worktree.ts";
 
-// Round 6 D1/Phase 5 (analysis §5 items 16): the worktree service's decision
+// Round 6 D1/Phase 5 (integration-analysis.md Round 8 analysis §5 item 16): the worktree service's decision
 // logic runs against fixtures — mocked `git worktree list --porcelain` output,
 // temp state.md/manifest files, and env/config cap inputs — so a regression
 // fails a named fixture instead of a live session.
@@ -123,7 +123,8 @@ test("pruneShipped decisions: eligible, force, own, and dirty paths", () => {
   const ineligible = pruneDecision(entry());
   assert.equal(ineligible.action, "skip");
   assert.match(ineligible.reason, /force after confirmation/u);
-  // Dirty shipped needs force (analysis W2/T5 class).
+  // Dirty shipped needs force (analysis W2/T5 class, integration-analysis.md
+  // Round 8).
   const dirty = pruneDecision(entry({ dirty: true, shipped: true }));
   assert.equal(dirty.action, "skip");
   assert.equal(dirty.needsForce, true);
@@ -183,7 +184,7 @@ test("statusReport: listing, cap wording, health audit, prunable vs stuck", () =
   assert.match(stuck, /1\/2 open/u);
   assert.match(stuck, /none are prunable/u);
 
-  // Always-on audit surface (fixes.md P0-1/P0-2): foundation gaps, a
+  // Always-on audit surface (integration-analysis.md Round 7 P0-1/P0-2): foundation gaps, a
   // corrupt manifest, and stale marks all render in the report.
   const unhealthy = statusReport({
     ...base,
@@ -208,7 +209,7 @@ test("statusReport: listing, cap wording, health audit, prunable vs stuck", () =
   assert.equal(idle, "Worktree status: 0/2 open.");
 });
 
-test("resolveCap: invalid-cap matrix — env × config (fixes.md P3-1)", async () => {
+test("resolveCap: invalid-cap matrix — env × config (integration-analysis.md Round 7 P3-1)", async () => {
   const dir = tempDir("cap-matrix");
   const configPath = path.join(dir, "opencode.json");
   const previous = process.env.LPWR_MAX_WORKTREES;

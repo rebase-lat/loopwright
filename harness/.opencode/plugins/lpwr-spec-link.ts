@@ -72,9 +72,10 @@ const specLink = (plugin: PluginInput): Promise<Hooks> => {
         return;
       }
       // specIdArgument skips flags, so `lpwr-implement --flag auth-014` still
-      // keys every gate on auth-014 (analysis T2 / verification F11). It only
-      // ever returns a token matching SPEC_ID, so a missing id and a malformed
-      // one both land here — one message names the expected shape.
+      // keys every gate on auth-014 (T2 / F11, folded into
+      // integration-analysis.md Round 8). It only ever returns a token
+      // matching SPEC_ID, so a missing id and a malformed one both land here —
+      // one message names the expected shape.
       const specId = specIdArgument(input.arguments);
       if (!specId) {
         block(

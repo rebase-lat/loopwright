@@ -84,7 +84,7 @@ export interface CapStatus {
   cap: number;
   atCap: boolean;
   entries: OpenWorktree[];
-  // Always-on audit surface (fixes.md P0-1/P0-2, decided 1.4.4): foundation
+  // Always-on audit surface (integration-analysis.md Round 7 P0-1/P0-2, decided 1.4.4): foundation
   // link gaps per open worktree, manifest corruption, and marks whose
   // worktree no longer exists — rendered by statusReport for both
   // lpwr-worktree-status and the guide injection.
@@ -96,7 +96,7 @@ export interface CapStatus {
 export interface PruneOptions {
   force?: boolean;
   // Report the plan without mutating anything — no removals, no manifest
-  // sweep, no confirmation prompts (fixes.md P1-2).
+  // sweep, no confirmation prompts (integration-analysis.md Round 7 P1-2).
   dryRun?: boolean;
   // Called before every force removal — the adapter raises the human
   // permission confirmation here (implementation-rules 52).
@@ -304,7 +304,7 @@ export const resolveCap = async (root: string): Promise<number> => {
 
 // One read result carries the marks AND an explicit corruption signal: a
 // truncated or malformed manifest must never look like "nothing is pending"
-// without a side channel (fixes.md P0-1 — the silent-swallow W2 pattern in
+// without a side channel (integration-analysis.md Round 7 P0-1 — the silent-swallow W2 pattern in
 // the one file where losing state strands worktrees).
 export interface ManifestState {
   corrupt: boolean;
@@ -723,7 +723,7 @@ const copyDir = async (src: string, dst: string): Promise<void> => {
 const FOUNDATION = ["state", "context", "constitution", "audit"];
 
 // ONE link inventory drives both provisioning and status gap detection
-// (fixes.md P0-2) — harness-relative rels plus the project-root dependency
+// (integration-analysis.md Round 7 P0-2) — harness-relative rels plus the project-root dependency
 // dir, so the two views can never drift apart.
 const HARNESS_LINK_RELS: string[] = [
   ".opencode/node_modules",
@@ -831,7 +831,7 @@ const moveSpecFolder = async (
 // One link's health: absent link whose target is gone = dangling/never
 // created (missing on trunk, with the fixing command); absent link with a
 // present target = provisioning failed or someone unlinked it. Both are
-// gaps, never a broken symlink left in place (fixes.md P0-2).
+// gaps, never a broken symlink left in place (integration-analysis.md Round 7 P0-2).
 const linkGap = async (
   label: string,
   linkPath: string,
@@ -848,7 +848,7 @@ const linkGap = async (
 
 // Foundation-link gaps for every open worktree — the same inventory
 // `provision` uses, recomputed on demand so lpwr-worktree-status shows
-// them long after the mint-time toast scrolled away (fixes.md P0-2).
+// them long after the mint-time toast scrolled away (integration-analysis.md Round 7 P0-2).
 const foundationGaps = async (
   o: Orientation,
   entries: OpenWorktree[]
@@ -972,7 +972,7 @@ export const createWorktreeService = (
     // commits) plus implementation-rules 2 (branch = folder = ID): Done in
     // state.md means this
     // ID has already shipped — minting again would branch from trunk over a
-    // merged history and clobber it (fixes.md P1-1). The normal propose /
+    // merged history and clobber it (integration-analysis.md Round 7 P1-1). The normal propose /
     // explore flow writes the folder on trunk BEFORE minting and is never
     // Done yet, so a fresh proposal still adopts its folder as before.
     if (await stateHasEntry(o.mainHarness, "done", specId)) {
@@ -1079,7 +1079,7 @@ export const createWorktreeService = (
 
   // One worktree's pass through the prune plan — kept out of `prune` so the
   // driver stays a readable sequence of gates and the per-entry rules stay
-  // individually auditable (fixes.md P1-2: a failure at entry N leaves its
+  // individually auditable (integration-analysis.md Round 7 P1-2: a failure at entry N leaves its
   // manifest mark in place and the loop continues to N+1).
   const pruneEntry = async (
     o: Orientation,
@@ -1146,7 +1146,7 @@ export const createWorktreeService = (
     const notices: string[] = [];
     if (manifestCorrupt) {
       // Never let an unreadable manifest masquerade as "nothing pending"
-      // (fixes.md P0-1): the result stays explicit even when marks are lost.
+      // (integration-analysis.md Round 7 P0-1): the result stays explicit even when marks are lost.
       const notice =
         "pending-cleanup manifest unreadable — marks unknown; shipped " +
         "worktrees still close via docs/state.md. Repair or delete " +
@@ -1180,7 +1180,7 @@ export const createWorktreeService = (
       }
     }
     // Notices ride after the results so a corrupt manifest can never scroll
-    // past as an unqualified success (fixes.md P0-1 acceptance).
+    // past as an unqualified success (integration-analysis.md Round 7 P0-1 acceptance).
     return [...lines, ...notices].join("\n");
   };
 

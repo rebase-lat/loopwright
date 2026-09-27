@@ -272,8 +272,9 @@ const worktreeGuard = (plugin: PluginInput): Promise<Hooks> => {
           );
         } else if (result === "manifest-corrupt") {
           // The manifest is never overwritten while unreadable — surface it
-          // here so the commit flow cannot end silently unmarked (fixes.md
-          // P0-1). Shipped status still lets lpwr-worktree-prune close it.
+          // here so the commit flow cannot end silently unmarked
+          // (integration-analysis.md Round 7 P0-1). Shipped status still lets
+          // lpwr-worktree-prune close it.
           const message =
             `worktree ${specId}: pending-cleanup manifest is unreadable — ` +
             `mark not written; repair or delete ` +

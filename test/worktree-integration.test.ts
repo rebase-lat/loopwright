@@ -22,7 +22,8 @@ import {
 } from "../harness/.opencode/lib/worktree.ts";
 
 // The full mint → work → commit → prune cycle against a real temporary git
-// repository (analysis §5 item 17 / fixes.md P3-2), extended with the 1.4.4
+// repository (integration-analysis.md Round 8, analysis §5 item 17 /
+// Round 7, P3-2), extended with the 1.4.4
 // stages: foundation-gap visibility and zero dangling symlinks (P0-2),
 // invalid/taken-ID refusals (P1-1), corrupt-manifest honesty (P0-1), and a
 // resumable prune that converges after a mid-list failure (P1-2).
@@ -131,7 +132,7 @@ const worktreeCount = (root: string): number =>
     .split("\n")
     .filter((line) => line.startsWith("worktree ")).length;
 
-// fixes.md P0-2 acceptance: every symlink in the worktree resolves.
+// integration-analysis.md Round 7 P0-2 acceptance: every symlink in the worktree resolves.
 const danglingLinks = (target: string): string =>
   spawnSync(
     "find",

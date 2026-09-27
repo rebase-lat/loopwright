@@ -831,3 +831,68 @@ Round 7 recorded as reconstructed; the reconstruction has been replaced by the
 authentic pre-implementation plan). `fixes.md` carries no scope section; the
 1.4.2–1.4.4 outcomes remain in CHANGELOG 1.4.2–1.4.4, and `fixes.md`'s new
 header points there. Rounds 1–6 remain this file's record.
+
+---
+
+# Round 8 — restore + gate hardening (post-1.4.5)
+
+A full-remediation pass over the harness, executed in six gated waves —
+lint + typecheck + tests after each (35 → 56 tests), one commit per wave.
+Scope started as an independent audit of `harness/` looking for workarounds
+dressed as fixes, technical debt, and misaligned implementations; Waves 1–2
+reconciled the restored audit records and doc drift, Waves 3–4 rebuilt the
+enforcement layer's testability and closed four gate gaps, Wave 5 corrected
+Round 7's own close-out wording.
+
+## Round 8 findings
+
+| ID | Finding | Evidence | Status |
+|----|---------|----------|--------|
+| S8-01 | The 1.4.2/1.4.3 audit originals were still lost and `fixes.md` existed only as a reconstruction, while code cited it as the record; the Round 7 close-out and companion note asserted the loss as permanent, and two near-identical titles (`fixes.md` "Loopwright 1.4.4 Fixing Plan" vs `loopwright-1.4.4-fixing-plan.md` "Loopwright 1.4.4 — Fixing Plan") named a plan and a review of that plan | untracked `analysis.md` / `verification.md`, modified `fixes.md`; `CHANGELOG.md` 1.4.5; this file's companion note; README layout | **Fixed (Wave 1)** — originals committed; `fixes.md` reverted to the authentic pre-implementation plan with a header naming what did not ship as written (`lpwr-worktree-status --audit`, the `\d{3}`/`auth-14` rule) and pointing outcomes at CHANGELOG 1.4.4; review file renamed `loopwright-1.4.4-review.md` (+3 refs); README layout and the companion note corrected. All six code-cited IDs (P0-1…P3-2) resolve in the restored file. |
+| S8-02 | Root `context.md` described one root that does not exist: counts of 8 agents / 26 commands / 11 plugins (actual 9/27/12), "`docs/` holds constitution, glossary, context, specs, lessons, state" with no `docs/` at the repo root, "MCP servers: none configured" against four in root `opencode.json`, and a `docs/constitution.md` pointer that resolves nowhere | `context.md:8-32` vs `ls`, README's correct counts, root `opencode.json` | **Fixed (Wave 2)** — rewritten to document both roots (repo root vs `harness/`), scoped the MCP claim to `harness/opencode.json`, repointed Principles at the root constitution and stated the enforced-path split (this workspace stays bootstrap-gated by design). |
+| S8-03 | `AGENTS.md:3` pointed "the rules" at `docs/constitution.md` (which holds floors, not numbered rules, and does not exist in this repo), while two rule-numbering spaces (AGENTS 1–13, implementation-rules 1–52) share numbers with different meanings and code/commands cited bare `rule N` for N ≤ 13 | `AGENTS.md:3`; bare citations in conventions, glossary (6), lpwr-review/propose/explore/commit, verdict-gate (2), worktree (2) | **Fixed (Wave 2)** — AGENTS.md states the three-way split and requires citing by source; every ambiguous citation qualified (`AGENTS rule 1/2/4/7/9`, `implementation-rules 2/5`); `worktree.ts`'s "(rule 1)" on the shipped-ID claim dropped — neither rule 1 states single-use, now spelled out from AGENTS 1 + implementation-rules 2. |
+| S8-04 | Rule 47 exempted four commands from `lpwr-guard-bootstrap`; the guard exempts six | `implementation-rules.md:197` vs `lpwr-guard-bootstrap.ts:14-21` | **Fixed (Wave 2)** — rule 47 lists `lpwr-worktree-prune` and `lpwr-worktree-status` with the same reason as guide. |
+| S8-05 | Rule 48 claimed "the matrix names every known builtin" while `todowrite` was in neither the permission matrix nor `lpwr-setup`'s audit list — the completeness check could not see its own hole (omitted ⇒ default-allow for all nine agents) | `harness/opencode.json` (no `todowrite`), `lpwr-setup.md:20` (13 keys), `implementation-rules.md:205` | **Fixed (Wave 2)** — `"todowrite": "allow"` added to all nine agent blocks, to the setup checklist, and the known set spelled out in the rule. |
+| S8-06 | No plugin could be loaded by a test: they imported `../lib/*.js` NodeNext specifiers plain `node` cannot resolve to `.ts`, so `plugin-shape.test.ts` regex-scanned source instead of importing it and every hook shipped with zero behavioral coverage; the helper split also left three `stateSectionHasEntry` copies (worktree, verdict-gate, spec-link) and `frontmatterBlock`/`normalizeEol`/the spec-ID regexes duplicated between `shared.ts` and `gates.ts` | `plugin-shape.test.ts`'s own comment; `lib/worktree.ts:9-12` proving `.ts` works under both runners; `tsconfig.json` `allowImportingTsExtensions` | **Fixed (Wave 3)** — all 12 plugins + TUI import `../lib/*.ts`; the shape test dynamic-imports every entry module; primitives centralized in `gates.ts` (`SPEC_ID`/`SPEC_REF`, `escapeRegExp`, `frontmatterBlock`, `frontmatterValue`, `normalizeEol`, `stateSectionHasEntry`) with `shared.ts` re-exporting; new fixtures drive spec-link, scope-guard, verdict-gate, and the state parser (35 → 48 tests). |
+| S8-07 | `specIdArgument` existed, was tested, and was motivated by `lpwr-commit --amend auth-014` — but only `wrongTree` used it (analysis T2 / verification F11 scoped it to that one call site); spec-link, verdict-gate ×2, security-scan, and log-handoffs still read token[0]. security-scan's `if (specId && !SPEC_ID.test) return` silently skipped the dependency audit on a flag-prefixed invocation — the failure the helper's comment says it prevents | `shared.ts:78-86`; call sites in 4 plugins + log-handoffs' inline split | **Fixed (Wave 4)** — adopted at all five sites; the now-unreachable SPEC_ID re-checks collapse into one message naming the expected shape; `firstArgument` deleted (no callers). Parser tests already covered the flag cases. |
+| S8-08 | `lpwr-scope-guard` unconditionally allowed `docs/specs/<id>/**` and re-read the surface per edit — the one agent with `edit: allow` could rewrite its own allow-list (criteria, `### Declared surface`, `status`) mid-Execute; `builder.md`'s "Never widen the Tasks surface" was prose (implementation-rules 5's own test) | `lpwr-scope-guard.ts:24` (+ the old always-allow surface array) | **Fixed (Wave 4)** — `status: approved` freezes spec.md to test-reference cells and lpwr-amend's approved→draft flip, validated against pending content (write compares whole files, edit applies `oldString`/`newString` first, apply_patch checked per marker section, unverifiable fails closed). `lpwr-amend` flips before amending; `lpwr-tasks` now flips, writes, and collects the package approval `lpwr-specify` gives, so the human approves the surface the gate enforces. |
+| S8-09 | `review.md` was bound to nothing — no hash, timestamp, or version ties it to the `spec.md` it reviewed; a post-approval spec edit sailed through commit as long as `risk_tier` matched, so AGENTS rule 9 / implementation-rules 38's "review voided" held only by prose | `templates/review.md` frontmatter (id, date, diff_ref, risk_tier, waived, deferred); `verdict-gate` cross-checked only tier equality and diff_ref *form* | **Fixed (Wave 4)** — verdict-gate compares spec.md's acceptance table to the review's Specs axis at commit and release: criterion sets equal, two present test references agree (blanks legitimate for waived/deferred). |
+| S8-10 | Rule 8 ("No other command path, including manual runs of the builder agent, should have deploy permission") had no mechanism — the matrix gives `builder` unscoped `bash: ask`, and verdict-gate gated only the `lpwr-release` command and `git commit` | `implementation-rules.md:30`; `opencode.json` builder block | **Fixed (Wave 4)** — the constitution declares `Deploy command:` (one `gates.constitutionCommands` parser serves it and `Audit command:`, which also fixes a CRLF leak in the audit reader); verdict-gate blocks that command outside a window opened only after release's own gate passes, closed on `command.executed` and on the next command, expiring after 10 minutes. Rule 8, `lpwr-release`, and the constitution template name the mechanism. |
+| S8-11 | Round 7's S7-01 close-out asserted two things the code does not do: FOUNDATION is "exactly harness/.gitignore's set" (that file also ignores `.env*`, `node_modules/`, `secrets/`, `*.pem`/`*.key`, `.loop-worktrees/`), and tracked docs "reach every worktree through checkout" — checkout happens once at `git worktree add`, so trunk glossary/conventions/implementation-rules commits after mint are invisible in an open worktree (the original finding) | `lib/worktree.ts:711-717` (pre-fix); `harness/.gitignore` | **Fixed (Wave 5)** — comment and the glossary's Foundation row now state the mint-time-snapshot limit and the real membership (the gitignored foundation-docs subset); the exclusion decision itself stands (a link would stage an absolute symlink — S5-03). CHANGELOG 1.4.5 keeps its as-written claim as released history; this row is the correction. |
+
+## Round 8 open items (carry forward)
+
+- **T6 (from `analysis.md`)** — nothing verifies that `harness/.env`'s
+  `OPENCODE_SPEC_ID` is actually *loaded*; `lpwr-scope-guard` reads
+  `process.env`, `lpwr-install`/provision writes the file, the TUI parses it
+  directly, and the only test asserts the file's contents
+  (`worktree-integration.test.ts:169`). Needs an opencode-side answer about
+  dotenv scope.
+- **D4 (declined)** — `surfaceOverlap` stays advisory, now justified as
+  implementation-rules 50's planning-time decision rather than a gap.
+- **F12 (not done)** — `TAIL_ALLOWED` is declared data + rule 51, which
+  satisfies W9/D6's contract requirement; F12's stricter form (derived from
+  the spec's own journal path) was not built.
+- **Optional, not built** — a tracked-doc staleness advisory in
+  `foundationGaps`/`statusReport` (blob-compare against trunk) would report
+  the mint-time-snapshot gap S8-11 documents; Wave 5 shipped docs-only, per
+  plan.
+- **B5 residual** — `review.md` tampering between review and commit is
+  covered by scribe's `edit: ask` plus the S8-09 table binding; gates still
+  cannot see who acts.
+
+## Round 8 wave status
+
+- [x] Wave 1 — S8-01 (restore + reconcile)
+- [x] Wave 2 — S8-02…S8-05 (doc/rule drift)
+- [x] Wave 3 — S8-06 (plugin testability + one shared gate core), 35 → 48 tests
+- [x] Wave 4 — S8-07…S8-10 (specIdArgument, approved-spec freeze, review↔spec
+  binding, deploy gate), 48 → 56 tests
+- [x] Wave 5 — S8-11 (FOUNDATION/glossary wording)
+- [x] Wave 6 — this record, CHANGELOG 1.4.6, version bump
+
+Each wave gated with `npm run lint` && `npm run typecheck` && `npm test` —
+all green. Committed directly on the default branch, out of process per
+implementation-rules 4 (this repo has never run its own spec flow —
+`docs/specs/` and `docs/lessons/` remain empty), which Rule 21's
+propose→review path still contradicts; noted, not resolved here.

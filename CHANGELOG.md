@@ -3,6 +3,60 @@
 All notable changes to this project, grouped by git tag. See the commit
 history for per-change detail.
 
+## [1.4.6] — 2026-09-27
+
+- Restore-and-harden pass — Round 8 findings table in `integration-analysis.md`,
+  six gated waves (lint + typecheck + tests after each; 35 → 56 tests), one
+  commit per wave:
+  - **Audit originals restored** (S8-01): `analysis.md` (the 1.4.2 W1–W9 /
+    D1–D7 / T1–T7 audit) and `verification.md` (the 1.4.3 F1–F17 re-check)
+    committed; `fixes.md` reverted from the 1.4.5 reconstruction to the
+    authentic pre-implementation plan, with a header naming what did **not**
+    ship as written (`lpwr-worktree-status --audit`; the `\d{3}` / `auth-14`
+    is-a-bad-shape rule) and pointing outcomes at CHANGELOG 1.4.4; the review
+    file renamed `loopwright-1.4.4-review.md` (the two titles differed by one
+    em-dash); README layout and the Round 7 companion note corrected. All six
+    code-cited IDs resolve in the restored plan.
+  - **Doc/rule drift** (S8-02…S8-05): root `context.md` rewritten to
+    document both roots with the real counts (9 agents / 27 commands / 17
+    skills / 12 plugins) and the MCP/constitution split; AGENTS.md states
+    the AGENTS 1–13 vs implementation-rules 1–52 overlap and requires citing
+    by source, every bare `rule N` (N ≤ 13) qualified; implementation-rules
+    47 gains the two EXEMPT worktree commands; `todowrite` added to all nine
+    agent blocks, to `lpwr-setup`'s audit list, and to rule 48's known set.
+  - **Plugin testability + one gate core** (S8-06): every plugin and the TUI
+    import `../lib/*.ts`, so `node --test` can load them — the plugin-shape
+    fixture now dynamic-imports each entry module instead of regex-scanning
+    source; `stateSectionHasEntry` (three copies → one), `frontmatterBlock`,
+    `frontmatterValue`, `normalizeEol`, `escapeRegExp`, and the spec-ID
+    regexes live once in `gates.ts`; new fixtures drive spec-link,
+    scope-guard, verdict-gate, and the state parser.
+  - **Four gates closed** (S8-07…S8-10): `specIdArgument` adopted at all
+    five keyed call sites — security-scan no longer silently skips the
+    dependency audit on a flag-prefixed invocation — and `firstArgument`
+    deleted; `status: approved` freezes `spec.md` to test-reference cells
+    and `lpwr-amend`'s draft flip, validated against the content that would
+    land (write compares whole files, edit applies `oldString`/`newString`
+    first, apply_patch is checked per marker section, unverifiable fails
+    closed), so the agent that writes can no longer rewrite its own
+    allow-list — `lpwr-amend` and `lpwr-tasks` are reordered around that
+    door, with `lpwr-tasks` now collecting the same package approval
+    `lpwr-specify` does; commit and release compare `spec.md`'s acceptance
+    table to `review.md`'s Specs axis, the review's only binding to the spec
+    it reviewed; deploy is gated by the constitution's `Deploy command:`
+    line and allowed only inside an open `lpwr-release` window (rule 8's
+    mechanism, one `constitutionCommands` parser shared with
+    `Audit command:`).
+  - **FOUNDATION wording** (S8-11): the 1.4.5 S7-01 close-out claimed
+    FOUNDATION "is exactly `harness/.gitignore`'s set" and that tracked docs
+    "reach every worktree through checkout" — both now state what holds (the
+    gitignored foundation-docs subset; a mint-time snapshot, invisible in an
+    open worktree until re-mint). The exclusion decision itself is unchanged;
+    released history keeps 1.4.5 as written.
+  - No permission-tier changes; `harness/.gitignore` untouched (S5-03).
+    Open items carried in Round 8: T6 (`OPENCODE_SPEC_ID` load unverified),
+    F12, the optional staleness advisory, B5's review-tampering residual.
+
 ## [1.4.5] — 2026-09-26
 
 - Fixing-plan review of the 1.4.4 release — findings table in

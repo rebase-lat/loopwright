@@ -3,7 +3,7 @@ set -euo pipefail
 
 [ -n "${BASH_VERSION:-}" ] || { printf 'error: run this script with bash\n' >&2; exit 1; }
 
-SCRIPT_VERSION="1.4.5"
+SCRIPT_VERSION="1.4.6"
 OWNER="rebase-lat"
 REPO="loopwright"
 STATE_DIR=".loopwright"

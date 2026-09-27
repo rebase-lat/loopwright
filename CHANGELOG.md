@@ -53,6 +53,11 @@ history for per-change detail.
     gitignored foundation-docs subset; a mint-time snapshot, invisible in an
     open worktree until re-mint). The exclusion decision itself is unchanged;
     released history keeps 1.4.5 as written.
+  - **README**: the "How it works" gate summary now names all three new
+    mechanisms — the `status: approved` freeze on `spec.md`, the
+    acceptance-table ↔ Specs-axis binding, and the `Deploy command:`
+    release window — replacing the old "blocks ship-less commits and
+    deploys" line.
   - No permission-tier changes; `harness/.gitignore` untouched (S5-03).
     Open items carried in Round 8: T6 (`OPENCODE_SPEC_ID` load unverified),
     F12, the optional staleness advisory, B5's review-tampering residual.

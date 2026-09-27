@@ -14,9 +14,13 @@ the worktree, branch, `docs/specs/<id>/` folder, log lines, and commit messages.
 through typed stages — each command declares its `Stage:` — and every handoff appends one
 structured line (`intent`, `spec_ref`, artifact-pointer `payload`, `confidence`) to the
 spec's `log.ndjson`. Gates hold whether or not the agent cooperates: `lpwr-spec-link` blocks
-unapproved specs, `lpwr-scope-guard` blocks out-of-surface edits (`edit`/`write`/
-`apply_patch`), `lpwr-verdict-gate` blocks
-ship-less commits and deploys, `lpwr-security-scan` blocks secrets (dependency findings
+unapproved specs; `lpwr-scope-guard` blocks out-of-surface edits (`edit`/`write`/
+`apply_patch`) and freezes `spec.md` at `status: approved` to test-reference cells — any
+other spec change goes through `lpwr-amend`, which flips the status to draft first;
+`lpwr-verdict-gate` blocks ship-less commits, refuses a commit when `spec.md`'s acceptance
+table and `review.md`'s Specs axis disagree (the tables are the review's only binding to
+the spec it reviewed), and allows the constitution's `Deploy command:` only inside an open
+`lpwr-release` window; `lpwr-security-scan` blocks secrets (dependency findings
 warn-and-trace to `audit.md`, reviewed at lpwr-review). Review weight scales by
 human-confirmed risk tier; high-tier specs need a threat review before release.
 Structured human picks run through the

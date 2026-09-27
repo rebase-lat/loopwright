@@ -22,10 +22,11 @@ table and `review.md`'s Specs axis disagree (the tables are the review's only bi
 the spec it reviewed), and allows the constitution's `Deploy command:` only inside an open
 `lpwr-release` window; `lpwr-security-scan` blocks secrets (dependency findings
 warn-and-trace to `audit.md`, reviewed at lpwr-review). Review weight scales by
-human-confirmed risk tier; high-tier specs need a threat review before release.
-Structured human picks run through the
-`question` tool; advisories land in
-`client.app.log` (`logWarn`) and one-shot warning toasts — never raw `console.*`.
+human-confirmed risk tier, with an advisory warning when the lines a spec
+actually changed look heavier than its recorded tier; high-tier specs need a
+threat review before release. Structured human picks run through the `question`
+tool; advisories land in `client.app.log` (`logWarn`) and one-shot warning
+toasts — never raw `console.*`.
 
 One `orchestrator` agent is the only interactive primary: all 28 commands pin
 to it, it fans doer steps out to subagents (`builder` implements, `scribe`
@@ -105,12 +106,12 @@ loopwright/
 ├── PRINCIPLES.md               # design intent (resume of the former principles essays)
 ├── LICENSE                     # MIT
 ├── CHANGELOG.md
-├── package.json                # npm scripts: lint, fmt, fmt:check, typecheck, test; version 1.4.6
+├── package.json                # npm scripts: lint, fmt, fmt:check, typecheck, test; version 1.5.0
 ├── loopwright.sh               # installer: install/update/doctor/fix/status/uninstall for harness/
 ├── opencode.json               # developer MCP + LSP config — distinct from harness/opencode.json (shipped matrix)
 ├── constitution.md             # this repo's own rules — the committed record for humans (harness ships without one; onboard creates harness/docs/constitution.md, which is what the gates read)
 ├── context.md                  # this repo's own context — documents both roots and that split (same: generated per project by onboard)
-├── integration-analysis.md     # the single audit trail — one `# Round N` per review/simulation pass; Rounds 7–8 carry the folded 1.4.2–1.4.4 originals (repo history, not shipped)
+├── integration-analysis.md     # the single audit trail — one `# Round N` per review/simulation pass; Rounds 7–8 hold the folded 1.4.2–1.4.4 originals (repo history, not shipped), Rounds 9–10 the post-1.4.6 pass
 ├── CONTRIBUTING.md             # repo-development rules: audit findings go into integration-analysis.md as the next round, never a new root file
 ├── harness/                    # pure boilerplate — no prefilled project info (run opencode from here)
 │   ├── AGENTS.md               # protocol only — rules 1–13 here; floors in docs/constitution.md, checklist in docs/implementation-rules.md

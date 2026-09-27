@@ -3,6 +3,69 @@
 All notable changes to this project, grouped by git tag. See the commit
 history for per-change detail.
 
+## [1.5.0] — 2026-09-27
+
+- One audit trail, one stage vocabulary, one metrics consumer — Rounds 9 and
+  10 of `integration-analysis.md`, six gated commits plus an installer fix
+  (lint + typecheck + tests after each; 56 → 81 tests):
+  - **One audit trail** (Round 9 A): `fixes.md`,
+    `loopwright-1.4.4-review.md`, `analysis.md` (the 1.4.2 W1–W9 / D1–D7 /
+    T1–T7 audit) and `verification.md` (the 1.4.3 F1–F17 re-check) are now
+    Rounds 7 and 8 of `integration-analysis.md` — each under a provenance
+    note — and all four root files are deleted. Every live citation
+    (`worktree.ts`, `worktree-guard`, `spec-link`, `shared.ts`, both
+    worktree tests) names a round instead of a filename, and root
+    `CONTRIBUTING.md` carries the rule that made the mess inevitable:
+    audit findings go into `integration-analysis.md` as the next round,
+    never a new root file. Released history is untouched — the originals
+    live on as repo history.
+  - **One source of truth for agent stages** (Round 9 B): new
+    `lib/agent-stages.ts` owns `STAGES` (the eight stage words) and
+    `AGENT_STAGES` (builder, planner, reviewer, scribe), so the role files,
+    the orchestrator's Responsibilities, and `lpwr-worktree-guard`'s
+    vocabulary can no longer drift apart. Seven fixtures pin the map, the
+    unmapped-agents-name-no-stage rule, and the requirement that the
+    orchestrator name every agent it maps.
+  - **Advisory risk-tier escalation at review** (Round 9 C):
+    `ESCALATION_SIGNALS` + `checkTierMismatch` in `lib/gates.ts` ask, at
+    `lpwr-review`, whether the lines a spec actually changed look heavier
+    than its recorded tier — network, permission, or process signals fed
+    only the added lines, so an URL already in the tree is context rather
+    than a new call. It surfaces as a `logWarn` plus a one-shot toast naming
+    the Security-axis checkbox, and is advisory only: the tier, and the
+    `lpwr-threat-review` requirement it controls, stay the human's to change
+    (AGENTS rule 11).
+  - **Visual proposals are first-class options** (Round 10 E): `lpwr-propose`
+    takes a mockup, screenshot, or design-file path as the option itself,
+    records the human's eyeball pick as the verdict — informal, no
+    confirmation pass over the image — and pins the path with the selection;
+    when that pick becomes real UI code it re-enters Specify.
+    `lpwr-option-triage` judges the design decision an option embodies, not
+    the craft of the pixels, and `lpwr-motion` pins the path so the proposal
+    stays readable with the picture unavailable.
+  - **`lpwr-metrics`** (Round 10 F): one read-only tool call reports rework
+    rate, time to first Verify, and patches per file, derived from
+    `log.ndjson` timestamps and `git log --grep=<id>` — no new
+    instrumentation, no spec content read. The three definitions live in
+    `lib/metrics.ts` beside the arithmetic so report and prose cannot drift,
+    and gaps (specs with no Frame→Verify pair, commits carrying no ID) are
+    named rather than folded into a zero. `project_metrics` is omitted from
+    the permission matrix, which defaults it to allow.
+  - **Core vs extended** (Round 10 D): README names the twelve-command
+    everyday path against the sixteen conditional or cross-cutting ones, and
+    `lpwr-guide` opens with the same loop — documentation, not a gate, and
+    nothing cut. Counts move to 28 commands / 13 plugins.
+  - **Installer**: the bootstrap fetches from `raw.githubusercontent.com`
+    with `curl` now that the repo is public (the `gh api` path and its
+    private-repo error are gone), every command accepts a positional DIR
+    equivalent to `--project DIR` (refusing both at once), and `-h`/`--help`
+    dispatches from the subcommand position instead of exiting 1 as an
+    unknown command.
+  - No permission-tier changes; `harness/.gitignore` untouched. Open items
+    carried in Round 10: T6 (`OPENCODE_SPEC_ID` load unverified), F12, the
+    optional staleness advisory, B5's review-tampering residual, and a
+    seeded-fixture test for `lpwr-metrics`' git query.
+
 ## [1.4.6] — 2026-09-27
 
 - Restore-and-harden pass — Round 8 findings table in `integration-analysis.md`,

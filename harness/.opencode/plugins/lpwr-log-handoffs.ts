@@ -5,8 +5,8 @@ import path from "node:path";
 import { tool } from "@opencode-ai/plugin";
 import type { Hooks, PluginInput } from "@opencode-ai/plugin";
 
-import { specDirNames } from "../lib/gates.js";
-import { commandName, logWarn, specWorktreeBases } from "../lib/shared.js";
+import { specDirNames } from "../lib/gates.ts";
+import { commandName, logWarn, specWorktreeBases } from "../lib/shared.ts";
 
 // Journals domain handoffs to docs/specs/<id>/log.ndjson — the one
 // artifact every domain writes to. Each command maps to its domain intent;

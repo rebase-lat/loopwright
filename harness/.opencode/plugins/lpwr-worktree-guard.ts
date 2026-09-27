@@ -4,8 +4,8 @@ import path from "node:path";
 import { tool } from "@opencode-ai/plugin";
 import type { Hooks, PluginInput } from "@opencode-ai/plugin";
 
-import { declaredSurfaceFrom, overlaps } from "../lib/gates.js";
-import type { WorktreeInfo } from "../lib/shared.js";
+import { declaredSurfaceFrom, overlaps } from "../lib/gates.ts";
+import type { WorktreeInfo } from "../lib/shared.ts";
 import {
   SPEC_ID,
   block,
@@ -18,8 +18,8 @@ import {
   toastBlocked,
   toastWarning,
   worktreeList,
-} from "../lib/shared.js";
-import type { Orientation } from "../lib/worktree.js";
+} from "../lib/shared.ts";
+import type { Orientation } from "../lib/worktree.ts";
 import {
   SERVICE,
   capBlocked,
@@ -32,7 +32,7 @@ import {
   orientation,
   stateHasEntry,
   statusReport,
-} from "../lib/worktree.js";
+} from "../lib/worktree.ts";
 
 // Per-spec worktree lifecycle (implementation-rules 2/29/49/50/51/52) — the
 // thin adapter over lib/worktree.ts, which owns minting, provisioning, the

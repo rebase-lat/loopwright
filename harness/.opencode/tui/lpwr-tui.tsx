@@ -15,7 +15,7 @@ import type {
 } from "@opencode-ai/plugin/tui";
 import { createEffect, createSignal, onCleanup, Show } from "solid-js";
 
-import { EXPECTED, SPEC_ID, frontmatterValue } from "../lib/shared.js";
+import { EXPECTED, SPEC_ID, frontmatterValue } from "../lib/shared.ts";
 
 type Verdict = "ship" | "block" | "redirect" | "pending" | "missing";
 

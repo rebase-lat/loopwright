@@ -29,7 +29,7 @@ import {
   logWarn,
   toastBlocked,
   toastWarning,
-} from "../lib/shared.js";
+} from "../lib/shared.ts";
 
 const execFileAsync = promisify(execFile);
 

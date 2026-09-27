@@ -4,16 +4,15 @@ import path from "node:path";
 
 import type { Hooks, PluginInput } from "@opencode-ai/plugin";
 
-import { receiptIncomplete } from "../lib/gates.js";
+import { receiptIncomplete, stateSectionHasEntry } from "../lib/gates.ts";
 import {
   SPEC_ID,
   block,
   commandName,
-  escapeRegExp,
   firstArgument,
   frontmatterValue,
   worktreeList,
-} from "../lib/shared.js";
+} from "../lib/shared.ts";
 
 // Refuses /lpwr-implement without an approved spec id.
 // The spec id is the first token of the command arguments string.
@@ -50,7 +49,7 @@ const designReviewOpen = async (
 // own status reads approved — the state file is the cross-spec escalation
 // record, and implement must not route around it. Entries look like
 // `- <id>: <reason>`; the boundary check keeps `auth-014` from matching
-// `auth-0144`.
+// `auth-0144` (shared parser in lib/gates.ts).
 const isStateBlocked = async (
   specId: string,
   root: string
@@ -61,26 +60,7 @@ const isStateBlocked = async (
   } catch {
     return false;
   }
-  const lines = state.split("\n");
-  let inside = false;
-  for (const line of lines) {
-    if (/^##\s+blocked/iu.test(line)) {
-      inside = true;
-      continue;
-    }
-    if (inside && /^##\s+/u.test(line)) {
-      break;
-    }
-    if (
-      inside &&
-      new RegExp(`^- ${escapeRegExp(specId)}(?=[:\\s]|$)`, "u").test(
-        line.trim()
-      )
-    ) {
-      return true;
-    }
-  }
-  return false;
+  return stateSectionHasEntry(state, "blocked", specId);
 };
 
 const specLink = (plugin: PluginInput): Promise<Hooks> => {

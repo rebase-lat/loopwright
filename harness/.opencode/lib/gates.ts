@@ -1,9 +1,20 @@
 // Pure gate predicates, extracted from the enforcing plugins so a committed
 // node:test fixture harness can exercise them directly (Round 3 D1). This
-// module is deliberately self-contained — no local imports — so `node --test`
-// can load it without the plugins' `./shared.js` NodeNext specifiers. The
-// plugins import these back, so the tested logic and the enforced logic are
-// the same functions, never a copy.
+// module is deliberately import-free — no local imports at all — so `node
+// --test` loads it with no fs/git/plugin dependencies, and so it can be the
+// one home for shared primitives (spec-ID regexes, frontmatter/EOL helpers,
+// the state.md section parser) that used to be copied between `shared.ts`
+// and the plugins. The plugins import these back (`.ts` specifiers, the same
+// spelling `lib/worktree.ts` already uses), so the tested logic and the
+// enforced logic are the same functions, never a copy.
+
+// Branch/command-arg spec ID: single sequence suffix (auth-014).
+export const SPEC_ID = /^[a-z0-9]+(?:-[a-z0-9]+)*-\d+$/u;
+// Journal/tool spec ref: also accepts criterion IDs (auth-014-1).
+export const SPEC_REF = /^[a-z0-9]+(?:-[a-z0-9]+)*-\d+(?:-\d+)?$/u;
+
+export const escapeRegExp = (text: string): string =>
+  text.replaceAll(/[.+^${}()|[\]\\]/gu, "\\$&");
 
 export const normalizeEol = (raw: string): string =>
   raw.replaceAll("\r\n", "\n");
@@ -11,6 +22,38 @@ export const normalizeEol = (raw: string): string =>
 export const frontmatterBlock = (raw: string): string | null => {
   const match = normalizeEol(raw).match(/^---\n(?<frontmatter>[\s\S]*?)\n---/u);
   return match?.groups?.frontmatter ?? null;
+};
+
+// state.md section membership (Done closures, Blocked escalations) — one
+// parser for every caller: the worktree service, lpwr-verdict-gate, and
+// lpwr-spec-link used to keep three near-identical copies that could drift.
+// Section names match case-insensitively; the entry match is boundary-aware
+// so `auth-014` never matches `auth-0144`. Pure text in, boolean out — the
+// callers own the file read.
+export const stateSectionHasEntry = (
+  stateText: string,
+  section: string,
+  specId: string
+): boolean => {
+  let inside = false;
+  for (const line of normalizeEol(stateText).split("\n")) {
+    if (new RegExp(`^##\\s+${escapeRegExp(section)}\\b`, "iu").test(line)) {
+      inside = true;
+      continue;
+    }
+    if (inside && /^##\s+/u.test(line)) {
+      break;
+    }
+    if (
+      inside &&
+      new RegExp(`^- ${escapeRegExp(specId)}(?=[:\\s]|$)`, "u").test(
+        line.trim()
+      )
+    ) {
+      return true;
+    }
+  }
+  return false;
 };
 
 // Strip a trailing YAML ` # …` comment (whitespace before `#` is required for
@@ -432,7 +475,7 @@ export const declaredSurfaceFrom = (specRaw: string): string[] => {
 // Empty means "not a spec-shaped ref" — callers must refuse instead of
 // creating a folder, so an id-shaped slug (`login-2`) can never mint a
 // phantom docs/specs/ entry (Round 6, S5-04/S6-02).
-const SPEC_DIR_REF = /^[a-z0-9]+(?:-[a-z0-9]+)*-\d+(?:-\d+)?$/u;
+const SPEC_DIR_REF = SPEC_REF;
 
 export const specDirNames = (specRef: string): string[] => {
   if (!SPEC_DIR_REF.test(specRef)) {

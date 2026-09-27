@@ -1,6 +1,6 @@
 import type { Hooks, PluginInput } from "@opencode-ai/plugin";
 
-import { logWarn } from "../lib/shared.js";
+import { logWarn } from "../lib/shared.ts";
 
 // Advisory audit: permission denials are otherwise silent. Structured warn
 // log records who tried what, where — never blocks and never overrides the

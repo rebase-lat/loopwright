@@ -1,6 +1,6 @@
 import type { Hooks, PluginInput } from "@opencode-ai/plugin";
 
-import { looksLikeGitCommit, logWarn, toastWarning } from "../lib/shared.js";
+import { looksLikeGitCommit, logWarn, toastWarning } from "../lib/shared.ts";
 
 // Advisory only: warns on achievement trap (>3 consecutive patches
 // on one file) and dislodging trap (15 min on one file without a

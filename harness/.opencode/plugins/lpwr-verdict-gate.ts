@@ -7,11 +7,12 @@ import type { Hooks, PluginInput } from "@opencode-ai/plugin";
 
 import {
   securityAxisComplete,
+  stateSectionHasEntry,
   tableComplete,
   templateLeftovers,
   threatAccepted,
   verdictCheck,
-} from "../lib/gates.js";
+} from "../lib/gates.ts";
 import {
   SPEC_ID,
   block,
@@ -23,7 +24,7 @@ import {
   looksLikeGitCommit,
   normalizeEol,
   toastWarning,
-} from "../lib/shared.js";
+} from "../lib/shared.ts";
 
 // Mechanical verdict floor (implementation-rules 5/7): /lpwr-commit, /lpwr-release, and a
 // raw `git commit` on a spec-shaped branch cannot run without a recorded "ship" whose
@@ -39,7 +40,8 @@ const execFileAsync = promisify(execFile);
 const readFileAt = async (root: string, relative: string): Promise<string> =>
   normalizeEol(await readFile(path.join(root, relative), "utf-8"));
 
-// state.md section membership for a spec id (Blocked escalations, Done closures).
+// state.md section membership for a spec id (Blocked escalations, Done
+// closures) — the file read, parsed by the shared gates parser.
 const stateHasEntry = async (
   root: string,
   section: string,
@@ -51,26 +53,7 @@ const stateHasEntry = async (
   } catch {
     return false;
   }
-  const lines = state.split("\n");
-  let inside = false;
-  for (const line of lines) {
-    if (new RegExp(`^##\\s+${section}\\b`, "iu").test(line)) {
-      inside = true;
-      continue;
-    }
-    if (inside && /^##\s+/u.test(line)) {
-      break;
-    }
-    if (
-      inside &&
-      new RegExp(`^- ${escapeRegExp(specId)}(?=[:\\s]|$)`, "u").test(
-        line.trim()
-      )
-    ) {
-      return true;
-    }
-  }
-  return false;
+  return stateSectionHasEntry(state, section, specId);
 };
 
 // Post-ship detection for lpwr-amend: state Done (written by lpwr-commit) or a

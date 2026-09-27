@@ -27,10 +27,10 @@ import { promisify } from "node:util";
 
 import type { PluginInput } from "@opencode-ai/plugin";
 
+import { stateSectionHasEntry } from "./gates.ts";
 import type { WorktreeInfo } from "./shared.ts";
 import {
   SPEC_ID,
-  escapeRegExp,
   logError,
   logInfo,
   logWarn,
@@ -165,8 +165,9 @@ export const findWorktree = (
 ): WorktreeInfo | null =>
   worktrees.find((wt) => specIdOfWorktree(wt) === specId) ?? null;
 
-// state.md section membership (Done closures) — same shape as
-// lpwr-verdict-gate's check; section is matched case-insensitively.
+// state.md section membership (Done closures) — the file read, parsed by the
+// one shared gates.stateSectionHasEntry (worktree service, verdict gate, and
+// spec-link each used to keep a near-identical copy).
 export const stateHasEntry = async (
   harnessDir: string,
   section: string,
@@ -178,25 +179,7 @@ export const stateHasEntry = async (
   } catch {
     return false;
   }
-  let inside = false;
-  for (const line of state.split("\n")) {
-    if (new RegExp(`^##\\s+${section}\\b`, "iu").test(line)) {
-      inside = true;
-      continue;
-    }
-    if (inside && /^##\s+/u.test(line)) {
-      break;
-    }
-    if (
-      inside &&
-      new RegExp(`^- ${escapeRegExp(specId)}(?=[:\\s]|$)`, "u").test(
-        line.trim()
-      )
-    ) {
-      return true;
-    }
-  }
-  return false;
+  return stateSectionHasEntry(state, section, specId);
 };
 
 // Cap (rule 29): env wins (fast override, headless-safe), then the harness's

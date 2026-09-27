@@ -6,8 +6,8 @@ import { promisify } from "node:util";
 
 import type { Hooks, PluginInput } from "@opencode-ai/plugin";
 
-import { declaredSurfaceFrom } from "../lib/gates.js";
-import { SPEC_ID, RETAIN_PATHS, toastBlocked } from "../lib/shared.js";
+import { declaredSurfaceFrom } from "../lib/gates.ts";
+import { SPEC_ID, RETAIN_PATHS, toastBlocked } from "../lib/shared.ts";
 
 // Blocks edits outside the active spec's declared surface.
 // The active spec resolves as: explicit OPENCODE_SPEC_ID wins; otherwise the git

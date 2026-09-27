@@ -4,19 +4,30 @@ import { promisify } from "node:util";
 
 import type { PluginInput } from "@opencode-ai/plugin";
 
+import { SPEC_ID, frontmatterBlock } from "./gates.ts";
+
 // Shared helpers for the lpwr-* plugins and the TUI. This module lives in
 // lib/, not plugins/, on purpose: opencode loads every file in plugins/ as a
 // plugin and requires each of its exports to be a function, so the RegExps and
 // arrays exported here made discovery throw "Plugin export is not a function"
 // on every startup. Plugin entry modules default-export one factory and import
 // everything else from here (Round 6, S6-01).
+//
+// The pure primitives (spec-ID regexes, frontmatter/EOL helpers,
+// escapeRegExp) live in gates.ts — the single definition — and are
+// re-exported here so every existing `from shared` call site keeps working;
+// SPEC_ID and frontmatterBlock are also bound locally for this module's own
+// helpers (specIdArgument, frontmatterValue).
+
+export {
+  SPEC_ID,
+  SPEC_REF,
+  escapeRegExp,
+  frontmatterBlock,
+  normalizeEol,
+} from "./gates.ts";
 
 const execFileAsync = promisify(execFile);
-
-// Branch/command-arg spec ID: single sequence suffix (auth-014).
-export const SPEC_ID = /^[a-z0-9]+(?:-[a-z0-9]+)*-\d+$/u;
-// Journal/tool spec ref: also accepts criterion IDs (auth-014-1).
-export const SPEC_REF = /^[a-z0-9]+(?:-[a-z0-9]+)*-\d+(?:-\d+)?$/u;
 
 // Foundation files every harness workspace must have — checked at startup by
 // lpwr-check-setup and displayed as gaps by the TUI sidebar (one source for
@@ -161,12 +172,6 @@ export const specWorktreeBases = async (root: string): Promise<string[]> => {
 export const commandName = (command: string): string =>
   command.split(/[/:]/u).pop() ?? "";
 
-export const normalizeEol = (raw: string): string =>
-  raw.replaceAll("\r\n", "\n");
-
-export const escapeRegExp = (text: string): string =>
-  text.replaceAll(/[.+^${}()|[\]\\]/gu, "\\$&");
-
 // Any command segment that is a `git … commit` (cd/g -C prefixes, pipes, && chains).
 // `commit-msg` and prose mentioning "commit" do not match.
 export const looksLikeGitCommit = (command: string): boolean => {
@@ -296,11 +301,6 @@ export const block: (plugin: PluginInput, message: string) => never = (
 ) => {
   void toastBlocked(plugin, message);
   throw new Error(message);
-};
-
-export const frontmatterBlock = (raw: string): string | null => {
-  const match = normalizeEol(raw).match(/^---\n(?<frontmatter>[\s\S]*?)\n---/u);
-  return match?.groups?.frontmatter ?? null;
 };
 
 // Returns the lowercased value of `key:` in frontmatter, `#` comments stripped.

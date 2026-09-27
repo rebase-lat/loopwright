@@ -708,13 +708,18 @@ const copyDir = async (src: string, dst: string): Promise<void> => {
 // copy, never part of a branch diff (rule 49 pattern). lpwr-install creates
 // every target — a missing target is a foundation gap (EXPECTED, surfaced by
 // lpwr-check-setup and the TUI sidebar), warned here, never silently patched.
-// Membership is exactly harness/.gitignore's set. Tracked docs — glossary,
-// conventions, implementation-rules — reach every worktree through checkout
-// instead, so docs/glossary.md is deliberately absent here (S5-05's glossary
-// half closed that way in Round 6: trunk-side glossary dirt is named by the
-// merge-gate message). Linking it would never help the tracked case and
-// would hand the branch an untracked absolute symlink to stage otherwise —
-// the S5-03 hazard the gitignore lines exist to prevent.
+// Membership is the gitignored foundation-docs subset of harness/.gitignore
+// — that file also ignores .env*, node_modules/, secrets/, *.pem/*.key, and
+// .loop-worktrees/, which provisioning and the manifest handle above and
+// below, not here. Tracked docs — glossary, conventions,
+// implementation-rules — are deliberately absent: `git worktree add` reads
+// them once, so an open worktree holds its mint-time copy and a trunk commit
+// to them after mint is invisible there until the next re-mint (Round 8
+// reopened the 1.4.5 claim that checkout "reaches every worktree" — it
+// reaches them at mint only). Linking them instead would hand the branch an
+// untracked absolute symlink to stage — the S5-03 hazard the gitignore
+// lines exist to prevent — and trunk-side dirt on them is named by the
+// merge-gate message (S5-05, Round 6).
 const FOUNDATION = ["state", "context", "constitution", "audit"];
 
 // ONE link inventory drives both provisioning and status gap detection

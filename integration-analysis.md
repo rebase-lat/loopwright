@@ -1597,3 +1597,72 @@ items each need a product decision first and were deliberately not started.
 Lint, typecheck, and tests gated green after each of A, B, and C, committed directly on the
 default branch out of process per implementation-rules 4 (this repo has never run its own spec
 flow), as Round 8 recorded.
+
+---
+
+# Round 10 — D, E, F: the three decisions that needed a human, then built
+
+Round 9 stopped at D, E, and F because each needed a product call rather than
+more code. All three were asked and answered, then implemented in one pass:
+the command surface got a documented everyday path, Frame learned to decide
+with pictures, and the derivable metrics got a consumer. `npm run lint`,
+`npm run typecheck`, and `npm test` (68 → 81) all green.
+
+## Decisions (human-confirmed, Round 10)
+
+- **D — document a core/extended split.** Declined: leaving the surface as is
+  (treats the symptom only) and merging near-duplicates (behaviour-change
+  risk in a well-tested system for a real but smaller reduction).
+- **E — a visual proposal's verdict is an informal human pick.** The human
+  eyeballs the artifacts and chooses through the `question` pick that already
+  ends triage; motion ratifies the framing without re-examining the picture.
+  Declined: the formal path (structured `question`-tool confirmation of the
+  kind Verify uses for code), which would have made this a new artifact-type
+  integration instead of an extension.
+- **F — build an `lpwr-metrics` command.** Declined: deferring it, and
+  documenting the derivations without a consumer.
+
+## Round 10 findings
+
+| ID | Finding | Evidence | Status |
+|----|---------|----------|--------|
+| S10-01 | Weakness 1 held: the full command surface (27 at the start of this round, 28 once `lpwr-metrics` landed) had no documented everyday path. The single-orchestrator model hides the surface from the human at runtime, but a maintainer still carries all of it, and nothing said which twelve a spec actually touches | `README.md` Commands table (a Stage map, not a frequency map); the 27-command list in README's layout and `context.md` | **Fixed (D)** — README gains a core (12) / extended (16) split with the everyday sequence spelled out and an explicit "documentation, not a gate" note — no command refuses to run for being extended, `lpwr-guide` covers both. `lpwr-guide.md` opens with the twelve-command loop so the split is visible where a human actually feels the size, and its side doors gain `lpwr-metrics`. Counts updated to 28 commands / 13 plugins in README and `context.md`. |
+| S10-02 | Opportunity 1 held: Frame assumed prose options, so a look-and-feel decision had no home — and the verdict question was open (informal pick vs Verify-style confirmation), which is what decides whether this is an extension or a new artifact-type integration | `lpwr-propose.md` steps 1-4; `skills/lpwr-option-triage`, `skills/lpwr-motion`; `templates/proposal.md` | **Fixed (E)** — informally: `lpwr-propose` step 1 accepts a visual artifact as the option itself (path + one line of what it proposes), step 3 records the human's eyeball pick as the verdict with no confirmation pass over the image, step 4 pins the artifact path as part of the selection, and a closing paragraph sends real UI code back through Specify — the picture replaces prose as the thing being decided, never a stage. Triage tells its seats to judge the design decision an option embodies, not the craft of the pixels. Motion pins the path literally so the proposal stays readable with the picture unavailable. Both proposal-template fields name the path form. |
+| S10-03 | Opportunity 2 held: rework rate, time-to-verdict, and patches-per-file are all derivable from the traceability ID plus `log.ndjson`/`state.md`/git with no new instrumentation, and nothing consumed them | `log.ndjson` lines already carry `ts` + `intent` + `spec_ref` (`lpwr-log-handoffs`); AGENTS rule 1 (commit messages carry the ID); no command reported any of it | **Fixed (F)** — new `lpwr-metrics` command (Cross-cutting, read-only, "one tool call") backed by a `project_metrics` tool in a new `lpwr-metrics` plugin, with all aggregation in pure `lib/metrics.ts` (13 fixtures in `test/metrics.test.ts`). `lib/metrics.ts` carries the three definitions in its header because the report quotes them beside each number: rework = an `execute` handoff after the first `verify` (a second `verify` alone — `lpwr-goal` then `lpwr-review` — is not); time to first verify = first `verify` − first `frame`, unreviewed specs absent from the range rather than zero; patches per file = commits whose message carries a spec ID over the distinct files they touch. Gaps (specs with no pair, folders with no log, commits with no ID) are named rather than folded into a zero. |
+
+### Notes on F
+
+- The plugin reads only handoff timestamps and `git log --grep=<id>` — it never
+  opens a spec's content, so the report stays read-only in the same sense
+  `lpwr-worktree-status` is.
+- Commits and paths collapse into sets across specs, so one commit naming two
+  IDs counts once.
+- This repo develops out of process with no `docs/specs/` history, so running
+  it here reports "no specs yet" — by design, not as a failure.
+- `lib/metrics.ts` brings its own insertion sort: oxlint's
+  `unicorn/no-array-sort` forbids `Array#sort` and the project targets
+  ES2022, whose `Array` has no `toSorted`. The one place a sorted copy is
+  needed takes a 10-line helper rather than an unchecked disable.
+
+## Round 10 open items (carry forward)
+
+- Round 9's D/E/F entries are closed by this round; this file keeps them
+  as-found.
+- **Round 8 still open** — T6 (prove `harness/.env`'s `OPENCODE_SPEC_ID` is
+  actually loaded; needs an opencode-side dotenv-scope answer), F12's stricter
+  form, the optional tracked-doc staleness advisory, and B5's review-tampering
+  residual.
+- **`lpwr-metrics` git query is unit-untested** — aggregation has fixtures, but
+  `gitForSpec`/`gitTotals` have no seeded-repo corpus test; worth adding when
+  a multi-spec fixture repo exists.
+
+## Round 10 status
+
+- [x] D — core/extended split in README, opened up in `lpwr-guide`
+- [x] E — visual artifact as the option set, informal pick as the verdict
+- [x] F — `lpwr-metrics` command + `project_metrics` tool + `lib/metrics.ts`
+- [x] Counts refreshed (28 commands, 13 plugins) in README and `context.md`
+
+Gate after each of D, E, and F: lint clean, typecheck clean, 81/81 tests
+(68 → 81), committed directly on the default branch out of process per
+implementation-rules 4, as Rounds 8 and 9 recorded.

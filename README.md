@@ -150,6 +150,27 @@ loopwright/
 | Retain | `lpwr-commit`, `lpwr-teach` |
 | Cross-cutting | `lpwr-guide`, `lpwr-worktree-status`, `lpwr-worktree-prune`, `lpwr-metrics` |
 
+The 28 commands also split by how often they run, so the everyday path reads
+as twelve:
+
+- **Core (12)** — `lpwr-setup`, `lpwr-install`, `lpwr-onboard` once to start a
+  project, then every spec runs `lpwr-propose` → `lpwr-specify` (or
+  `lpwr-specs`) → `lpwr-tasks` → `lpwr-implement` → `lpwr-review` →
+  `lpwr-commit` → `lpwr-teach`, with `lpwr-guide` for orientation.
+- **Extended (16)** — conditional or cross-cutting: `lpwr-constitution`,
+  `lpwr-domain`, `lpwr-stack` (governance upkeep); `lpwr-interview`,
+  `lpwr-research`, `lpwr-improve` (sourcing a frame); `lpwr-amend`,
+  `lpwr-design`, `lpwr-explore` (spec upkeep); `lpwr-diagnose`,
+  `lpwr-goal`, `lpwr-release`, `lpwr-threat-review` (verify side doors);
+  `lpwr-worktree-status`, `lpwr-worktree-prune`, `lpwr-metrics`
+  (cross-cutting reports).
+
+The split is documentation, not a gate — no command refuses to run because it
+is "extended", and `lpwr-guide`'s decision path covers both sets. The
+single-orchestrator model already hides the surface from the human at
+runtime; naming the everyday loop keeps it legible for whoever has to hold
+all 28, without cutting anything tested.
+
 Cross-cutting rules: amendments (including harness changes) go through
 `lpwr-propose` → `lpwr-review`; approved specs change only via `lpwr-amend`
 (review voided, re-approval required); risk tier is set at specs, re-confirmed

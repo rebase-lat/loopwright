@@ -51,10 +51,18 @@ const COMPLETE_RECEIPT =
 
 test("spec-link: refuses a missing or malformed spec id", async () => {
   const hooks = await specLink(plugin(root()));
-  await assert.rejects(runImplement(hooks, ""), /requires a spec id/u);
+  // specIdArgument returns undefined for both — one message names the shape.
+  await assert.rejects(
+    runImplement(hooks, ""),
+    /requires a traceability ID/u
+  );
   await assert.rejects(
     runImplement(hooks, "--fast"),
-    /not a traceability ID/u
+    /requires a traceability ID/u
+  );
+  await assert.rejects(
+    runImplement(hooks, "Auth-014"),
+    /requires a traceability ID/u
   );
 });
 

@@ -24,6 +24,26 @@ export const frontmatterBlock = (raw: string): string | null => {
   return match?.groups?.frontmatter ?? null;
 };
 
+// Lowercased value of `key:` in frontmatter, ` # …` comments stripped.
+// Lives here with the rest of the pure frontmatter helpers; shared.ts
+// re-exports it so existing call sites keep working.
+export const frontmatterValue = (raw: string, key: string): string | null => {
+  const fm = frontmatterBlock(raw);
+  if (!fm) {
+    return null;
+  }
+  const line = fm
+    .split("\n")
+    .find((candidate) => candidate.trim().toLowerCase().startsWith(`${key}:`));
+  if (!line) {
+    return null;
+  }
+  return (
+    line.split(":").slice(1).join(":").split("#")[0].trim().toLowerCase() ||
+    null
+  );
+};
+
 // state.md section membership (Done closures, Blocked escalations) — one
 // parser for every caller: the worktree service, lpwr-verdict-gate, and
 // lpwr-spec-link used to keep three near-identical copies that could drift.
@@ -54,6 +74,235 @@ export const stateSectionHasEntry = (
     }
   }
   return false;
+};
+
+// Pipe-table cells with the leading/trailing empty splits dropped: `| a | b |`
+// → ["a", "b"]. Primitive used by every table reader below.
+export const rowCells = (row: string): string[] => {
+  const parts = row.split("|").map((cell) => cell.trim());
+  return parts.filter((_cell, index) => index > 0 && index < parts.length - 1);
+};
+
+// --- Frozen approved spec (AGENTS rule 9 / implementation-rules 38) ----------
+//
+// While `spec.md` carries `status: approved`, Execute may fill test-reference
+// cells and nothing else; every other change travels through lpwr-amend, whose
+// first act is the one allowed non-table edit — flipping `status` to `draft`.
+// lpwr-scope-guard feeds these the tool's pending content, so the gate checks
+// what would land on disk rather than who is writing (tool hooks carry no
+// agent identity — conventions, "Gates can't see who acts").
+
+const ACCEPTANCE_HEADING = /^##\s+acceptance criteria\b/iu;
+
+const splitFrontmatter = (raw: string): { body: string; fm: string } => {
+  const text = normalizeEol(raw);
+  const match = text.match(/^---\n(?<fm>[\s\S]*?)\n---\n?/u);
+  if (!match?.groups) {
+    return { body: text, fm: "" };
+  }
+  return { body: text.slice(match[0].length), fm: match.groups.fm };
+};
+
+// Byte range of the spec's acceptance-table section: heading start → next
+// heading (or end of file). null when the spec has no such section.
+export const acceptanceSection = (
+  raw: string
+): { end: number; start: number } | null => {
+  const text = normalizeEol(raw);
+  let start = -1;
+  let end = text.length;
+  let offset = 0;
+  for (const line of text.split("\n")) {
+    if (start === -1) {
+      if (ACCEPTANCE_HEADING.test(line)) {
+        start = offset;
+      }
+    } else if (/^#{1,6}\s/u.test(line)) {
+      end = offset;
+      break;
+    }
+    offset += line.length + 1;
+  }
+  return start === -1 ? null : { end, start };
+};
+
+const tableIds = (
+  text: string,
+  range: { end: number; start: number }
+): string =>
+  text
+    .slice(range.start, range.end)
+    .split("\n")
+    .filter((line) => line.trim().startsWith("|"))
+    .map((line) => rowCells(line)[0] ?? "")
+    .join("\n");
+
+// Full pending content of spec.md vs the file on disk. Returns null when the
+// change is allowed, otherwise the reason to block.
+export const approvedSpecEdit = (
+  current: string,
+  pending: string
+): string | null => {
+  const onDisk = normalizeEol(current);
+  const next = normalizeEol(pending);
+  if (onDisk === next) {
+    return null;
+  }
+  if (frontmatterValue(onDisk, "status") !== "approved") {
+    return null;
+  }
+  const now = splitFrontmatter(onDisk);
+  const after = splitFrontmatter(next);
+  if (frontmatterValue(next, "status") === "draft") {
+    // lpwr-amend's door: the flip may change nothing else in the same write.
+    const flipped = now.fm.replace(
+      /^status:\s*approved\s*$/mu,
+      "status: draft"
+    );
+    return flipped === after.fm && now.body === after.body
+      ? null
+      : "the approved→draft flip must not carry other changes — split it off (lpwr-amend flips first)";
+  }
+  const a = acceptanceSection(onDisk);
+  const b = acceptanceSection(next);
+  if (!a || !b) {
+    return "the acceptance table is missing from one side — restore it, or run lpwr-amend";
+  }
+  if (
+    onDisk.slice(0, a.start) !== next.slice(0, b.start) ||
+    onDisk.slice(a.end) !== next.slice(b.end)
+  ) {
+    return "changes outside the acceptance table must go through lpwr-amend (AGENTS rule 9)";
+  }
+  if (tableIds(onDisk, a) !== tableIds(next, b)) {
+    return "the criterion list changed — that is a spec change, run lpwr-amend";
+  }
+  return null;
+};
+
+// Non-blank trimmed lines of a changed-line set.
+const changedRows = (lines: readonly string[]): string[] =>
+  lines.map((line) => line.trim()).filter((line) => line !== "");
+
+// Changed lines of an `apply_patch` section targeting spec.md: every one must
+// be an acceptance-table row, and the criterion ids must line up one-for-one
+// (a row's test reference may change; its id may not).
+export const patchChangesFrozenSpec = (
+  removed: readonly string[],
+  added: readonly string[]
+): string | null => {
+  const oldRows = changedRows(removed);
+  const newRows = changedRows(added);
+  if (oldRows.length !== newRows.length) {
+    return "the patch adds or removes acceptance-table rows — run lpwr-amend";
+  }
+  for (let index = 0; index < oldRows.length; index += 1) {
+    const before = oldRows[index];
+    const next = newRows[index];
+    if (!before.startsWith("|") || !next.startsWith("|")) {
+      return "the patch changes text outside the acceptance table — run lpwr-amend";
+    }
+    if (rowCells(before)[0] !== rowCells(next)[0]) {
+      return "the patch changes a criterion id — run lpwr-amend";
+    }
+  }
+  return null;
+};
+
+// --- Review ↔ spec binding (AGENTS rule 9 / implementation-rules 38) ----------
+//
+// review.md records no version of the spec it reviewed — no hash, no
+// timestamp — so the only mechanical tie between the two files is their pair
+// of tables: spec.md's acceptance table and the review's Specs axis.
+// lpwr-verdict-gate compares them at commit/release; a mismatch means the
+// review was rendered against a different spec than the one shipping.
+
+const tableRowsUnder = (raw: string, heading: RegExp): string[] | null => {
+  const lines = normalizeEol(raw).split("\n");
+  const start = lines.findIndex((line) => heading.test(line));
+  if (start === -1) {
+    return null;
+  }
+  const rows: string[] = [];
+  for (let index = start + 1; index < lines.length; index += 1) {
+    if (/^#{1,6}\s/u.test(lines[index])) {
+      break;
+    }
+    if (lines[index].trim().startsWith("|")) {
+      rows.push(lines[index]);
+    }
+  }
+  return rows;
+};
+
+// criterion id → test-reference cell. Both tables put the id first and the
+// reference second; the header row (index 0) and `---` separators are dropped
+// so the two templates' differently-worded headers never read as a drift.
+const criteriaOf = (rows: readonly string[]): Map<string, string> => {
+  const criteria = new Map<string, string>();
+  for (const [index, row] of rows.entries()) {
+    const [id, ref] = rowCells(row);
+    if (index === 0 || !id || /^-+$/u.test(id)) {
+      continue;
+    }
+    criteria.set(id, (ref ?? "").trim());
+  }
+  return criteria;
+};
+
+export const acceptanceTablesDiverge = (
+  specRaw: string,
+  review: string
+): string | null => {
+  const specRows = tableRowsUnder(specRaw, ACCEPTANCE_HEADING);
+  if (!specRows) {
+    return "spec.md has no acceptance table";
+  }
+  const reviewRows = tableRowsUnder(review, /^##\s+specs axis\b/iu);
+  if (!reviewRows) {
+    return "review.md has no Specs axis table";
+  }
+  const spec = criteriaOf(specRows);
+  const reviewed = criteriaOf(reviewRows);
+  for (const id of spec.keys()) {
+    if (!reviewed.has(id)) {
+      return `criterion ${id} is in spec.md but was never reviewed`;
+    }
+  }
+  for (const id of reviewed.keys()) {
+    if (!spec.has(id)) {
+      return `criterion ${id} was reviewed but is no longer in spec.md`;
+    }
+  }
+  for (const [id, specRef] of spec) {
+    const reviewRef = reviewed.get(id) ?? "";
+    // An empty cell on either side is legitimate (waived/deferred rows, or a
+    // reference the review has not recorded) — only two present, disagreeing
+    // references prove the spec moved.
+    if (specRef && reviewRef && specRef !== reviewRef) {
+      return `criterion ${id} cites ${specRef} in spec.md but ${reviewRef} in review.md`;
+    }
+  }
+  return null;
+};
+
+// `Audit command:` / `Deploy command:` lines from the constitution — one
+// parser for both: lpwr-security-scan reads audit commands, lpwr-verdict-gate
+// the deploy command. Placeholder lines (`<…>`, straight from the template)
+// declare nothing, so a never-filled constitution gates nothing.
+export const constitutionCommands = (raw: string, label: string): string[] => {
+  const commands: string[] = [];
+  const needle = `${label.trim().toLowerCase()}:`;
+  for (const line of normalizeEol(raw).split("\n")) {
+    if (!line.trim().toLowerCase().startsWith(needle)) {
+      continue;
+    }
+    const command = line.split(":").slice(1).join(":").trim();
+    if (command && !command.includes("<")) {
+      commands.push(command);
+    }
+  }
+  return commands;
 };
 
 // Strip a trailing YAML ` # …` comment (whitespace before `#` is required for
@@ -138,11 +387,6 @@ export const parseDeferred = (fmBlock: string): Deferred => {
     }
   }
   return { targets };
-};
-
-export const rowCells = (row: string): string[] => {
-  const parts = row.split("|").map((cell) => cell.trim());
-  return parts.filter((_cell, index) => index > 0 && index < parts.length - 1);
 };
 
 export const isPlaceholderRef = (ref: string): boolean =>

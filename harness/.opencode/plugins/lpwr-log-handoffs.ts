@@ -6,7 +6,12 @@ import { tool } from "@opencode-ai/plugin";
 import type { Hooks, PluginInput } from "@opencode-ai/plugin";
 
 import { specDirNames } from "../lib/gates.ts";
-import { commandName, logWarn, specWorktreeBases } from "../lib/shared.ts";
+import {
+  commandName,
+  logWarn,
+  specIdArgument,
+  specWorktreeBases,
+} from "../lib/shared.ts";
 
 // Journals domain handoffs to docs/specs/<id>/log.ndjson — the one
 // artifact every domain writes to. Each command maps to its domain intent;
@@ -204,7 +209,9 @@ const evidenceLog = (plugin: PluginInput): Promise<Hooks> => {
         if (!isCommand(command)) {
           return;
         }
-        const specRef = args.trim().split(/\s+/u)[0] ?? "";
+        // Flag-skipping: a keyed command invoked with flags still journals on
+        // its ID; prose first words that are not spec-shaped stay "invalid".
+        const specRef = specIdArgument(args) ?? "";
         const resolved = await resolveSpecDir(root, specRef);
         if (resolved.status === "invalid") {
           // Unkeyed command (topic slug, path, prose) — out-of-process work.

@@ -17,6 +17,7 @@ Ubiquitous rules — always true, never re-litigated per spec.
 - Dependencies shall carry no known critical or high-severity vulnerability at release time.
 
 Audit command: <one audit command per stack — findings are traced to docs/specs/<id>/audit.md, never blocking>
+Deploy command: <the one command that ships this repo — optional; lpwr-verdict-gate blocks it outside an open lpwr-release window (implementation-rules 8)>
 
 ## Verdict floor
 A spec may be marked "ship" only when:

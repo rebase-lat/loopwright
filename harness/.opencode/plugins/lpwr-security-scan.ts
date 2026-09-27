@@ -20,13 +20,14 @@ import { promisify } from "node:util";
 
 import type { Hooks, PluginInput } from "@opencode-ai/plugin";
 
+import { constitutionCommands } from "../lib/gates.ts";
 import {
   SPEC_ID,
   commandName,
-  firstArgument,
   gitCommandDir,
   looksLikeGitCommit,
   logWarn,
+  specIdArgument,
   toastBlocked,
   toastWarning,
 } from "../lib/shared.ts";
@@ -99,17 +100,10 @@ const readAuditCommands = async (root: string): Promise<string[]> => {
   } catch {
     return [];
   }
-  const commands: string[] = [];
-  for (const line of raw.split("\n")) {
-    if (!line.trim().toLowerCase().startsWith("audit command:")) {
-      continue;
-    }
-    const command = line.split(":").slice(1).join(":").trim();
-    if (command && !command.includes("<")) {
-      commands.push(command);
-    }
-  }
-  return commands;
+  // One parser for every `… command:` line (lpwr-verdict-gate reads
+  // `Deploy command:` with the same function) — it also normalizes CRLF, which
+  // the old split("\n") left dangling in each command.
+  return constitutionCommands(raw, "audit command");
 };
 
 // Minimal quote-aware split: single binary plus args, no shell features.
@@ -271,8 +265,11 @@ const securityScan = (plugin: PluginInput): Promise<Hooks> => {
       if (commandName(input.command) !== "lpwr-implement") {
         return;
       }
-      const specId = firstArgument(input.arguments);
-      if (specId && !SPEC_ID.test(specId)) {
+      // specIdArgument only ever returns a token that matches SPEC_ID, so a
+      // flag-prefixed invocation no longer skips the dependency audit (the
+      // old firstArgument path returned the flag and bailed out silently).
+      const specId = specIdArgument(input.arguments);
+      if (!specId) {
         return;
       }
       const audit = await auditDependencies(root, specId);

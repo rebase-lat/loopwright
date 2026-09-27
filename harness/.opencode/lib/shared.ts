@@ -4,7 +4,7 @@ import { promisify } from "node:util";
 
 import type { PluginInput } from "@opencode-ai/plugin";
 
-import { SPEC_ID, frontmatterBlock } from "./gates.ts";
+import { SPEC_ID } from "./gates.ts";
 
 // Shared helpers for the lpwr-* plugins and the TUI. This module lives in
 // lib/, not plugins/, on purpose: opencode loads every file in plugins/ as a
@@ -14,16 +14,16 @@ import { SPEC_ID, frontmatterBlock } from "./gates.ts";
 // everything else from here (Round 6, S6-01).
 //
 // The pure primitives (spec-ID regexes, frontmatter/EOL helpers,
-// escapeRegExp) live in gates.ts — the single definition — and are
-// re-exported here so every existing `from shared` call site keeps working;
-// SPEC_ID and frontmatterBlock are also bound locally for this module's own
-// helpers (specIdArgument, frontmatterValue).
+// escapeRegExp, the state.md parser) live in gates.ts — the single definition
+// — and are re-exported here so every existing `from shared` call site keeps
+// working; SPEC_ID is also bound locally for specIdArgument.
 
 export {
   SPEC_ID,
   SPEC_REF,
   escapeRegExp,
   frontmatterBlock,
+  frontmatterValue,
   normalizeEol,
 } from "./gates.ts";
 
@@ -83,13 +83,12 @@ export const trunkBranch = async (root: string): Promise<string | null> => {
   }
 };
 
-export const firstArgument = (args: string): string | undefined =>
-  args.trim().split(/\s+/u)[0];
-
 // First argument that IS a traceability ID: skips flags (`lpwr-commit --amend
-// auth-014` must key on `auth-014`, not `--amend` — a flag-token firstArgument
-// would silently skip gates that test the ID). Tokens starting with `-` are
-// never spec IDs; the first token that matches SPEC_ID wins.
+// auth-014` must key on `auth-014`, not `--amend` — a plain first-token read
+// would hand the flag to gates that test the ID; security-scan used to bail
+// out silently for exactly that reason, analysis T2 / verification F11).
+// Tokens starting with `-` are never spec IDs; the first token that matches
+// SPEC_ID wins. Every keyed command gate uses this, never token[0].
 export const specIdArgument = (args: string): string | undefined =>
   args
     .trim()
@@ -180,6 +179,21 @@ export const looksLikeGitCommit = (command: string): boolean => {
     .split(/&&|\|\||;|\|/u)
     .some((segment) => pattern.test(segment.trim()));
 };
+
+// Whether a bash command runs `declared` — an exact segment match or the
+// declared command followed by its own arguments (`npm run deploy -- --tag x`),
+// in any segment of a `cd … && …` / pipe chain. Used for the constitution's
+// `Deploy command:` gate (implementation-rules 8): an exact-string test would
+// miss the flags real deploy steps carry, a substring test would match prose.
+export const runsDeclared = (command: string, declared: string): boolean =>
+  command.split(/&&|\|\||;|\|/u).some((segment) => {
+    const trimmed = segment.trim();
+    return (
+      trimmed === declared ||
+      trimmed.startsWith(`${declared} `) ||
+      trimmed.startsWith(`${declared}\t`)
+    );
+  });
 
 // Any command segment that is a `git … merge --squash` — the squash-merge is
 // the Retain commit's last clean stop, so lpwr-worktree-guard preflights trunk
@@ -301,22 +315,4 @@ export const block: (plugin: PluginInput, message: string) => never = (
 ) => {
   void toastBlocked(plugin, message);
   throw new Error(message);
-};
-
-// Returns the lowercased value of `key:` in frontmatter, `#` comments stripped.
-export const frontmatterValue = (raw: string, key: string): string | null => {
-  const fm = frontmatterBlock(raw);
-  if (!fm) {
-    return null;
-  }
-  const line = fm
-    .split("\n")
-    .find((candidate) => candidate.trim().toLowerCase().startsWith(`${key}:`));
-  if (!line) {
-    return null;
-  }
-  return (
-    line.split(":").slice(1).join(":").split("#")[0].trim().toLowerCase() ||
-    null
-  );
 };

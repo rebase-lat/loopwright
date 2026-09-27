@@ -28,7 +28,11 @@ names the failure it prevents.
    reasoning) or `deferred:` (with a follow-up) in `review.md` frontmatter, enforced by
    `lpwr-verdict-gate.ts` — unlisted gaps never ship, and a silent skip is a miss, not a waiver.
 8. **Only `/release` may trigger deploy, and only on a recorded "ship."** No other command path,
-   including manual runs of the builder agent, should have deploy permission.
+   including manual runs of the builder agent, may run it. The mechanism is the constitution's
+   `Deploy command:` line: `lpwr-verdict-gate` blocks that command outside an open
+   `lpwr-release` window (opened only after the release's own gate passes, closed when any
+   command finishes or the next one starts, expiring on its own). No declared line means no
+   deploy to gate — the human's bash-ask checkpoint stays the floor.
 
 ## Placement (which of the six pieces something belongs in)
 

@@ -6,6 +6,8 @@ import { promisify } from "node:util";
 import type { Hooks, PluginInput } from "@opencode-ai/plugin";
 
 import {
+  acceptanceTablesDiverge,
+  constitutionCommands,
   securityAxisComplete,
   stateSectionHasEntry,
   tableComplete,
@@ -18,11 +20,12 @@ import {
   block,
   commandName,
   escapeRegExp,
-  firstArgument,
   frontmatterBlock,
   frontmatterValue,
   looksLikeGitCommit,
   normalizeEol,
+  runsDeclared,
+  specIdArgument,
   toastWarning,
 } from "../lib/shared.ts";
 
@@ -39,6 +42,25 @@ const execFileAsync = promisify(execFile);
 
 const readFileAt = async (root: string, relative: string): Promise<string> =>
   normalizeEol(await readFile(path.join(root, relative), "utf-8"));
+
+// Deploy gate (implementation-rules 8): the constitution's `Deploy command:`
+// line declares what a deploy *is*; this window says when it may run — only
+// inside an lpwr-release whose verdict gate has already passed. Tool hooks
+// carry no agent identity, so the gate keys on the command's own window
+// rather than on who is holding the shell. The window opens when the release
+// gate passes, closes when any command finishes or the next command starts,
+// and expires on its own so a crashed release cannot leave it open.
+const RELEASE_WINDOW_MS = 10 * 60 * 1000;
+let releaseWindowUntil = 0;
+
+const readDeployCommand = async (root: string): Promise<string | null> => {
+  try {
+    const constitution = await readFileAt(root, "docs/constitution.md");
+    return constitutionCommands(constitution, "deploy command")[0] ?? null;
+  } catch {
+    return null;
+  }
+};
 
 // state.md section membership for a spec id (Blocked escalations, Done
 // closures) — the file read, parsed by the shared gates parser.
@@ -332,6 +354,19 @@ const enforceVerdictGate = async (
         `over, or change it via lpwr-amend (AGENTS rule 9), then re-review.`
     );
   }
+  // The tables are the review's only binding to the spec it reviewed — no
+  // hash or timestamp ties the two files. A mismatch means spec.md moved
+  // after the review was rendered: re-review, or amend first if the spec
+  // itself is what changed.
+  const divergence = acceptanceTablesDiverge(specRaw, review);
+  if (divergence) {
+    block(
+      plugin,
+      `Blocked: spec.md and review.md disagree for ${specId} — ${divergence}. ` +
+        `Re-run lpwr-review against the current spec (or lpwr-amend if the ` +
+        `spec itself changed, then re-review).`
+    );
+  }
   const diffProblem = await diffRefProblem(root, review, options.release);
   if (diffProblem) {
     block(plugin, `Blocked: ${specId} / ${label}: ${diffProblem}.`);
@@ -382,17 +417,15 @@ const verdictGate = (plugin: PluginInput): Promise<Hooks> => {
   return Promise.resolve({
     "command.execute.before": async (input) => {
       const name = commandName(input.command);
+      // Every new command closes any release window still open — a crashed or
+      // never-completed lpwr-release must not leave deploy unguarded.
+      if (name !== "lpwr-release") {
+        releaseWindowUntil = 0;
+      }
       if (name === "lpwr-amend") {
-        const specId = firstArgument(input.arguments);
+        const specId = specIdArgument(input.arguments);
         if (!specId) {
           return;
-        }
-        if (!SPEC_ID.test(specId)) {
-          block(
-            plugin,
-            `Blocked: "${specId}" is not a traceability ID ` +
-              `(expected <domain>-<sequence>, lowercase, e.g. auth-014).`
-          );
         }
         const done = await stateHasEntry(root, "done", specId);
         const committed = done ? true : await shippedInGit(root, specId);
@@ -408,31 +441,61 @@ const verdictGate = (plugin: PluginInput): Promise<Hooks> => {
       if (name !== "lpwr-commit" && name !== "lpwr-release") {
         return;
       }
-      const specId = firstArgument(input.arguments);
+      const specId = specIdArgument(input.arguments);
       if (!specId) {
-        block(plugin, `Blocked: /${name} requires a spec id.`);
-      }
-      if (!SPEC_ID.test(specId)) {
+        // specIdArgument only returns SPEC_ID-shaped tokens, so a malformed id
+        // lands here too — one message names the expected shape.
         block(
           plugin,
-          `Blocked: "${specId}" is not a traceability ID ` +
-            `(expected <domain>-<sequence>, lowercase, e.g. auth-014).`
+          `Blocked: /${name} requires a traceability ID ` +
+            `(<domain>-<sequence>, lowercase, e.g. auth-014).`
         );
       }
       await enforceVerdictGate(plugin, root, name, specId, {
         release: name === "lpwr-release",
       });
+      if (name === "lpwr-release") {
+        // The deploy steps run inside this command, delegated to workers whose
+        // bash stays ask-gated — the bash hook below keys on this window.
+        releaseWindowUntil = Date.now() + RELEASE_WINDOW_MS;
+      }
+    },
+    event: (input) => {
+      if (input.event.type === "command.executed") {
+        releaseWindowUntil = 0;
+      }
+      return Promise.resolve();
     },
     "tool.execute.before": async (input, output) => {
-      // Raw `git commit` through bash is the same Retain action as /lpwr-commit
-      // — gated when (and only when) the branch names a spec. Branches with no
-      // spec ID (bootstrap, harness development) stay ungated, mirroring lpwr-scope-guard's
-      // active-spec model; the human's bash-ask checkpoint remains everywhere.
       if (input.tool !== "bash") {
         return;
       }
       const command: unknown = output.args.command;
-      if (typeof command !== "string" || !looksLikeGitCommit(command)) {
+      if (typeof command !== "string") {
+        return;
+      }
+      // Deploy gate (implementation-rules 8): the constitution declares what
+      // a deploy is, the release window says when it may run. No declared
+      // command means nothing to gate — the human's bash-ask stays the floor.
+      const deploy = await readDeployCommand(root);
+      if (deploy !== null && runsDeclared(command, deploy)) {
+        if (Date.now() >= releaseWindowUntil) {
+          block(
+            plugin,
+            `Blocked: deploy command \`${deploy}\` may only run inside ` +
+              `lpwr-release (implementation-rules 8) — run /lpwr-release <id> ` +
+              `on a recorded ship verdict. If that shell line was not a ` +
+              `deploy, change the \`Deploy command:\` line in ` +
+              `docs/constitution.md.`
+          );
+        }
+        return;
+      }
+      // Raw `git commit` through bash is the same Retain action as /lpwr-commit
+      // — gated when (and only when) the branch names a spec. Branches with no
+      // spec ID (bootstrap, harness development) stay ungated, mirroring lpwr-scope-guard's
+      // active-spec model; the human's bash-ask checkpoint remains everywhere.
+      if (!looksLikeGitCommit(command)) {
         return;
       }
       const branch = await currentBranch(root);

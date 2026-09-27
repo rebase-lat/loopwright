@@ -28,22 +28,35 @@ const runCommand = async (
   await before({ arguments: args, command, sessionID: "test" }, { parts: [] });
 };
 
+const runBash = async (hooks: Hooks, command: string): Promise<void> => {
+  const before = hooks["tool.execute.before"];
+  assert.ok(before, "verdict-gate must register tool.execute.before");
+  await before(
+    { callID: "c1", sessionID: "test", tool: "bash" },
+    { args: { command } }
+  );
+};
+
 interface Fixture {
+  readonly deploy?: boolean;
+  readonly spec?: boolean;
   readonly specTier?: string;
+  readonly state?: string;
   readonly review?: string | null;
   readonly reviewTier?: string;
   readonly verdict?: string;
   readonly rows?: readonly string[];
   readonly waived?: string;
-  readonly state?: string;
   readonly log?: boolean;
-  readonly spec?: boolean;
 }
 
 const SPEC_FM = (tier: string): string =>
   `---\nid: auth-014\nstatus: approved\nrisk_tier: ${tier}\n` +
   "design_review: none\nbasis: proposed\nsupersedes: null\n" +
-  "proposal_ref: docs/specs/auth-014/proposal.md\n---\n\n# Spec: x\n";
+  "proposal_ref: docs/specs/auth-014/proposal.md\n---\n\n# Spec: x\n\n" +
+  "## Acceptance criteria → test binding\n" +
+  "| Criterion ID | Test reference (filled by lpwr-implement) |\n" +
+  "| --- | --- |\n| auth-014-1 | test/a.test.ts |\n";
 
 const REVIEW = (options: {
   tier: string;
@@ -105,6 +118,14 @@ const workspace = (fixture: Fixture = {}): string => {
   }
   if (fixture.state) {
     writeFileSync(path.join(dir, "docs/state.md"), fixture.state, "utf-8");
+  }
+  if (fixture.deploy) {
+    writeFileSync(
+      path.join(dir, "docs/constitution.md"),
+      "# Constitution\n\nAudit command: npm audit --audit-level=high\n" +
+        "Deploy command: npm run deploy\n",
+      "utf-8"
+    );
   }
   return dir;
 };
@@ -197,4 +218,73 @@ test("verdict-gate: commit passes the full chain; amend refuses post-ship", asyn
     runCommand(shipped, "lpwr-amend", "auth-014 widen the surface"),
     /already shipped/u
   );
+});
+
+test("verdict-gate: a spec edited after review diverges from its tables", async () => {
+  // The tables are the review's only binding to the spec (no hash): move a
+  // test reference after review and commit must refuse.
+  const renamed = workspace();
+  writeFileSync(
+    path.join(renamed, "docs/specs/auth-014/spec.md"),
+    SPEC_FM("low").replace(
+      "| auth-014-1 | test/a.test.ts |",
+      "| auth-014-1 | test/renamed.test.ts |"
+    ),
+    "utf-8"
+  );
+  await assert.rejects(
+    runCommand(await verdictGate(plugin(renamed)), "lpwr-commit", "auth-014"),
+    /cites test\/renamed\.test\.ts in spec\.md but test\/a\.test\.ts in review\.md/u
+  );
+
+  // A criterion the review never saw is the same class of drift.
+  const added = workspace();
+  writeFileSync(
+    path.join(added, "docs/specs/auth-014/spec.md"),
+    `${SPEC_FM("low")}| auth-014-2 | test/extra.test.ts |\n`,
+    "utf-8"
+  );
+  await assert.rejects(
+    runCommand(await verdictGate(plugin(added)), "lpwr-commit", "auth-014"),
+    /criterion auth-014-2 is in spec\.md but was never reviewed/u
+  );
+});
+
+test("verdict-gate: deploy runs only inside an open lpwr-release window", async () => {
+  const dir = workspace({ deploy: true });
+  const hooks = await verdictGate(plugin(dir));
+
+  // Outside any release: the declared deploy command is refused, with flags
+  // and inside a compound command too.
+  await assert.rejects(
+    runBash(hooks, "npm run deploy"),
+    /may only run inside lpwr-release/u
+  );
+  await assert.rejects(
+    runBash(hooks, "cd . && npm run deploy -- --tag x"),
+    /may only run inside lpwr-release/u
+  );
+  // Anything that is not the deploy command is untouched.
+  await runBash(hooks, "npm run build");
+
+  // lpwr-release passes its gate → the window opens → deploy is allowed.
+  await runCommand(hooks, "lpwr-release", "auth-014");
+  await runBash(hooks, "npm run deploy");
+
+  // Any later command closes the window again.
+  await runCommand(hooks, "lpwr-guide", "");
+  await assert.rejects(
+    runBash(hooks, "npm run deploy"),
+    /may only run inside lpwr-release/u
+  );
+});
+
+test("verdict-gate: no declared Deploy command means nothing to gate", async () => {
+  const dir = workspace();
+  writeFileSync(
+    path.join(dir, "docs/constitution.md"),
+    "# Constitution\n\nAudit command: npm audit --audit-level=high\n",
+    "utf-8"
+  );
+  await runBash(await verdictGate(plugin(dir)), "npm run deploy");
 });

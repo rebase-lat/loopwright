@@ -6,11 +6,10 @@ import type { Hooks, PluginInput } from "@opencode-ai/plugin";
 
 import { receiptIncomplete, stateSectionHasEntry } from "../lib/gates.ts";
 import {
-  SPEC_ID,
   block,
   commandName,
-  firstArgument,
   frontmatterValue,
+  specIdArgument,
   worktreeList,
 } from "../lib/shared.ts";
 
@@ -72,15 +71,16 @@ const specLink = (plugin: PluginInput): Promise<Hooks> => {
       if (commandName(input.command) !== "lpwr-implement") {
         return;
       }
-      const specId = firstArgument(input.arguments);
+      // specIdArgument skips flags, so `lpwr-implement --flag auth-014` still
+      // keys every gate on auth-014 (analysis T2 / verification F11). It only
+      // ever returns a token matching SPEC_ID, so a missing id and a malformed
+      // one both land here — one message names the expected shape.
+      const specId = specIdArgument(input.arguments);
       if (!specId) {
-        block(plugin, "Blocked: /lpwr-implement requires a spec id.");
-      }
-      if (!SPEC_ID.test(specId)) {
         block(
           plugin,
-          `Blocked: "${specId}" is not a traceability ID ` +
-            `(expected <domain>-<sequence>, lowercase, e.g. auth-014).`
+          `Blocked: /lpwr-implement requires a traceability ID ` +
+            `(<domain>-<sequence>, lowercase, e.g. auth-014).`
         );
       }
       let raw: string;

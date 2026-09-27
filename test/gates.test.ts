@@ -2,6 +2,9 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  acceptanceTablesDiverge,
+  approvedSpecEdit,
+  constitutionCommands,
   declaredSurfaceFrom,
   normalizeGlob,
   overlaps,
@@ -179,4 +182,132 @@ test("specDirNames: spec and criterion refs, slugs and prose refused", () => {
   assert.deepEqual(specDirNames("login"), []);
   assert.deepEqual(specDirNames("Auth-014"), []);
   assert.deepEqual(specDirNames("docs/context.md"), []);
+});
+
+// Round 8 Wave 4: the frozen-spec and review↔spec binding predicates.
+const approvedSpec = (options?: {
+  rows?: string;
+  status?: string;
+  title?: string;
+  tier?: string;
+}): string => {
+  const status = options?.status ?? "approved";
+  const rows = options?.rows ?? "| auth-014-1 |  |";
+  const title = options?.title ?? "# Spec";
+  const tier = options?.tier ?? "low";
+  return (
+    `---\nid: auth-014\nstatus: ${status}\nrisk_tier: ${tier}\n---\n\n` +
+    `${title}\n\n## Acceptance criteria → test binding\n` +
+    `| Criterion ID | Test reference |\n| --- | --- |\n${rows}\n\n` +
+    `## Tasks\n1. [ ] x\n`
+  );
+};
+
+test("constitutionCommands: audit/deploy lines, placeholders and CRLF", () => {
+  const raw =
+    "# C\n\nAudit command: npm audit --audit-level=high\n" +
+    "Audit command: pip-audit\n" +
+    "Deploy command: <one command that ships>\n";
+  assert.deepEqual(constitutionCommands(raw, "audit command"), [
+    "npm audit --audit-level=high",
+    "pip-audit",
+  ]);
+  // Template placeholders declare nothing.
+  assert.deepEqual(constitutionCommands(raw, "deploy command"), []);
+  assert.deepEqual(constitutionCommands(raw, "release command"), []);
+  assert.deepEqual(
+    constitutionCommands("Deploy command: npm run deploy\r\n", "deploy command"),
+    ["npm run deploy"]
+  );
+});
+
+test("approvedSpecEdit: test refs pass, everything else is lpwr-amend", () => {
+  const current = approvedSpec();
+  // Filling the test-reference cell is Execute's own job.
+  assert.equal(
+    approvedSpecEdit(current, approvedSpec({ rows: "| auth-014-1 | test/x |" })),
+    null
+  );
+  // The amend door: status flips alone.
+  assert.equal(
+    approvedSpecEdit(current, approvedSpec({ status: "draft" })),
+    null
+  );
+  // A flip that smuggles other changes through.
+  assert.match(
+    approvedSpecEdit(
+      current,
+      approvedSpec({ status: "draft", title: "# Spec: renamed" })
+    ) ?? "",
+    /must not carry other changes/u
+  );
+  // Changes outside the table.
+  assert.match(
+    approvedSpecEdit(current, approvedSpec({ title: "# Spec: renamed" })) ?? "",
+    /outside the acceptance table/u
+  );
+  assert.match(
+    approvedSpecEdit(current, approvedSpec({ tier: "high" })) ?? "",
+    /outside the acceptance table/u
+  );
+  // The criterion list itself.
+  assert.match(
+    approvedSpecEdit(current, approvedSpec({ rows: "| auth-014-1 |  |\n| auth-014-2 |  |" })) ?? "",
+    /criterion list changed/u
+  );
+  // A draft spec is not frozen at all.
+  const draft = approvedSpec({ status: "draft" });
+  assert.equal(approvedSpecEdit(draft, approvedSpec({ title: "# X" })), null);
+});
+
+const reviewTable = (rows: string): string =>
+  `## Standards axis\n- [x] ok\n\n## Specs axis\n` +
+  `| Criterion ID | Test reference | Pass? |\n| --- | --- | --- |\n${rows}\n\n` +
+  `## Verdict\n- [x] Ship\n`;
+
+test("acceptanceTablesDiverge: the review's only binding to the spec", () => {
+  const spec = (rows: string): string =>
+    approvedSpec({ rows });
+  assert.equal(
+    acceptanceTablesDiverge(spec("| auth-014-1 | test/a |"), reviewTable("| auth-014-1 | test/a | yes |")),
+    null
+  );
+  // Two present, disagreeing references.
+  assert.match(
+    acceptanceTablesDiverge(
+      spec("| auth-014-1 | test/renamed |"),
+      reviewTable("| auth-014-1 | test/a | yes |")
+    ) ?? "",
+    /cites test\/renamed in spec\.md but test\/a in review\.md/u
+  );
+  // Criterion added after review.
+  assert.match(
+    acceptanceTablesDiverge(
+      spec("| auth-014-1 | test/a |\n| auth-014-2 | test/b |"),
+      reviewTable("| auth-014-1 | test/a | yes |")
+    ) ?? "",
+    /auth-014-2 is in spec\.md but was never reviewed/u
+  );
+  // Criterion dropped after review.
+  assert.match(
+    acceptanceTablesDiverge(
+      spec("| auth-014-1 | test/a |"),
+      reviewTable("| auth-014-1 | test/a | yes |\n| auth-014-2 |  | deferred |")
+    ) ?? "",
+    /auth-014-2 was reviewed but is no longer in spec\.md/u
+  );
+  // A blank cell on either side (waived/deferred) is not drift.
+  assert.equal(
+    acceptanceTablesDiverge(spec("| auth-014-1 |  |"), reviewTable("| auth-014-1 |  | waived |")),
+    null
+  );
+  // Missing tables.
+  assert.match(
+    acceptanceTablesDiverge("# Spec: no table\n", reviewTable("| auth-014-1 | test/a | yes |")) ?? "",
+    /has no acceptance table/u
+  );
+  assert.match(
+    acceptanceTablesDiverge(spec("| auth-014-1 | test/a |"), "# Review\n") ?? "",
+    /no Specs axis table/u
+  );
 });
